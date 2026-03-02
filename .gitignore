@@ -361,3 +361,46 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# ClickOnce deployment files
+*.application
+*.manifest
+
+# Release ZIP archives (Git dışı — Build-Release.ps1 tarafından oluşturulur)
+releases/
+
+# Windows system files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# JetBrains Rider
+*.sln.iml
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Project-specific: Build output & setup artifacts
+Output/
+
+# Project-specific: Bundled runtime installers
+eFaturaEdit/Assets/ndp472-*.exe
+
+# Project-specific: Loose DLL copies (NuGet paketinden gelir)
+eFaturaEdit/ICSharpCode.TextEditorEx.dll

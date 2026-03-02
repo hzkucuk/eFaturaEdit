@@ -82,8 +82,9 @@ namespace eFaturaEdit
                             result = mo[wmiProperty].ToString();
                             break;
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            System.Diagnostics.Debug.WriteLine($"WMI property read failed: {wmiClass}.{wmiProperty} - {ex.Message}");
                         }
                     }
                 }
@@ -107,8 +108,9 @@ namespace eFaturaEdit
                         result = mo[wmiProperty].ToString();
                         break;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        System.Diagnostics.Debug.WriteLine($"WMI property read failed: {wmiClass}.{wmiProperty} - {ex.Message}");
                     }
                 }
             }
