@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.0.0] — 2025-06-20 — UBL-TR Entegrasyonu — UblTrSamples.cs, XsltSnippets.cs, Form1.cs, UBL-TR/
+
+### Eklenen
+- **UBL-TR Referans Klasörü:** `UBL-TR/` altında Ornekler (30 XML), Schematron (4 dosya), XSD (16 dosya) düzenli yapı. — `UBL-TR/`
+- **Örnek Fatura Deposu:** Ribbon'da "Örnek Faturalar" dropdown — 7 kategori, 30 GİB resmi senaryo XML'i (Temel, Ticari, İade, KDV Sıfır, İhracat, Kullanıcı İşlemleri). — `UblTrSamples.cs`, `Form1.cs`
+- **8 UBL-TR Snippet:** Satıcı Bilgisi, Alıcı Bilgisi, Fatura Kalemleri, Vergi Toplamları, Genel Toplam, Fatura Başlığı, Senaryo Kontrolü, Fatura Tipi Kontrolü. Toplam 23 snippet. — `XsltSnippets.cs`
+
 ## [1.9.0] — 2025-06-20 — Güvenlik + Yeni Snippet'ler + Dokümantasyon — frmMain.cs, XsltSnippets.cs, App.config, INSTALL.md
 
 ### Güvenlik

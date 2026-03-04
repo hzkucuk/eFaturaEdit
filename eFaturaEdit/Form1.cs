@@ -50,6 +50,7 @@ namespace eFaturaEdit
 
             Cef.Initialize(settings);
             InitSnippetToolbar();
+            InitSampleXmlToolbar();
             InitEditorDragDrop();
         }
         void InitSkinGallery()
@@ -469,6 +470,107 @@ namespace eFaturaEdit
             ribbonControl.MouseDown += RibbonControl_SnippetMouseDown;
         }
 
+        #endregion
+
+        #region Örnek XML Senaryo Toolbar
+
+        /// <summary>
+        /// Ribbon'a "Örnek Faturalar" grubu ve kategorilere göre alt menü butonları ekler.
+        /// UBL-TR 1.2.1 resmi örnek XML dosyaları kullanıcıya sunulur.
+        /// </summary>
+        private void InitSampleXmlToolbar()
+        {
+            if (!UblTrSamples.SamplesDirectoryExists())
+                return;
+
+            var samplePageGroup = new RibbonPageGroup("Örnek Faturalar");
+
+            foreach (var group in UblTrSamples.Groups)
+            {
+                var subMenu = new BarSubItem
+                {
+                    Caption = group.CategoryName,
+                    Name = "subSample_" + group.CategoryName.Replace(" ", ""),
+                };
+
+                foreach (var entry in group.Entries)
+                {
+                    var item = new BarButtonItem
+                    {
+                        Caption = entry.DisplayName,
+                        Tag = entry.FileName,
+                        Name = "btnSample_" + Path.GetFileNameWithoutExtension(entry.FileName),
+                    };
+                    item.ItemClick += SampleXml_ItemClick;
+                    subMenu.AddItem(item);
+                    ribbonControl.Items.Add(item);
+                }
+
+                ribbonControl.Items.Add(subMenu);
+                samplePageGroup.ItemLinks.Add(subMenu);
+            }
+
+            homeRibbonPage.Groups.Add(samplePageGroup);
+        }
+
+        /// <summary>
+        /// Örnek XML seçildiğinde: XML'i editöre yükler, XSLT açıksa dönüşüm yapar ve önizler.
+        /// </summary>
+        private void SampleXml_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            string fileName = e.Item.Tag as string;
+            if (string.IsNullOrEmpty(fileName))
+                return;
+
+            string fullPath = UblTrSamples.GetFullPath(fileName);
+            if (!File.Exists(fullPath))
+            {
+                MessageBox.Show(
+                    $"Örnek XML dosyası bulunamadı:\n{fullPath}",
+                    "Dosya Bulunamadı",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                // XML editörüne yükle
+                textEditorControlEx2.LoadFile(fullPath, true, true);
+                textEditorControlEx2.Tag = fullPath;
+                xtraTabControl2.TabPages[1].Text = fileName;
+
+                // XSLT açıksa dönüşüm yap ve önizle
+                if (textEditorControlEx1.Tag != null)
+                {
+                    XsltSettings xsettings = new XsltSettings(true, true);
+                    myXslTrans.Load(textEditorControlEx1.Tag.ToString(), xsettings, new XmlUrlResolver());
+                    myXslTrans.Transform(fullPath, @"result.html");
+
+                    brow?.Dispose();
+                    brow = new ChromiumWebBrowser(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "result.html"));
+                    SetupBrowserDropEvents();
+
+                    brow.Dock = DockStyle.Fill;
+                    xtraTabControl2.TabPages[0].Controls.Clear();
+                    xtraTabControl2.TabPages[0].Controls.Add(brow);
+                    xtraTabControl2.TabPages[0].Text = fileName;
+                }
+
+                UpdateAndCheckFoldings();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Örnek XML yüklenirken hata oluştu:\n{ex.Message}",
+                    "Hata",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        #endregion
+
         private DevExpress.Utils.SuperToolTip CreateSnippetTooltip(SnippetInfo snippet)
         {
             var tip = new DevExpress.Utils.SuperToolTip();
@@ -534,8 +636,6 @@ namespace eFaturaEdit
             var snippet = XsltSnippets.Elements[key];
             ribbonControl.DoDragDrop(snippet.DragDataString, DragDropEffects.Copy);
         }
-
-        #endregion
 
         #region Faz 1 — XSLT Editörüne Drag-Drop
 

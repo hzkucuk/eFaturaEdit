@@ -1,0 +1,1465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xerces="http://xerces.apache.org"
+	xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+	xmlns:earsiv="http://earsiv.efatura.gov.tr" targetNamespace="http://earsiv.efatura.gov.tr"
+	xmlns:xades141="http://uri.etsi.org/01903/v1.4.1#" elementFormDefault="qualified"
+	attributeFormDefault="unqualified" xmlns:ns1="http://zraporu.efatura.gov.tr">
+	<xs:import namespace="http://uri.etsi.org/01903/v1.3.2#" schemaLocation="XAdES.xsd"/>
+	<xs:import namespace="http://uri.etsi.org/01903/v1.4.1#" schemaLocation="XAdESv141.xsd"/>
+	<xs:import namespace="http://www.w3.org/2000/09/xmldsig#"
+		schemaLocation="xmldsig-core-schema.xsd"/>
+	<xs:element name="eArsivRaporu">
+		<xs:annotation>
+			<xs:documentation>eArsiv Rapor Bilgileri.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="baslik" type="earsiv:baslikType" maxOccurs="1" minOccurs="1"/>
+				<xs:choice minOccurs="1" maxOccurs="unbounded">
+					<xs:element name="fatura" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="faturaNo" type="earsiv:idType"/>
+								<xs:element name="faturaUUID" type="earsiv:uuidType"/>
+								<xs:element name="faturaTip" type="earsiv:faturaTipEnum"/>
+								<xs:element name="ytbBilgileri" minOccurs="0" maxOccurs="1">
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="ytbNo" minOccurs="1">
+												<xs:simpleType>
+													<xs:restriction base="xs:string">
+														<xs:pattern value="[0-9]{6}"/>
+													</xs:restriction>
+												</xs:simpleType>
+											</xs:element>
+											<xs:element name="tarih" type="xs:date" minOccurs="1"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="gonderimSekli">
+									<xs:simpleType>
+										<xs:restriction base="xs:string">
+											<xs:enumeration value="KAGIT"/>
+											<xs:enumeration value="ELEKTRONIK"/>
+										</xs:restriction>
+									</xs:simpleType>
+								</xs:element>
+								<xs:element name="dosyaAdi" type="xs:string"/>
+								<xs:element name="ozetDeger" type="xs:string"/>
+								<xs:element name="duzenlenmeTarihi" type="xs:date"/>
+								<xs:element name="duzenlenmeZamani" type="earsiv:timeType"/>
+								<xs:element name="toplamTutar" type="earsiv:currencyValueType"/>
+								<xs:element name="toplamIskonto" type="earsiv:currencyValueType"/>
+								<xs:element name="odenecekTutar" type="earsiv:currencyValueType"/>
+								<xs:element name="paraBirimi" type="earsiv:currencyCode"/>
+								<xs:element name="dovizKuru" minOccurs="1">
+									<xs:simpleType>
+										<xs:restriction base="xs:decimal">
+											<xs:totalDigits value="18"/>
+											<xs:fractionDigits value="6"/>
+										</xs:restriction>
+									</xs:simpleType>
+								</xs:element>
+								<xs:element name="faturaUrl" minOccurs="1" type="earsiv:urlType"/>
+								<xs:element name="vergiBilgisi" type="earsiv:vergiBilgisiType"/>
+								<xs:element name="aliciBilgileri" type="earsiv:aliciType"/>
+								<xs:element name="internetSatisBilgi" minOccurs="0" maxOccurs="1">
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="webAdresi" maxOccurs="1">
+												<xs:simpleType>
+												<xs:restriction base="xs:string">
+												<xs:minLength value="2"/>
+												</xs:restriction>
+												</xs:simpleType>
+											</xs:element>
+											<xs:element name="odemeSekli" type="earsiv:odemeTip"/>
+											<xs:element name="odemeAracisiAdi" type="xs:string"
+												minOccurs="0"/>
+											<xs:element name="odemeTarihi" type="xs:date"
+												minOccurs="0"/>
+											<xs:element name="gonderiBilgileri" minOccurs="1">
+												<xs:complexType>
+												<xs:sequence>
+												<xs:element name="gonderimTarihi" type="xs:date"/>
+												<xs:element name="gonderiTasiyan"
+												type="earsiv:kisiType"/>
+												</xs:sequence>
+												</xs:complexType>
+											</xs:element>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="ynOkcFisBilgisi" minOccurs="0"
+									maxOccurs="unbounded">
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="okcSeriNo" type="xs:string"/>
+											<xs:element name="zNo" type="xs:string"/>
+											<xs:element name="fisNo" type="xs:string"/>
+											<xs:element name="fisTip" type="earsiv:fisTipType"/>
+											<xs:element name="fisTarih" type="xs:date"/>
+											<xs:element name="fisZaman" type="earsiv:timeType"
+												minOccurs="0"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="sarjAnlik" minOccurs="0">
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="sarjZamani"
+												type="earsiv:sarjZamanType"/>
+											<xs:element name="plaka" type="xs:string"/>
+											<xs:element name="toplamTutar"
+												type="earsiv:currencyValueType"/>
+											<xs:element name="indirim" type="xs:string"
+												minOccurs="0"/>
+											<xs:element name="kalemDetay"
+												type="earsiv:kalemDetayType"/>
+											<xs:element name="esuSeriNo" type="xs:string"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="sarj" minOccurs="0" maxOccurs="1">
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="sarjZamani"
+												type="earsiv:sarjZamanType"/>
+											<xs:element name="esuRaporID" type="earsiv:uuidType"/>
+											<xs:element name="plaka" type="xs:string"/>
+											<xs:element name="toplamTutar"
+												type="earsiv:currencyValueType"/>
+											<xs:element name="indirim" type="xs:string"
+												minOccurs="0"/>
+											<xs:element name="kalemDetay"
+												type="earsiv:kalemDetayType" maxOccurs="unbounded"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+								<xs:element name="imzaZamani" type="xs:dateTime" minOccurs="1"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="faturaIptal" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="faturaNo" type="earsiv:idType"/>
+								<xs:element name="iptalTarihi" type="xs:date"/>
+								<xs:element name="toplamTutar" type="earsiv:currencyValueType"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="faturaItiraz" minOccurs="0" maxOccurs="unbounded"
+						type="earsiv:belgeItirazType"/>
+					<xs:element name="mustahsilMakbuz" maxOccurs="unbounded" minOccurs="0">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="makbuzNo" type="earsiv:idType"/>
+								<xs:element name="dosyaAdi" type="xs:string"/>
+								<xs:element name="ozetDeger" type="xs:string"/>
+								<xs:element name="duzenlenmeTarihi" type="xs:date"/>
+								<xs:element name="duzenlenmeZamani" type="earsiv:timeType"/>
+								<xs:element name="toplamTutar" type="earsiv:currencyValueType"/>
+								<xs:element name="odenecekTutar" type="earsiv:currencyValueType"/>
+								<xs:element name="paraBirimi" type="earsiv:currencyCode"/>
+								<xs:element name="mustahsilMakbuzUrl" minOccurs="1"
+									type="earsiv:urlType"/>
+								<xs:element name="vergiBilgisi" type="earsiv:vergiBilgisiType"/>
+								<xs:element name="mustahsilBilgileri" type="earsiv:aliciTypeMin"/>
+								<xs:element name="imzaZamani" type="xs:dateTime" minOccurs="1"/>
+								<xs:element name="ynOkcFisBilgisi" minOccurs="0"
+									maxOccurs="unbounded">
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="okcSeriNo" type="xs:string"/>
+											<xs:element name="zNo" type="xs:string"/>
+											<xs:element name="fisNo" type="xs:string"/>
+											<xs:element name="fisTip" type="earsiv:fisTipType"/>
+											<xs:element name="fisTarih" type="xs:date"/>
+											<xs:element name="fisZaman" type="earsiv:timeType"
+												minOccurs="0"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="mustahsilMakbuzIptal" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="makbuzNo" type="earsiv:idType"/>
+								<xs:element name="iptalTarihi" type="xs:date"/>
+								<xs:element name="toplamTutar" type="earsiv:currencyValueType"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="serbestMeslekMakbuz" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="makbuzNo" type="earsiv:idType"/>
+								<xs:element name="gonderimSekli">
+									<xs:simpleType>
+										<xs:restriction base="xs:string">
+											<xs:enumeration value="KAGIT"/>
+											<xs:enumeration value="ELEKTRONIK"/>
+										</xs:restriction>
+									</xs:simpleType>
+								</xs:element>
+								<xs:element name="dosyaAdi" type="xs:string"/>
+								<xs:element name="ozetDeger" type="xs:string"/>
+								<xs:element name="duzenlenmeTarihi" type="xs:date"/>
+								<xs:element name="duzenlenmeZamani" type="earsiv:timeType"
+									minOccurs="0"/>
+								<xs:element name="toplamTutar" type="earsiv:currencyValueType"/>
+								<xs:element name="odenecekTutar" type="earsiv:currencyValueType"/>
+								<xs:element name="paraBirimi" type="earsiv:currencyCode"/>
+								<xs:element name="dovizKuru" minOccurs="1">
+									<xs:simpleType>
+										<xs:restriction base="xs:decimal">
+											<xs:totalDigits value="18"/>
+											<xs:fractionDigits value="6"/>
+										</xs:restriction>
+									</xs:simpleType>
+								</xs:element>
+								<xs:element name="serbestMeslekMakbuzUrl" minOccurs="1"
+									type="earsiv:urlType"/>
+								<xs:element name="vergiBilgisi" type="earsiv:vergiBilgisiType"/>
+								<xs:element name="aliciBilgileri" type="earsiv:aliciTypeMin"/>
+								<xs:element name="imzaZamani" type="xs:dateTime" minOccurs="1"/>
+								<xs:element name="ynOkcFisBilgisi" minOccurs="0"
+									maxOccurs="unbounded">
+									<xs:complexType>
+										<xs:sequence>
+											<xs:element name="okcSeriNo" type="xs:string"/>
+											<xs:element name="zNo" type="xs:string"/>
+											<xs:element name="fisNo" type="xs:string"/>
+											<xs:element name="fisTip" type="earsiv:fisTipType"/>
+											<xs:element name="fisTarih" type="xs:date"/>
+											<xs:element name="fisZaman" type="earsiv:timeType"
+												minOccurs="0"/>
+										</xs:sequence>
+									</xs:complexType>
+								</xs:element>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="serbestMeslekMakbuzIptal" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="makbuzNo" type="earsiv:idType"/>
+								<xs:element name="iptalTarihi" type="xs:date"/>
+								<xs:element name="toplamTutar" type="earsiv:currencyValueType"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="serbestMeslekMakbuzItiraz" minOccurs="0" maxOccurs="unbounded"
+						type="earsiv:belgeItirazType"/>
+					<xs:element name="mRapor" maxOccurs="unbounded" minOccurs="0"
+						type="earsiv:mRaporType"/>
+					<xs:element name="ymRapor" maxOccurs="unbounded" minOccurs="0"
+						type="earsiv:ymRaporType"/>
+					<xs:element name="bankReceipt" maxOccurs="unbounded" minOccurs="0"
+						type="earsiv:bankReceiptType"/>
+					<xs:element name="bankReceiptIptal" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="dekontNo" type="earsiv:idType"/>
+								<xs:element name="UUID" type="earsiv:uuidType"/>
+								<xs:element name="iptalTarihi" type="xs:date"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="adisyon" maxOccurs="unbounded" minOccurs="0"
+						type="earsiv:eCheckType"/>
+					<xs:element name="adisyonIptal" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="adisyonNo" type="earsiv:idType"/>
+								<xs:element name="UUID" type="earsiv:uuidType"/>
+								<xs:element name="iptalTarihi" type="xs:date"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+		<xs:unique name="faturaNo">
+			<xs:selector xpath="earsiv:fatura"/>
+			<xs:field xpath="earsiv:faturaNo"/>
+		</xs:unique>
+		<xs:unique name="faturaIptalNo">
+			<xs:selector xpath="earsiv:faturaIptal"/>
+			<xs:field xpath="earsiv:faturaNo"/>
+		</xs:unique>
+		<xs:unique name="faturaItirazNo">
+			<xs:selector xpath="earsiv:faturaItiraz"/>
+			<xs:field xpath="earsiv:belgeNo"/>
+		</xs:unique>
+		<xs:unique name="serbestMeslekMakbuzNo">
+			<xs:selector xpath="earsiv:serbestMeslekMakbuz"/>
+			<xs:field xpath="earsiv:makbuzNo"/>
+		</xs:unique>
+		<xs:unique name="serbestMeslekMakbuzIptalNo">
+			<xs:selector xpath="earsiv:serbestMeslekMakbuzIptal"/>
+			<xs:field xpath="earsiv:makbuzNo"/>
+		</xs:unique>
+		<xs:unique name="serbestMeslekMakbuzItirazNo">
+			<xs:selector xpath="earsiv:serbestMeslekMakbuzItiraz"/>
+			<xs:field xpath="earsiv:belgeNo"/>
+		</xs:unique>
+		<xs:unique name="mustahsilMakbuzNo">
+			<xs:selector xpath="earsiv:mustahsilMakbuz"/>
+			<xs:field xpath="earsiv:makbuzNo"/>
+		</xs:unique>
+		<xs:unique name="mustahsilMakbuzIptalNo">
+			<xs:selector xpath="earsiv:mustahsilMakbuzIptal"/>
+			<xs:field xpath="earsiv:makbuzNo"/>
+		</xs:unique>
+		<xs:unique name="mustahsilMakbuzItirazNo">
+			<xs:selector xpath="earsiv:mustahsilMakbuzItiraz"/>
+			<xs:field xpath="earsiv:belgeNo"/>
+		</xs:unique>
+		<xs:unique name="adisyonNo">
+			<xs:selector xpath="earsiv:adisyon"/>
+			<xs:field xpath="earsiv:adisyonNo"/>
+		</xs:unique>
+		<xs:unique name="adisyonIptalNo">
+			<xs:selector xpath="earsiv:adisyonIptal"/>
+			<xs:field xpath="earsiv:adisyonNo"/>
+		</xs:unique>
+		<xs:unique name="adisyonUUID">
+			<xs:selector xpath="earsiv:adisyon"/>
+			<xs:field xpath="earsiv:UUID"/>
+		</xs:unique>
+		<xs:unique name="adisyonIptalUUID">
+			<xs:selector xpath="earsiv:adisyonIptal"/>
+			<xs:field xpath="earsiv:UUID"/>
+		</xs:unique>
+		<xs:unique name="dekontNo">
+			<xs:selector xpath="earsiv:bankReceipt"/>
+			<xs:field xpath="earsiv:dekontNo"/>
+		</xs:unique>
+		<xs:unique name="dekontIptalNo">
+			<xs:selector xpath="earsiv:bankReceipt"/>
+			<xs:field xpath="earsiv:dekontNo"/>
+		</xs:unique>
+		<xs:unique name="dekontUUID">
+			<xs:selector xpath="earsiv:bankReceipt"/>
+			<xs:field xpath="earsiv:UUID"/>
+		</xs:unique>
+		<xs:unique name="dekontIptalUUID">
+			<xs:selector xpath="earsiv:bankReceipt"/>
+			<xs:field xpath="earsiv:UUID"/>
+		</xs:unique>
+	</xs:element>
+	<xs:complexType name="baslikType">
+		<xs:sequence>
+			<xs:element name="versiyon" type="xs:string"/>
+			<xs:element name="mukellef" type="earsiv:vknTcknType"/>
+			<xs:element name="hazirlayan" type="earsiv:vknTcknType"/>
+			<xs:element name="raporNo" type="earsiv:uuidType"/>
+			<xs:element name="donemBaslangicTarihi" type="xs:date"/>
+			<xs:element name="donemBitisTarihi" type="xs:date"/>
+			<xs:element name="bolumBaslangicTarihi" type="xs:date"/>
+			<xs:element name="bolumBitisTarihi" type="xs:date"/>
+			<xs:element name="bolumNo" type="xs:int"/>
+			<xs:element ref="ds:Signature"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="vknType">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="\d\d\d\d\d\d\d\d\d\d"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="tcknType">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="\d\d\d\d\d\d\d\d\d\d\d"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="idType">
+		<xs:restriction base="xs:string">
+			<xs:length value="16"/>
+			<xs:pattern value="[A-Za-z0-9]{3}20[0-9]{2}[0-9]{9}"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="vknTcknType">
+		<xs:choice>
+			<xs:element name="vkn" type="earsiv:vknType"/>
+			<xs:element name="tckn" type="earsiv:tcknType"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="kisiType">
+		<xs:sequence>
+			<xs:element name="tuzelKisi" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="vkn" type="earsiv:vknType"/>
+						<xs:element name="unvan">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:minLength value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="gercekKisi" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="tckn" type="earsiv:tcknType"/>
+						<xs:element name="adiSoyadi">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:minLength value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="aliciType">
+		<xs:sequence>
+			<xs:element name="tuzelKisi" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="vkn" type="earsiv:vknType"/>
+						<xs:element name="unvan">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:minLength value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="gercekKisi" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="tckn" type="earsiv:tcknType"/>
+						<xs:element name="adiSoyadi">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:minLength value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element minOccurs="0" name="tesisatNumarasi" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="aliciTypeMin">
+		<xs:sequence>
+			<xs:element name="tuzelKisi" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="vkn" type="earsiv:vknType"/>
+						<xs:element name="unvan">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:minLength value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="gercekKisi" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="tckn" type="earsiv:tcknType"/>
+						<xs:element name="adiSoyadi">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:minLength value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="odemeTipEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="KREDIKARTI/BANKAKARTI"/>
+			<xs:enumeration value="EFT/HAVALE"/>
+			<xs:enumeration value="KAPIDAODEME"/>
+			<xs:enumeration value="ODEMEARACISI"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="odemeTipDiger">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="DIGER - \S.*"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="odemeTip">
+		<xs:union memberTypes="earsiv:odemeTipEnum earsiv:odemeTipDiger"/>
+	</xs:simpleType>
+
+	<xs:simpleType name="receiptScenariosType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="ALINAN_EFT"/>
+			<xs:enumeration value="GONDERILEN_EFT"/>
+			<xs:enumeration value="ALINAN_SWIFT"/>
+			<xs:enumeration value="GONDERILEN_SWIFT"/>
+			<xs:enumeration value="NAKIT_YATIRILAN"/>
+			<xs:enumeration value="NAKIT_CEKILEN"/>
+			<xs:enumeration value="ALINAN_HAVALE"/>
+			<xs:enumeration value="GONDERILEN_HAVALE"/>
+			<xs:enumeration value="DOVIZ_ALIS"/>
+			<xs:enumeration value="DOVIZ_SATIS"/>
+			<xs:enumeration value="KIYMETLI_MADEN_ALIS"/>
+			<xs:enumeration value="KIYMETLI_MADEN_SATIS"/>
+			<xs:enumeration value="HESABA_BAGLI_OLMAYAN_TRANSFER"/>
+			<xs:enumeration value="IHTIYAC_KREDISI_KULLANIMI"/>
+			<xs:enumeration value="IHTIYAC_KREDISI_ODEME"/>
+			<xs:enumeration value="GAYRIMENKUL_KREDISI_KULLANIMI"/>
+			<xs:enumeration value="GAYRIMENKUL_KREDISI_ODEME"/>
+			<xs:enumeration value="TASIT_KREDISI_KULLANIMI"/>
+			<xs:enumeration value="TASIT_KREDISI_ODEME"/>
+			<xs:enumeration value="TICARI_KREDI_KULLANIMI"/>
+			<xs:enumeration value="TICARI_KREDI_ODEME"/>
+			<xs:enumeration value="CEK_TAHSILATI"/>
+			<xs:enumeration value="SENET_TAHSILATI"/>
+			<xs:enumeration value="KREDI_KARTI_HARCAMA"/>
+			<xs:enumeration value="KREDI_KARTI_ODEME"/>
+			<xs:enumeration value="VERGI_ODEME"/>
+			<xs:enumeration value="GUMRUK_VERGISI_ODEME"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="receiptScenariosDigerType">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="DIGER - \S.*"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="receiptScenarioType">
+		<xs:union memberTypes="earsiv:receiptScenariosType earsiv:receiptScenariosDigerType"/>
+	</xs:simpleType>
+
+	<xs:simpleType name="timeType">
+		<xs:restriction base="xs:time">
+			<xs:pattern value="(([01][0-9])|(2[0-3]))(:[0-5][0-9]){2}(\.[0-9]+)?"/>
+			<xs:minInclusive value="00:00:00"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="belgeItirazType">
+		<xs:sequence>
+			<xs:element name="belgeNo" type="earsiv:idType"/>
+			<xs:element name="itirazBelgeTarihi" type="xs:date"/>
+			<xs:element name="itirazBelgeNo" type="xs:string"/>
+			<xs:element name="itirazYontemi">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="KEP"/>
+						<xs:enumeration value="NOTER"/>
+						<xs:enumeration value="TELGRAF"/>
+						<xs:enumeration value="TAAHHUTLU_MEKTUP"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="aciklama">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:maxLength value="255"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="mRaporType">
+		<xs:sequence>
+			<xs:element name="mRaporNo" type="xs:string"/>
+			<xs:element name="okcSicilNo" type="xs:string"/>
+			<xs:element name="satisTutar">
+				<xs:simpleType>
+					<xs:restriction base="xs:decimal">
+						<xs:totalDigits value="18"/>
+						<xs:fractionDigits value="2"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element maxOccurs="unbounded" minOccurs="1" name="vergi" type="earsiv:vergiType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="vergiType">
+		<xs:sequence>
+			<xs:element name="vergiAdi" type="earsiv:vergiTipEnum"/>
+			<xs:element name="vergiTutar">
+				<xs:simpleType>
+					<xs:restriction base="xs:decimal">
+						<xs:totalDigits value="18"/>
+						<xs:fractionDigits value="2"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="satisType">
+		<xs:sequence>
+			<xs:element name="vergiAdi" type="earsiv:vergiTipEnum"/>
+			<xs:element name="vergiTutar">
+				<xs:simpleType>
+					<xs:restriction base="xs:decimal">
+						<xs:totalDigits value="18"/>
+						<xs:fractionDigits value="2"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element maxOccurs="unbounded" name="vergiDetay">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element minOccurs="1" name="vergiYuzde" type="xs:decimal"/>
+						<xs:element name="satisTutar">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ymRaporType">
+		<xs:sequence>
+			<xs:element name="ymRaporNo" type="xs:string"/>
+			<xs:element name="mukellef">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="vknTckn">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:pattern value="\d\d\d\d\d\d\d\d\d\d"/>
+									<xs:pattern value="\d\d\d\d\d\d\d\d\d\d\d"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="unvan" type="xs:string"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="okc" type="earsiv:okcType"/>
+			<xs:element name="okcAylikSatisRaporNo" type="xs:string"/>
+			<xs:element name="satis" type="earsiv:satisType" maxOccurs="unbounded"/>
+			<xs:element maxOccurs="unbounded" name="belgeTutar">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="tutar">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="tip" type="earsiv:belgeTutarTipEnum"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element maxOccurs="unbounded" name="odemeTuruTutar">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="tutar">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="tip" type="earsiv:odemeTuruTipEnum"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element maxOccurs="unbounded" name="bilgiFis" type="earsiv:adetTutarType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="adetTutarType">
+		<xs:sequence maxOccurs="1">
+			<xs:element name="tutar">
+				<xs:simpleType>
+					<xs:restriction base="xs:decimal">
+						<xs:totalDigits value="18"/>
+						<xs:fractionDigits value="2"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="adet" type="xs:integer"/>
+			<xs:element name="tip" type="earsiv:bilgiFisTipEnum"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="okcType">
+		<xs:sequence>
+			<xs:element name="marka" type="xs:string"/>
+			<xs:element name="model" type="xs:string"/>
+			<xs:element name="sicilNo" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="bilgiFisTipEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="FATURABFIS">
+				<xs:annotation>
+					<xs:documentation>Düzenlenen Fatura Bilgi Fişleri</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="YEMEKKCBFIS">
+				<xs:annotation>
+					<xs:documentation>Düzenlenen Yemek Kartı/Çeki Bilgi Fişleri</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="AVANSBFIS">
+				<xs:annotation>
+					<xs:documentation>Düzenlenen Avans Bilgi Fişleri</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="FATURATAHSILATBFIS">
+				<xs:annotation>
+					<xs:documentation>Düzenlenen Fatura Tahsilatı Bilgi Fişleri</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="OTOPARKBFIS">
+				<xs:annotation>
+					<xs:documentation>Düzenlenen Otopark Giriş Bilgi Fişleri</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="CARIHESAPBFIS">
+				<xs:annotation>
+					<xs:documentation>Düzenlenen Cari Hesap Tahsilatı Bilgi Fişleri</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="DIGERBFIS">
+				<xs:annotation>
+					<xs:documentation>Düzenlenen Diğer Bilgi Fişleri</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="belgeTutarTipEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="OKCFISTUTAR">
+				<xs:annotation>
+					<xs:documentation>ÖKC FİŞLERİNİN TOPLAM TUTARI (KDV DAHİL)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="FATURATUTAR">
+				<xs:annotation>
+					<xs:documentation>FATURALARIN TOPLAM TUTARI (KDV DAHİL) </xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="SMMTUTAR">
+				<xs:annotation>
+					<xs:documentation>SERBEST MESLEK MAKBUZU TOPLAM TUTARI (KDV DAHİL)</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="MUHTASILTUTAR">
+				<xs:annotation>
+					<xs:documentation>MÜSTAHSİL MAKBUZU TOPLAM TUTARI</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="GYBILETTUTAR">
+				<xs:annotation>
+					<xs:documentation>GİRİŞ-YOLCU BİLETİ TOPLAM TUTARI</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="GPUSULATUTAR">
+				<xs:annotation>
+					<xs:documentation>GİDER PUSULASI TOPLAM TUTARI</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="odemeTuruTipEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="NAKITODEME">
+				<xs:annotation>
+					<xs:documentation>NAKİT YAPILAN SATIŞ TUTARI TOPLAMI</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="BKKARTODEME">
+				<xs:annotation>
+					<xs:documentation>BANKA / KREDİ KARTI İLE YAPILAN SATIŞ TUTARI TOPLAMI</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="YEMEKKCODEME">
+				<xs:annotation>
+					<xs:documentation>YEMEK KARTI / ÇEKİ İLE YAPILAN SATIŞLAR TOPLAMI</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="DIGERODEME">
+				<xs:annotation>
+					<xs:documentation>DİĞER ÖDEME TÜRLERİ İLE YAPILAN SATIŞ TUTARI TOPLAMI</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="vergiTipEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="KDV"/>
+			<xs:enumeration value="OTV"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="vergiKodEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="0003"/>
+			<xs:enumeration value="0011"/>
+			<xs:enumeration value="0015"/>
+			<xs:enumeration value="0021"/>
+			<xs:enumeration value="0022"/>
+			<xs:enumeration value="0059"/>
+			<xs:enumeration value="0061"/>
+			<xs:enumeration value="0071"/>
+			<xs:enumeration value="0073"/>
+			<xs:enumeration value="0074"/>
+			<xs:enumeration value="0075"/>
+			<xs:enumeration value="0076"/>
+			<xs:enumeration value="0077"/>
+			<xs:enumeration value="1047"/>
+			<xs:enumeration value="1048"/>
+			<xs:enumeration value="4080"/>
+			<xs:enumeration value="4081"/>
+			<xs:enumeration value="4171"/>
+			<xs:enumeration value="9015"/>
+			<xs:enumeration value="9021"/>
+			<xs:enumeration value="9077"/>
+			<xs:enumeration value="8001"/>
+			<xs:enumeration value="8002"/>
+			<xs:enumeration value="4071"/>
+			<xs:enumeration value="8004"/>
+			<xs:enumeration value="8005"/>
+			<xs:enumeration value="8006"/>
+			<xs:enumeration value="8007"/>
+			<xs:enumeration value="8008"/>
+			<xs:enumeration value="9040"/>
+			<xs:enumeration value="9064"/>
+			<xs:enumeration value="9944"/>
+			<xs:enumeration value="SGK_PRIM"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="vergiBilgisiType">
+		<xs:sequence>
+			<xs:element name="vergilerToplami">
+				<xs:simpleType>
+					<xs:restriction base="xs:decimal">
+						<xs:totalDigits value="18"/>
+						<xs:fractionDigits value="2"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="vergi" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="matrah">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="vergiKodu" type="earsiv:vergiKodEnum"/>
+						<xs:element name="vergiTutari">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="vergiOrani" minOccurs="1">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="6"/>
+									<xs:fractionDigits value="3"/>
+									<xs:maxInclusive value="300"/>
+									<xs:minInclusive value="0"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="tevkifat" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="tevkifatKodu">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:pattern value="\d\d\d"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="tevkifatTutari">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="tevkifatOrani">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="5"/>
+									<xs:fractionDigits value="3"/>
+									<xs:maxInclusive value="100"/>
+									<xs:minInclusive value="0"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="vergiBilgisiEnerjiType">
+		<xs:sequence>
+			<xs:element name="vergilerToplami">
+				<xs:simpleType>
+					<xs:restriction base="xs:decimal">
+						<xs:totalDigits value="18"/>
+						<xs:fractionDigits value="2"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="vergi" maxOccurs="unbounded" minOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="matrah">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="vergiKodu" type="earsiv:vergiKodEnum"/>
+						<xs:element name="vergiTutari">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="vergiOrani" minOccurs="0">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="6"/>
+									<xs:fractionDigits value="3"/>
+									<xs:maxInclusive value="300"/>
+									<xs:minInclusive value="0"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="kalemDetayType">
+		<xs:sequence>
+			<xs:element name="hizmetAdi" type="xs:string"> </xs:element>
+			<xs:element name="hizmetBirimFiyati" type="earsiv:sarjCurrencyValueType"/>
+			<xs:element name="hizmetMiktari" type="earsiv:hizmetType"/>
+			<xs:element name="vergilerToplami">
+				<xs:simpleType>
+					<xs:restriction base="xs:decimal">
+						<xs:totalDigits value="18"/>
+						<xs:fractionDigits value="2"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="vergi" maxOccurs="unbounded" minOccurs="1">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="matrah">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="vergiKodu" type="earsiv:vergiKodEnum"/>
+						<xs:element name="vergiTutari">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="18"/>
+									<xs:fractionDigits value="2"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+						<xs:element name="vergiOrani" minOccurs="0">
+							<xs:simpleType>
+								<xs:restriction base="xs:decimal">
+									<xs:totalDigits value="6"/>
+									<xs:fractionDigits value="3"/>
+									<xs:maxInclusive value="300"/>
+									<xs:minInclusive value="0"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="currencyType">
+		<xs:simpleContent>
+			<xs:extension base="earsiv:currencyValueType">
+				<xs:attribute name="currencyID">
+					<xs:simpleType>
+						<xs:restriction base="earsiv:currencyCode"/>
+					</xs:simpleType>
+				</xs:attribute>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+
+	<xs:simpleType name="currencyValueType">
+		<xs:restriction base="xs:decimal">
+			<xs:totalDigits value="18"/>
+			<xs:fractionDigits value="2"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:simpleType name="sarjCurrencyValueType">
+		<xs:restriction base="xs:decimal">
+			<xs:totalDigits value="24"/>
+			<xs:fractionDigits value="8"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="fisTipType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="AVANS"/>
+			<xs:enumeration value="YEMEK_FIS"/>
+			<xs:enumeration value="E-FATURA"/>
+			<xs:enumeration value="E-FATURA_IRSALIYE"/>
+			<xs:enumeration value="E-ARSIV"/>
+			<xs:enumeration value="E-ARSIV_IRSALIYE"/>
+			<xs:enumeration value="FATURA"/>
+			<xs:enumeration value="OTOPARK"/>
+			<xs:enumeration value="FATURA_TAHSILAT"/>
+			<xs:enumeration value="FATURA_TAHSILAT_KOMISYONLU"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="currencyCode">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="AED"/>
+			<xs:enumeration value="AFN"/>
+			<xs:enumeration value="ALL"/>
+			<xs:enumeration value="AMD"/>
+			<xs:enumeration value="ANG"/>
+			<xs:enumeration value="AOA"/>
+			<xs:enumeration value="ARS"/>
+			<xs:enumeration value="AUD"/>
+			<xs:enumeration value="AWG"/>
+			<xs:enumeration value="AZN"/>
+			<xs:enumeration value="BAM"/>
+			<xs:enumeration value="BBD"/>
+			<xs:enumeration value="BDT"/>
+			<xs:enumeration value="BGN"/>
+			<xs:enumeration value="BHD"/>
+			<xs:enumeration value="BIF"/>
+			<xs:enumeration value="BMD"/>
+			<xs:enumeration value="BND"/>
+			<xs:enumeration value="BOB"/>
+			<xs:enumeration value="BOV"/>
+			<xs:enumeration value="BRL"/>
+			<xs:enumeration value="BSD"/>
+			<xs:enumeration value="BTN"/>
+			<xs:enumeration value="BWP"/>
+			<xs:enumeration value="BYN"/>
+			<xs:enumeration value="BZD"/>
+			<xs:enumeration value="CAD"/>
+			<xs:enumeration value="CDF"/>
+			<xs:enumeration value="CHE"/>
+			<xs:enumeration value="CHF"/>
+			<xs:enumeration value="CHW"/>
+			<xs:enumeration value="CLF"/>
+			<xs:enumeration value="CLP"/>
+			<xs:enumeration value="CNY"/>
+			<xs:enumeration value="COP"/>
+			<xs:enumeration value="COU"/>
+			<xs:enumeration value="CRC"/>
+			<xs:enumeration value="CUC"/>
+			<xs:enumeration value="CUP"/>
+			<xs:enumeration value="CVE"/>
+			<xs:enumeration value="CZK"/>
+			<xs:enumeration value="DJF"/>
+			<xs:enumeration value="DKK"/>
+			<xs:enumeration value="DOP"/>
+			<xs:enumeration value="DZD"/>
+			<xs:enumeration value="EGP"/>
+			<xs:enumeration value="ERN"/>
+			<xs:enumeration value="ETB"/>
+			<xs:enumeration value="EUR"/>
+			<xs:enumeration value="FJD"/>
+			<xs:enumeration value="FKP"/>
+			<xs:enumeration value="GBP"/>
+			<xs:enumeration value="GEL"/>
+			<xs:enumeration value="GHS"/>
+			<xs:enumeration value="GIP"/>
+			<xs:enumeration value="GMD"/>
+			<xs:enumeration value="GNF"/>
+			<xs:enumeration value="GTQ"/>
+			<xs:enumeration value="GYD"/>
+			<xs:enumeration value="HKD"/>
+			<xs:enumeration value="HNL"/>
+			<xs:enumeration value="HRK"/>
+			<xs:enumeration value="HTG"/>
+			<xs:enumeration value="HUF"/>
+			<xs:enumeration value="IDR"/>
+			<xs:enumeration value="ILS"/>
+			<xs:enumeration value="INR"/>
+			<xs:enumeration value="IQD"/>
+			<xs:enumeration value="IRR"/>
+			<xs:enumeration value="ISK"/>
+			<xs:enumeration value="JMD"/>
+			<xs:enumeration value="JOD"/>
+			<xs:enumeration value="JPY"/>
+			<xs:enumeration value="KES"/>
+			<xs:enumeration value="KGS"/>
+			<xs:enumeration value="KHR"/>
+			<xs:enumeration value="KMF"/>
+			<xs:enumeration value="KPW"/>
+			<xs:enumeration value="KRW"/>
+			<xs:enumeration value="KWD"/>
+			<xs:enumeration value="KYD"/>
+			<xs:enumeration value="KZT"/>
+			<xs:enumeration value="LAK"/>
+			<xs:enumeration value="LBP"/>
+			<xs:enumeration value="LKR"/>
+			<xs:enumeration value="LRD"/>
+			<xs:enumeration value="LSL"/>
+			<xs:enumeration value="LTL"/>
+			<xs:enumeration value="LVL"/>
+			<xs:enumeration value="LYD"/>
+			<xs:enumeration value="MAD"/>
+			<xs:enumeration value="MDL"/>
+			<xs:enumeration value="MGA"/>
+			<xs:enumeration value="MKD"/>
+			<xs:enumeration value="MMK"/>
+			<xs:enumeration value="MNT"/>
+			<xs:enumeration value="MOP"/>
+			<xs:enumeration value="MRU"/>
+			<xs:enumeration value="MUR"/>
+			<xs:enumeration value="MVR"/>
+			<xs:enumeration value="MWK"/>
+			<xs:enumeration value="MXN"/>
+			<xs:enumeration value="MXV"/>
+			<xs:enumeration value="MYR"/>
+			<xs:enumeration value="MZN"/>
+			<xs:enumeration value="NAD"/>
+			<xs:enumeration value="NGN"/>
+			<xs:enumeration value="NIO"/>
+			<xs:enumeration value="NOK"/>
+			<xs:enumeration value="NPR"/>
+			<xs:enumeration value="NZD"/>
+			<xs:enumeration value="OMR"/>
+			<xs:enumeration value="PAB"/>
+			<xs:enumeration value="PEN"/>
+			<xs:enumeration value="PGK"/>
+			<xs:enumeration value="PHP"/>
+			<xs:enumeration value="PKR"/>
+			<xs:enumeration value="PLN"/>
+			<xs:enumeration value="PYG"/>
+			<xs:enumeration value="QAR"/>
+			<xs:enumeration value="RON"/>
+			<xs:enumeration value="RSD"/>
+			<xs:enumeration value="RUB"/>
+			<xs:enumeration value="RWF"/>
+			<xs:enumeration value="SAR"/>
+			<xs:enumeration value="SBD"/>
+			<xs:enumeration value="SCR"/>
+			<xs:enumeration value="SDG"/>
+			<xs:enumeration value="SEK"/>
+			<xs:enumeration value="SGD"/>
+			<xs:enumeration value="SHP"/>
+			<xs:enumeration value="SLE"/>
+			<xs:enumeration value="SLL"/>
+			<xs:enumeration value="SOS"/>
+			<xs:enumeration value="SRD"/>
+			<xs:enumeration value="SSP"/>
+			<xs:enumeration value="STD"/>
+			<xs:enumeration value="STN"/>
+			<xs:enumeration value="SVC"/>
+			<xs:enumeration value="SYP"/>
+			<xs:enumeration value="SZL"/>
+			<xs:enumeration value="THB"/>
+			<xs:enumeration value="TJS"/>
+			<xs:enumeration value="TMT"/>
+			<xs:enumeration value="TND"/>
+			<xs:enumeration value="TOP"/>
+			<xs:enumeration value="TRY"/>
+			<xs:enumeration value="TTD"/>
+			<xs:enumeration value="TWD"/>
+			<xs:enumeration value="TZS"/>
+			<xs:enumeration value="UAH"/>
+			<xs:enumeration value="UGX"/>
+			<xs:enumeration value="USD"/>
+			<xs:enumeration value="USN"/>
+			<xs:enumeration value="USS"/>
+			<xs:enumeration value="UYI"/>
+			<xs:enumeration value="UYU"/>
+			<xs:enumeration value="UYW"/>
+			<xs:enumeration value="UZS"/>
+			<xs:enumeration value="VED"/>
+			<xs:enumeration value="VEF"/>
+			<xs:enumeration value="VES"/>
+			<xs:enumeration value="VND"/>
+			<xs:enumeration value="VUV"/>
+			<xs:enumeration value="WST"/>
+			<xs:enumeration value="XAD"/>
+			<xs:enumeration value="XAF"/>
+			<xs:enumeration value="XAG"/>
+			<xs:enumeration value="XAU"/>
+			<xs:enumeration value="XBA"/>
+			<xs:enumeration value="XBB"/>
+			<xs:enumeration value="XBC"/>
+			<xs:enumeration value="XBD"/>
+			<xs:enumeration value="XCD"/>
+			<xs:enumeration value="XCG"/>
+			<xs:enumeration value="XDR"/>
+			<xs:enumeration value="XFU"/>
+			<xs:enumeration value="XOF"/>
+			<xs:enumeration value="XPD"/>
+			<xs:enumeration value="XPF"/>
+			<xs:enumeration value="XPT"/>
+			<xs:enumeration value="XSU"/>
+			<xs:enumeration value="XTS"/>
+			<xs:enumeration value="XUA"/>
+			<xs:enumeration value="XXX"/>
+			<xs:enumeration value="YER"/>
+			<xs:enumeration value="ZAR"/>
+			<xs:enumeration value="ZMK"/>
+			<xs:enumeration value="ZMW"/>
+			<xs:enumeration value="ZWG"/>
+			<xs:enumeration value="ZWL"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="uuidType">
+		<xs:restriction base="xs:string">
+			<xs:length value="36"/>
+			<xs:pattern
+				value="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+			/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="postalAddressType">
+		<xs:sequence>
+			<xs:element name="Street" type="xs:string"/>
+			<xs:element minOccurs="0" name="PostalCode" type="xs:string"/>
+			<xs:element name="CitySubdivision" type="xs:string"/>
+			<xs:element name="City" type="xs:string"/>
+			<xs:element minOccurs="0" name="CountryCode" type="xs:string"/>
+			<xs:element minOccurs="0" name="Country" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="partyIdentificationType">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="schemeID">
+					<xs:simpleType>
+						<xs:restriction base="earsiv:partyIdentificationTypeCodes"/>
+					</xs:simpleType>
+				</xs:attribute>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:simpleType name="partyIdentificationTypeCodes">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="VKN"/>
+			<xs:enumeration value="MERSISNO"/>
+			<xs:enumeration value="TICARETSICILNO"/>
+			<xs:enumeration value="MUSTERINO"/>
+			<xs:enumeration value="TCKN"/>
+			<xs:enumeration value="IBAN"/>
+			<xs:enumeration value="YKN"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="taxOfficeType">
+		<xs:sequence>
+			<xs:element name="TaxOfficeName" type="xs:string"/>
+			<xs:element name="TaxOfficeCode" type="xs:string"> </xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="bankReceiptType">
+		<xs:sequence>
+			<xs:element name="ReceiptProfileID">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="DEKONT"/>
+						<xs:enumeration value="VERGITAHSILALINDISI"/>
+						<xs:enumeration value="GUMRUKVERGITAHSILALINDISI"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="ReceiptTypeCode">
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="NORMAL"/>
+						<xs:enumeration value="IPTAL"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element maxOccurs="1" minOccurs="1" name="ReceiptScenario"
+				type="earsiv:receiptScenarioType"/>
+			<xs:element name="UUID" type="earsiv:uuidType"/>
+			<xs:element name="dekontNo" type="earsiv:idType"/>
+			<xs:element minOccurs="1" name="IssueDate" type="xs:date"/>
+			<xs:element name="IssueTime" type="xs:time"/>
+			<xs:element name="ValueDate" type="xs:date"/>
+			<xs:element minOccurs="0" name="TotalPaymentAmount" type="earsiv:currencyType"/>
+			<xs:element name="TaxCollectionDetail" maxOccurs="1" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="TaxTypeCode" type="earsiv:vergiKodEnum"/>
+						<xs:element minOccurs="0" name="LiabiltyCode" type="xs:string"/>
+						<xs:element minOccurs="0" name="TransactionTypeCode" type="xs:string"/>
+						<xs:element minOccurs="0" name="PlateNo" type="xs:string"/>
+						<xs:element name="TaxPeriod">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:pattern
+										value="(1[0-2]|0[1-9])/[0-9]{4} - (1[0-2]|0[1-9])/[0-9]{4}"
+									/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="CustomsTaxCollectionDetail" maxOccurs="1" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="CustomsAccountingDirectorateName" type="xs:string"/>
+						<xs:element name="CustomsAccountingDirectorateCode" type="xs:string"/>
+						<xs:element name="CustomsAccountingDirectorateBankBranchCode"
+							type="xs:string"/>
+						<xs:element name="CustomsAccountingDirectorateBankBranchName"
+							type="xs:string"/>
+						<xs:element name="CustomsOfficeName" type="xs:string"/>
+						<xs:element name="CustomsOfficeCode" type="xs:string"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="ReceiptReference" maxOccurs="unbounded" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="ID" type="xs:string"/>
+						<xs:element name="IssueDate" type="xs:date"/>
+						<xs:element name="TypeCode" type="xs:string"/>
+						<xs:element name="Description" type="xs:string"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="CustomerParty">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="PartyName" type="xs:string"/>
+						<xs:element maxOccurs="unbounded" name="PartyIdentification"
+							type="earsiv:partyIdentificationType"/>
+						<xs:element minOccurs="0" maxOccurs="1" name="TaxOffice"
+							type="earsiv:taxOfficeType"/>
+						<xs:element minOccurs="0" name="ContactPerson">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element minOccurs="1" name="ID" type="earsiv:tcknType"/>
+									<xs:element minOccurs="1" name="FirstName" type="xs:string"/>
+									<xs:element minOccurs="1" name="FamilyName" type="xs:string"/>
+									<xs:element minOccurs="0" name="Telephone" type="xs:string"/>
+									<xs:element minOccurs="0" name="Fax" type="xs:string"/>
+									<xs:element minOccurs="0" name="Email" type="xs:string"/>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="DigestValue" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="eCheckType">
+		<xs:sequence>
+			<xs:element name="adisyonNo" type="earsiv:idType"/>
+			<xs:element name="UUID" type="earsiv:uuidType"/>
+			<xs:element name="dosyaAdi" type="xs:string"/>
+			<xs:element name="ozetDeger" type="xs:string"/>
+			<xs:element name="duzenlenmeTarihi" type="xs:date"/>
+			<xs:element name="duzenlenmeZamani" type="earsiv:timeType"/>
+			<xs:element name="toplamTutar" type="earsiv:currencyValueType"/>
+			<xs:element name="odenecekTutar" type="earsiv:currencyValueType"/>
+			<xs:element name="paraBirimi" type="earsiv:currencyCode"/>
+			<xs:element name="aliciBilgileri" type="earsiv:aliciTypeMin"/>
+			<xs:element name="imzaZamani" type="xs:dateTime" minOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="urlType">
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="255"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="sarjZamanType">
+		<xs:sequence>
+			<xs:element name="baslamaTarihi" type="xs:date"/>
+			<xs:element name="bitisTarihi" type="xs:date"/>
+			<xs:element name="baslamaZamani" type="earsiv:timeType"/>
+			<xs:element name="bitisZamani" type="earsiv:timeType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="vergiDetayType">
+		<xs:sequence>
+			<xs:element name="vergiMiktari" type="earsiv:currencyValueType"/>
+			<xs:element name="vergiYuzdesi" type="xs:decimal"/>
+			<xs:element name="vergiAdi" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="hizmetType">
+		<xs:simpleContent>
+			<xs:extension base="earsiv:sarjCurrencyValueType">
+				<xs:attribute name="unitCode" type="xs:string" use="required"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+
+	<xs:complexType name="hizmetAttrType">
+		<xs:attribute name="unitCode" type="xs:string" use="required"/>
+	</xs:complexType>
+	<xs:simpleType name="faturaTipEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="SATIS"/>
+			<xs:enumeration value="IADE"/>
+			<xs:enumeration value="TEVKIFAT"/>
+			<xs:enumeration value="TEVKIFATIADE"/>
+			<xs:enumeration value="ISTISNA"/>
+			<xs:enumeration value="OZELMATRAH"/>
+			<xs:enumeration value="IHRACKAYITLI"/>
+			<xs:enumeration value="SGK"/>
+			<xs:enumeration value="KOMISYONCU"/>
+			<xs:enumeration value="HKSSATIS"/>
+			<xs:enumeration value="HKSKOMISYONCU"/>
+			<xs:enumeration value="SARJ"/>
+			<xs:enumeration value="SARJANLIK"/>
+			<xs:enumeration value="TEKNOLOJIDESTEK"/>
+			<xs:enumeration value="KONAKLAMAVERGISI"/>
+			<xs:enumeration value="YTBSATIS"/>
+			<xs:enumeration value="YTBISTISNA"/>
+			<xs:enumeration value="YTBIADE"/>
+			<xs:enumeration value="YTBTEVKIFAT"/>
+			<xs:enumeration value="YTBTEVKIFATIADE"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+</xs:schema>

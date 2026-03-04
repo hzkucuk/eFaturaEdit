@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ns1="http://earsiv.efatura.gov.tr">
+
+    <xs:element name="fatura">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="faturaNo" type="idType"/>
+                <xs:element name="duzenlemeTarihi" type="xs:date"/>
+                <xs:element name="sonOdemeTarihi" type="xs:date"/>
+                <xs:element name="duzenleyen">
+                    <xs:complexType>
+                        <xs:choice>
+                            <xs:element name="vkn" type="vknType"/>
+                            <xs:element name="tckn" type="tcknType"/>
+                        </xs:choice>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="alici">
+                    <xs:complexType>
+                        <xs:choice>
+                            <xs:element name="vkn" type="vknType"/>
+                            <xs:element name="tckn" type="tcknType"/>
+                        </xs:choice>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="odenecekTutar" type="tutarType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:simpleType name="vknType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="\d\d\d\d\d\d\d\d\d\d"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="tcknType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="\d\d\d\d\d\d\d\d\d\d\d"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="tutarType">
+        <xs:restriction base="xs:decimal">
+            <xs:totalDigits value="18"/>
+            <xs:fractionDigits value="2"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="idType">
+        <xs:restriction base="xs:string">
+            <xs:length value="16"/>
+            <xs:pattern value="[A-Za-z0-9]{3}20[0-9]{2}[0-9]{9}"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>
