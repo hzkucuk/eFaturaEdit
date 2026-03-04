@@ -1,4 +1,4 @@
-# Kurulum Rehberi (Installation)
+﻿# Kurulum Rehberi (Installation)
 
 ## Gereksinimler
 
@@ -42,8 +42,16 @@
 
 - Uygulama ayarları: `eFaturaEdit\Properties\Settings.settings`
 - Lisans doğrulama sertifikası: `eFaturaEdit\LicenseVerify.cer` (embedded resource)
+- Sertifika şifresi: `eFaturaEdit\Demo\DemoActivationTool\App.config` → `CertificatePassword` (üretim ortamında değiştirin)
 - Örnek XSLT: `eFaturaEdit\diz.xslt`
 - Örnek fatura XML: `eFaturaEdit\fatura.xml`, `eFaturaEdit\XMLDataFiles\`
+
+## Öğe Ekleme Toolbar
+
+Ribbon üzerindeki "Öğe Ekle" grubu ile 15 hazır XSLT/HTML snippet kullanılabilir:
+- **Tıklama:** Butona tıklayarak imleç pozisyonuna snippet ekleme
+- **Editöre sürükle-bırak:** Butonu XSLT editörüne sürükleyip bırakma
+- **Önizlemeye sürükle-bırak:** Butonu CefSharp önizleme üzerine sürükleyip bırakma (JavaScript interop)
 
 ## Dağıtım (Inno Setup)
 

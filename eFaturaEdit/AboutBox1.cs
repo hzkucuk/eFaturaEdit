@@ -26,14 +26,15 @@ namespace eFaturaEdit
 
          byte[] _certPubicKeyData;
             MyLicense _lic = null;
-            HardwareInfo hw = new HardwareInfo();
             string _msg = string.Empty;
             LicenseStatus _status = LicenseStatus.UNDEFINED;
             Assembly _assembly = Assembly.GetExecutingAssembly();
             using (MemoryStream _mem = new MemoryStream())
             {
-                _assembly.GetManifestResourceStream("eFaturaEdit.LicenseVerify.cer").CopyTo(_mem);
-
+                var _stream = _assembly.GetManifestResourceStream("eFaturaEdit.LicenseVerify.cer");
+                if (_stream == null)
+                    throw new InvalidOperationException("LicenseVerify.cer kayna\u011f\u0131 bulunamad\u0131.");
+                _stream.CopyTo(_mem);
                 _certPubicKeyData = _mem.ToArray();
             }
 

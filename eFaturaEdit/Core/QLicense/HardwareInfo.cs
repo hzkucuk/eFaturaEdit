@@ -17,12 +17,15 @@ namespace QLicense
         {
             try
             {
-                ManagementObject _disk = new ManagementObject(@"Win32_LogicalDisk.deviceid=""c:""");
-                _disk.Get();
-                return _disk["VolumeSerialNumber"].ToString();
+                using (ManagementObject _disk = new ManagementObject(@"Win32_LogicalDisk.deviceid=""c:"""))
+                {
+                    _disk.Get();
+                    return _disk["VolumeSerialNumber"].ToString();
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"GetDiskVolumeSerialNumber failed: {ex.Message}");
                 return string.Empty;
             }
         }
@@ -35,23 +38,23 @@ namespace QLicense
         {
             try
             {
-                ManagementObjectSearcher _mbs = new ManagementObjectSearcher("Select ProcessorId From Win32_processor");
-                ManagementObjectCollection _mbsList = _mbs.Get();
-                string _id = string.Empty;
-                foreach (ManagementObject _mo in _mbsList)
+                using (ManagementObjectSearcher _mbs = new ManagementObjectSearcher("Select ProcessorId From Win32_processor"))
+                using (ManagementObjectCollection _mbsList = _mbs.Get())
                 {
-                    _id= _mo["ProcessorId"].ToString();
-                    break;                    
+                    string _id = string.Empty;
+                    foreach (ManagementObject _mo in _mbsList)
+                    {
+                        _id = _mo["ProcessorId"].ToString();
+                        break;
+                    }
+                    return _id;
                 }
-
-                return _id; 
-
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"GetProcessorId failed: {ex.Message}");
                 return string.Empty;
             }
-            
         }
 
         /// <summary>
@@ -60,25 +63,25 @@ namespace QLicense
         /// <returns></returns>
         public static string GetMotherboardID()
         {
-
             try
             {
-                ManagementObjectSearcher _mbs = new ManagementObjectSearcher("Select SerialNumber From Win32_BaseBoard");
-                ManagementObjectCollection _mbsList = _mbs.Get();
-                string _id = string.Empty;
-                foreach (ManagementObject _mo in _mbsList)
+                using (ManagementObjectSearcher _mbs = new ManagementObjectSearcher("Select SerialNumber From Win32_BaseBoard"))
+                using (ManagementObjectCollection _mbsList = _mbs.Get())
                 {
-                    _id = _mo["SerialNumber"].ToString();
-                    break;
+                    string _id = string.Empty;
+                    foreach (ManagementObject _mo in _mbsList)
+                    {
+                        _id = _mo["SerialNumber"].ToString();
+                        break;
+                    }
+                    return _id;
                 }
-
-                return _id;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"GetMotherboardID failed: {ex.Message}");
                 return string.Empty;
             }
-            
         }
 
         private static IEnumerable<string> SplitInParts(string input, int partLength)
@@ -103,8 +106,11 @@ namespace QLicense
             byte[] _byteIds = Encoding.UTF8.GetBytes(_id);
 
             //Use MD5 to get the fixed length checksum of the ID string
-            MD5CryptoServiceProvider _md5 = new MD5CryptoServiceProvider();
-            byte[] _checksum = _md5.ComputeHash(_byteIds);
+            byte[] _checksum;
+            using (MD5CryptoServiceProvider _md5 = new MD5CryptoServiceProvider())
+            {
+                _checksum = _md5.ComputeHash(_byteIds);
+            }
 
             //Convert checksum into 4 ulong parts and use BASE36 to encode both
             string _part1Id = BASE36.Encode(BitConverter.ToUInt32(_checksum, 0));
@@ -123,12 +129,13 @@ namespace QLicense
 
             if (_ids.Length != 4) throw new ArgumentException("Wrong UID");
 
-            //Combine 4 part Id into one byte array
+            // Her part BASE36.Decode → ulong (8 byte), 4 part × 4 byte = 16 byte
+            // BitConverter.GetBytes(uint) kullanarak 4 byte per part = toplam 16 byte
             byte[] _value = new byte[16];
-            Buffer.BlockCopy(BitConverter.GetBytes(BASE36.Decode(_ids[0])), 0, _value, 0, 8);
-            Buffer.BlockCopy(BitConverter.GetBytes(BASE36.Decode(_ids[1])), 0, _value, 8, 8);
-            Buffer.BlockCopy(BitConverter.GetBytes(BASE36.Decode(_ids[2])), 0, _value, 16, 8);
-            Buffer.BlockCopy(BitConverter.GetBytes(BASE36.Decode(_ids[3])), 0, _value, 24, 8);
+            Buffer.BlockCopy(BitConverter.GetBytes((uint)BASE36.Decode(_ids[0])), 0, _value, 0,  4);
+            Buffer.BlockCopy(BitConverter.GetBytes((uint)BASE36.Decode(_ids[1])), 0, _value, 4,  4);
+            Buffer.BlockCopy(BitConverter.GetBytes((uint)BASE36.Decode(_ids[2])), 0, _value, 8,  4);
+            Buffer.BlockCopy(BitConverter.GetBytes((uint)BASE36.Decode(_ids[3])), 0, _value, 12, 4);
 
             return _value;            
         }

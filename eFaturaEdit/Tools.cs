@@ -34,10 +34,12 @@ namespace eFaturaEdit
         }
         private static string GetHash(string s)
         {
-            MD5 sec = new MD5CryptoServiceProvider();
-            ASCIIEncoding enc = new ASCIIEncoding();
-            byte[] bt = enc.GetBytes(s);
-            return GetHexString(sec.ComputeHash(bt));
+            using (MD5 sec = new MD5CryptoServiceProvider())
+            {
+                ASCIIEncoding enc = new ASCIIEncoding();
+                byte[] bt = enc.GetBytes(s);
+                return GetHexString(sec.ComputeHash(bt));
+            }
         }
         private static string GetHexString(byte[] bt)
         {
@@ -67,14 +69,39 @@ namespace eFaturaEdit
   (string wmiClass, string wmiProperty, string wmiMustBeTrue)
         {
             string result = "";
-            ManagementClass mc =
-  new ManagementClass(wmiClass);
-            ManagementObjectCollection moc = mc.GetInstances();
-            foreach (ManagementObject mo in moc)
+            using (ManagementClass mc = new ManagementClass(wmiClass))
+            using (ManagementObjectCollection moc = mc.GetInstances())
             {
-                if (mo[wmiMustBeTrue].ToString() == "True")
+                foreach (ManagementObject mo in moc)
                 {
-                    //Only get the first one
+                    if (mo[wmiMustBeTrue].ToString() == "True")
+                    {
+                        if (result == "")
+                        {
+                            try
+                            {
+                                result = mo[wmiProperty].ToString();
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"WMI property read failed: {wmiClass}.{wmiProperty} - {ex.Message}");
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        //Return a hardware identifier
+        private static string identifier(string wmiClass, string wmiProperty)
+        {
+            string result = "";
+            using (ManagementClass mc = new ManagementClass(wmiClass))
+            using (ManagementObjectCollection moc = mc.GetInstances())
+            {
+                foreach (ManagementObject mo in moc)
+                {
                     if (result == "")
                     {
                         try
@@ -86,31 +113,6 @@ namespace eFaturaEdit
                         {
                             System.Diagnostics.Debug.WriteLine($"WMI property read failed: {wmiClass}.{wmiProperty} - {ex.Message}");
                         }
-                    }
-                }
-            }
-            return result;
-        }
-        //Return a hardware identifier
-        private static string identifier(string wmiClass, string wmiProperty)
-        {
-            string result = "";
-            ManagementClass mc =
-  new ManagementClass(wmiClass);
-            ManagementObjectCollection moc = mc.GetInstances();
-            foreach (ManagementObject mo in moc)
-            {
-                //Only get the first one
-                if (result == "")
-                {
-                    try
-                    {
-                        result = mo[wmiProperty].ToString();
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"WMI property read failed: {wmiClass}.{wmiProperty} - {ex.Message}");
                     }
                 }
             }

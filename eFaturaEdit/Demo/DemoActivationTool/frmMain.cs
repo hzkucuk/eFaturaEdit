@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Windows.Forms;
 using System.IO;
 using System.Security;
+using System.Configuration;
 using System.Reflection;
 using QLicense;
 using eFaturaLicense;
@@ -11,16 +12,30 @@ namespace ActivationTool
     public partial class frmMain : Form
     {
         private byte[] _certPubicKeyData;
-        private SecureString _certPwd = new SecureString();
+        private SecureString _certPwd;
 
         public frmMain()
         {
             InitializeComponent();
 
-            _certPwd.AppendChar('d');
-            _certPwd.AppendChar('e');
-            _certPwd.AppendChar('m');
-            _certPwd.AppendChar('o');
+            _certPwd = LoadCertificatePassword();
+        }
+
+        private static SecureString LoadCertificatePassword()
+        {
+            var pwd = new SecureString();
+
+            string configValue = ConfigurationManager.AppSettings["CertificatePassword"];
+            if (string.IsNullOrEmpty(configValue))
+                throw new InvalidOperationException("App.config icinde 'CertificatePassword' ayari bulunamadi.");
+
+            foreach (char c in configValue)
+            {
+                pwd.AppendChar(c);
+            }
+
+            pwd.MakeReadOnly();
+            return pwd;
         }
 
         private void frmMain_Load(object sender, EventArgs e)

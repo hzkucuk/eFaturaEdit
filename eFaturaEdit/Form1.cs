@@ -23,6 +23,7 @@ using DevExpress.XtraTab.Buttons;
 using DevExpress.XtraEditors.Controls;
 using System.Threading.Tasks;
 using System.Collections;
+using System.Drawing;
 
 using QLicense;
 using eFaturaLicense;
@@ -37,16 +38,19 @@ namespace eFaturaEdit
         byte[] _certPubicKeyData;
 
 
-        private static  ChromiumWebBrowser brow;
+        private ChromiumWebBrowser brow;
         readonly CefSettings settings;
+        private string _activeDragSnippetKey;
         public Form1()
         {
             InitializeComponent();
             InitSkinGallery();
             settings  = new CefSettings();
-            
+
 
             Cef.Initialize(settings);
+            InitSnippetToolbar();
+            InitEditorDragDrop();
         }
         void InitSkinGallery()
         {
@@ -69,20 +73,17 @@ namespace eFaturaEdit
 
         private void barButtonItem1_ItemClick(object sender, ItemClickEventArgs e)
         {
+            if (brow == null) return;
             try
             {
                 brow.ShowDevTools();
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show($@"Dosya işlenemedi{ex.Message}", 
-                    @"Dosya Açma Hatası", 
-                    MessageBoxButtons.AbortRetryIgnore);
+                MessageBox.Show($"Geliştirici aracu açılamadı: {ex.Message}",
+                    "Hata",
+                    MessageBoxButtons.OK);
             }
-           
-           
-            
         }
 
         private void iSave_ItemClick(object sender, ItemClickEventArgs e)
@@ -92,11 +93,6 @@ namespace eFaturaEdit
                 textEditorControlEx1.SaveFile(textEditorControlEx1.Tag.ToString());
                 textEditorControlEx2.SaveFile(textEditorControlEx2.Tag.ToString());
 
-                textEditorControlEx2.SaveFile(xtraTabControl2.TabPages[1].Text);
-                      
-                    
-
-                
                 iSave.Enabled = false;
             }
             catch (Exception ex)
@@ -117,12 +113,11 @@ namespace eFaturaEdit
             }
             try
             {
-                brow.Reload();
+                brow?.Reload();
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show("Dosya işlenemedi" + ex.Message, "Dosya Açma Hatası", MessageBoxButtons.AbortRetryIgnore);
+                MessageBox.Show("Sayfa yenilenemedi: " + ex.Message, "Yenileme Hatası", MessageBoxButtons.OK);
             }
 
 
@@ -131,17 +126,8 @@ namespace eFaturaEdit
 
         private void iExit_ItemClick(object sender, ItemClickEventArgs e)
         {
-            try
-            {
             Cef.Shutdown();
             Application.Exit();
-            }
-            finally
-            {
-                Cef.Shutdown();
-                Application.Exit();
-            }
-           
         }
         readonly XslCompiledTransform myXslTrans = new XslCompiledTransform();
     
@@ -170,7 +156,7 @@ namespace eFaturaEdit
 
 
 
-                    myXslTrans.Transform(Path.GetDirectoryName(Application.ExecutablePath) + @"\XMLDataFiles\fatura.xml", @"result.html");
+                    myXslTrans.Transform(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "XMLDataFiles", "fatura.xml"), "result.html");
 
 
 
@@ -179,19 +165,20 @@ namespace eFaturaEdit
 
 
 
-                    brow = null;
-                    brow = new ChromiumWebBrowser(Path.GetDirectoryName(Application.ExecutablePath) + @"\result.html");
+                    brow?.Dispose();
+                    brow = new ChromiumWebBrowser(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "result.html"));
+                    SetupBrowserDropEvents();
 
                     brow.Dock = DockStyle.Fill;
 
                     xtraTabControl2.TabPages[0].Controls.Clear();
                     xtraTabControl2.TabPages[0].Controls.Add(brow);
                  
-                    xtraTabControl2.TabPages[0].Text = Path.GetDirectoryName(Application.ExecutablePath) + @"\XMLDataFiles\fatura.xml";
+                    xtraTabControl2.TabPages[0].Text = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "XMLDataFiles", "fatura.xml");
 
-                    xtraTabControl2.TabPages[1].Text = Path.GetDirectoryName(Application.ExecutablePath) + @"\XMLDataFiles\fatura.xml";
-                    textEditorControlEx2.LoadFile(Path.GetDirectoryName(Application.ExecutablePath) + @"\XMLDataFiles\fatura.xml", true, true);
-                    textEditorControlEx2.Tag = Path.GetDirectoryName(Application.ExecutablePath) + @"\XMLDataFiles\fatura.xml";
+                    xtraTabControl2.TabPages[1].Text = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "XMLDataFiles", "fatura.xml");
+                    textEditorControlEx2.LoadFile(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "XMLDataFiles", "fatura.xml"), true, true);
+                    textEditorControlEx2.Tag = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "XMLDataFiles", "fatura.xml");
    
                     iSave.Enabled = false;
                     iSaveAs.Enabled = true;
@@ -233,49 +220,37 @@ namespace eFaturaEdit
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            try
-            {
+            if (Cef.IsInitialized == true)
                 Cef.Shutdown();
-                Application.Exit();
-            }
-            finally
-            {
-                Cef.Shutdown();
-                Application.Exit();
-            }
-          
         }
 
         private void barButtonItem2_ItemClick(object sender, ItemClickEventArgs e)
         {
+            if (brow == null) return;
             try
             {
                 brow.Reload();
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show("Dosya işlenemedi" + ex.Message, "Dosya Açma Hatası", MessageBoxButtons.AbortRetryIgnore);
+                MessageBox.Show("Sayfa yenilenemedi: " + ex.Message, "Yenileme Hatası", MessageBoxButtons.OK);
             }
-            
         }
 
         private void iSaveAs_ItemClick(object sender, ItemClickEventArgs e)
         {
-            using (SaveFileDialog saveFileDialog1 = new SaveFileDialog() { Filter = "(e-Fatura Dizayn Dosyası Xslt  |*.Xslt", Title = "Save  File" })
+            using (SaveFileDialog saveFileDialog1 = new SaveFileDialog() { Filter = "e-Fatura Dizayn Dosyası XSLT|*.xslt", Title = "Farklı Kaydet" })
             {
-                saveFileDialog1.ShowDialog();
-                try
+                if (saveFileDialog1.ShowDialog() == DialogResult.OK)
                 {
-                    if (saveFileDialog1.FileName != "")
+                    try
                     {
                         textEditorControlEx1.SaveFile(saveFileDialog1.FileName);
                     }
-                }
-                catch (Exception ex)
-                {
-
-                    MessageBox.Show("Dosya işlenemedi" + ex.Message, "Dosya Açma Hatası", MessageBoxButtons.AbortRetryIgnore);
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Dosya kaydedilemedi: " + ex.Message, "Kaydetme Hatası", MessageBoxButtons.OK);
+                    }
                 }
             }
         }
@@ -297,8 +272,10 @@ namespace eFaturaEdit
             Assembly _assembly = Assembly.GetExecutingAssembly();
             using (MemoryStream _mem = new MemoryStream())
             {
-                _assembly.GetManifestResourceStream("eFaturaEdit.LicenseVerify.cer").CopyTo(_mem);
-
+                var _stream = _assembly.GetManifestResourceStream("eFaturaEdit.LicenseVerify.cer");
+                if (_stream == null)
+                    throw new InvalidOperationException("LicenseVerify.cer kayna\u011f\u0131 bulunamad\u0131.");
+                _stream.CopyTo(_mem);
                 _certPubicKeyData = _mem.ToArray();
             }
 
@@ -387,8 +364,9 @@ namespace eFaturaEdit
 
 
 
-                        brow = null;
-                        brow = new ChromiumWebBrowser(Path.GetDirectoryName(Application.ExecutablePath) + @"\result.html");
+                        brow?.Dispose();
+                        brow = new ChromiumWebBrowser(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "result.html"));
+                        SetupBrowserDropEvents();
 
                         brow.Dock = DockStyle.Fill;
                    
@@ -423,47 +401,301 @@ namespace eFaturaEdit
             UpdateAndCheckFoldings();
         }
 
-        private  void barButtonItem3_ItemClick(object sender, ItemClickEventArgs e)
+        private async void barButtonItem3_ItemClick(object sender, ItemClickEventArgs e)
         {
-            using (SaveFileDialog saveFileDialog1 = new SaveFileDialog() { Filter = "(e-Fatura Dizayn pdf  |*.pdf", Title = "Save  File" })
+            using (SaveFileDialog saveFileDialog1 = new SaveFileDialog() { Filter = "e-Fatura Dizayn PDF|*.pdf", Title = "Save File" })
             {
-                saveFileDialog1.ShowDialog();
-                try
+                if (saveFileDialog1.ShowDialog() == DialogResult.OK)
                 {
-                    if (saveFileDialog1.FileName != "")
+                    try
                     {
-                        GeneratePdf(saveFileDialog1.FileName);
-                       // textEditorControlEx1.SaveFile(saveFileDialog1.FileName);
+                        if (!string.IsNullOrEmpty(saveFileDialog1.FileName))
+                        {
+                            await GeneratePdf(saveFileDialog1.FileName);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("PDF oluşturulamadı: " + ex.Message, "PDF Hatası", MessageBoxButtons.OK);
                     }
                 }
-                catch (Exception ex)
-                {
-
-                    MessageBox.Show("Dosya işlenemedi" + ex.Message, "Dosya Açma Hatası", MessageBoxButtons.AbortRetryIgnore);
-                }
             }
-            
-
         }
 
-        private static async void GeneratePdf(string pdff)
+        private async Task GeneratePdf(string pdff)
         {
             var path = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
             var generatedPdfFile = Path.Combine(path, pdff);
 
             var chromeSettings = new PdfPrintSettings();
-            var htmlFile = Path.Combine(path, @"\result.html");
-           
-                var pdfFileSaved = await brow.PrintToPdfAsync(generatedPdfFile, chromeSettings);
-                if (pdfFileSaved)
-                {
-                    //Thread.Sleep(10);  // <-- uncomment this line and no exception happens
-                    using (var testStream = new FileStream(generatedPdfFile, FileMode.Open))
-                    {
-                        // access the file for read --> exception is thrown. PDF file is still in use by Chromium.
-                    }
-                }
-            
+
+            var pdfFileSaved = await brow.PrintToPdfAsync(generatedPdfFile, chromeSettings);
+            if (!pdfFileSaved)
+            {
+                MessageBox.Show("PDF dosyası kaydedilemedi.", "PDF Hatası", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
+
+        #region Öğe Ekleme Toolbar — Faz 1 (Editör) + Faz 2 (Önizleme)
+
+        /// <summary>
+        /// Ribbon'a "Öğe Ekle" grubu ve her snippet için buton ekler.
+        /// Butonlar: tıklama → editöre ekleme, sürükleme → editör veya önizlemeye bırakma.
+        /// </summary>
+        private void InitSnippetToolbar()
+        {
+            var snippetPageGroup = new RibbonPageGroup("Öğe Ekle");
+
+            foreach (var kvp in XsltSnippets.Elements)
+            {
+                var snippet = kvp.Value;
+                var btn = new BarButtonItem
+                {
+                    Caption = snippet.DisplayName,
+                    Tag = snippet.Key,
+                    Name = "btnSnippet_" + snippet.Key,
+                    AllowAllUp = true,
+                };
+                btn.SuperTip = CreateSnippetTooltip(snippet);
+                btn.ItemClick += SnippetButton_ItemClick;
+
+                ribbonControl.Items.Add(btn);
+                snippetPageGroup.ItemLinks.Add(btn);
+            }
+
+            homeRibbonPage.Groups.Add(snippetPageGroup);
+
+            // Snippet sürükleme için Ribbon MouseDown hook
+            ribbonControl.MouseDown += RibbonControl_SnippetMouseDown;
+        }
+
+        private DevExpress.Utils.SuperToolTip CreateSnippetTooltip(SnippetInfo snippet)
+        {
+            var tip = new DevExpress.Utils.SuperToolTip();
+            var titleItem = new DevExpress.Utils.ToolTipTitleItem { Text = snippet.DisplayName };
+            var bodyItem = new DevExpress.Utils.ToolTipItem
+            {
+                Text = snippet.XsltCode.Length > 120
+                    ? snippet.XsltCode.Substring(0, 120) + "..."
+                    : snippet.XsltCode
+            };
+            tip.Items.Add(titleItem);
+            tip.Items.Add(bodyItem);
+            return tip;
+        }
+
+        /// <summary>
+        /// Ribbon butonu tıklandığında XSLT editöründe imleç pozisyonuna snippet ekler.
+        /// </summary>
+        private void SnippetButton_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            string key = e.Item.Tag as string;
+            if (key == null || !XsltSnippets.Elements.ContainsKey(key))
+                return;
+
+            InsertSnippetAtCursor(XsltSnippets.Elements[key].XsltCode);
+        }
+
+        /// <summary>
+        /// XSLT editöründe imleç pozisyonuna verilen kodu ekler.
+        /// </summary>
+        private void InsertSnippetAtCursor(string code)
+        {
+            var editor = textEditorControlEx1;
+            var doc = editor.Document;
+            var caret = editor.ActiveTextAreaControl.Caret;
+
+            int offset = doc.PositionToOffset(caret.Position);
+            doc.Insert(offset, code);
+            editor.Refresh();
+
+            // İmleci eklenen kodun sonuna taşı
+            var newPos = doc.OffsetToPosition(offset + code.Length);
+            caret.Position = newPos;
+
+            UpdateAndCheckFoldings();
+        }
+
+        /// <summary>
+        /// Ribbon üzerinde snippet butonuna mouse basılı tutulduğunda drag işlemini başlatır.
+        /// </summary>
+        private void RibbonControl_SnippetMouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left) return;
+
+            var hitInfo = ribbonControl.CalcHitInfo(e.Location);
+            if (hitInfo.Item == null || hitInfo.Item.Item == null) return;
+
+            string key = hitInfo.Item.Item.Tag as string;
+            if (key == null || !XsltSnippets.Elements.ContainsKey(key))
+                return;
+
+            _activeDragSnippetKey = key;
+            var snippet = XsltSnippets.Elements[key];
+            ribbonControl.DoDragDrop(snippet.DragDataString, DragDropEffects.Copy);
+        }
+
+        #endregion
+
+        #region Faz 1 — XSLT Editörüne Drag-Drop
+
+        /// <summary>
+        /// XSLT editörünün drag-drop olaylarını bağlar.
+        /// </summary>
+        private void InitEditorDragDrop()
+        {
+            textEditorControlEx1.AllowDrop = true;
+            textEditorControlEx1.ActiveTextAreaControl.TextArea.AllowDrop = true;
+            textEditorControlEx1.ActiveTextAreaControl.TextArea.DragEnter += EditorTextArea_DragEnter;
+            textEditorControlEx1.ActiveTextAreaControl.TextArea.DragDrop += EditorTextArea_DragDrop;
+        }
+
+        private void EditorTextArea_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.Text) ||
+                e.Data.GetDataPresent(DataFormats.UnicodeText))
+            {
+                string data = e.Data.GetData(DataFormats.Text) as string ?? string.Empty;
+                if (data.StartsWith(XsltSnippets.SnippetPrefix))
+                {
+                    e.Effect = DragDropEffects.Copy;
+                    return;
+                }
+            }
+            e.Effect = DragDropEffects.None;
+        }
+
+        private void EditorTextArea_DragDrop(object sender, DragEventArgs e)
+        {
+            string data = e.Data.GetData(DataFormats.Text) as string;
+            if (string.IsNullOrEmpty(data) || !data.StartsWith(XsltSnippets.SnippetPrefix))
+                return;
+
+            string key = data.Substring(XsltSnippets.SnippetPrefix.Length);
+            if (!XsltSnippets.Elements.ContainsKey(key))
+                return;
+
+            // Mouse pozisyonunu editör koordinatına çevir
+            var textArea = textEditorControlEx1.ActiveTextAreaControl.TextArea;
+            Point clientPoint = textArea.PointToClient(new Point(e.X, e.Y));
+
+            var pos = textArea.TextView.GetLogicalPosition(
+                Math.Max(0, clientPoint.X - textArea.TextView.DrawingPosition.X),
+                Math.Max(0, clientPoint.Y - textArea.TextView.DrawingPosition.Y));
+
+            var doc = textEditorControlEx1.Document;
+            int offset = doc.PositionToOffset(pos);
+
+            string code = XsltSnippets.Elements[key].XsltCode;
+            doc.Insert(offset, code);
+            textEditorControlEx1.Refresh();
+
+            var newPos = doc.OffsetToPosition(offset + code.Length);
+            textEditorControlEx1.ActiveTextAreaControl.Caret.Position = newPos;
+
+            UpdateAndCheckFoldings();
+        }
+
+        #endregion
+
+        #region Faz 2 — Önizleme (CefSharp) Üzerine Drag-Drop
+
+        /// <summary>
+        /// CefSharp tarayıcısına JavaScript drop handler enjekte eder.
+        /// Her sayfa yüklendiğinde otomatik çağrılır.
+        /// </summary>
+        private void InjectDropHandler()
+        {
+            if (brow == null) return;
+
+            brow.ExecuteScriptAsync(BrowserDropBridge.DropHandlerScript);
+        }
+
+        /// <summary>
+        /// CefSharp tarayıcısı kurulduğunda çağrılır — JS message handler'ı bağlar.
+        /// </summary>
+        private void SetupBrowserDropEvents()
+        {
+            if (brow == null) return;
+
+            brow.JavascriptMessageReceived -= Brow_JavascriptMessageReceived;
+            brow.JavascriptMessageReceived += Brow_JavascriptMessageReceived;
+
+            brow.FrameLoadEnd -= Brow_FrameLoadEnd;
+            brow.FrameLoadEnd += Brow_FrameLoadEnd;
+        }
+
+        private void Brow_FrameLoadEnd(object sender, CefSharp.FrameLoadEndEventArgs e)
+        {
+            // Ana frame yüklendiğinde drop handler'ı enjekte et
+            if (e.Frame.IsMain)
+            {
+                InjectDropHandler();
+            }
+        }
+
+        private void Brow_JavascriptMessageReceived(object sender, CefSharp.JavascriptMessageReceivedEventArgs e)
+        {
+            // JavaScript'ten gelen drop mesajını işle
+            dynamic message = e.Message;
+
+            string msgType;
+            try { msgType = (string)message.type; }
+            catch { return; }
+
+            if (msgType != "efatura-drop") return;
+
+            var args = new BrowserDropEventArgs
+            {
+                SnippetKey = (string)message.snippetKey,
+                TargetTagName = (string)message.targetTagName,
+                TargetId = (string)message.targetId,
+                TargetOuterHtmlPrefix = (string)message.targetOuterHtmlPrefix,
+                TargetTextPrefix = (string)message.targetTextPrefix,
+            };
+
+            // UI thread'e geç
+            this.BeginInvoke(new Action(() => HandlePreviewDrop(args)));
+        }
+
+        /// <summary>
+        /// Önizlemeye bırakılan snippet'i XSLT kaynağında uygun yere ekler.
+        /// </summary>
+        private void HandlePreviewDrop(BrowserDropEventArgs args)
+        {
+            if (!XsltSnippets.Elements.ContainsKey(args.SnippetKey))
+                return;
+
+            string code = XsltSnippets.Elements[args.SnippetKey].XsltCode;
+            string xsltSource = textEditorControlEx1.Text;
+
+            int insertPos = BrowserDropBridge.FindInsertPosition(xsltSource, args);
+
+            if (insertPos >= 0)
+            {
+                // XSLT kaynağında bulunan pozisyona ekle
+                var doc = textEditorControlEx1.Document;
+                doc.Insert(insertPos, "\n" + code + "\n");
+                textEditorControlEx1.Refresh();
+
+                // İmleci eklenen kodun sonuna taşı
+                var newPos = doc.OffsetToPosition(insertPos + code.Length + 2);
+                textEditorControlEx1.ActiveTextAreaControl.Caret.Position = newPos;
+            }
+            else
+            {
+                // Pozisyon bulunamadı — imleç pozisyonuna ekle
+                InsertSnippetAtCursor(code);
+                MessageBox.Show(
+                    "Önizlemedeki hedef konum XSLT kaynağında eşleştirilemedi.\nSnippet imleç pozisyonuna eklendi.",
+                    "Bilgi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+
+            UpdateAndCheckFoldings();
+        }
+
+        #endregion
     }
 }

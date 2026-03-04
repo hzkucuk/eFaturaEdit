@@ -1,6 +1,6 @@
 # Özellikler (Features)
 
-## E-Fatura Dizayn Editörü — v1.7.0
+## E-Fatura Dizayn Editörü — v1.8.0
 
 ### Ana Özellikler
 
@@ -8,6 +8,14 @@
 - **Canlı Önizleme:** XSLT dönüşümünü `CefSharp.WinForms` (Chromium) tabanlı tarayıcıda anlık görselleştirme.
 - **XSLT 3.0 Desteği:** `Saxon-HE` motoru ile gelişmiş XSLT dönüşüm desteği.
 - **Örnek Fatura Verileri:** Birden fazla örnek XML fatura dosyası ile test imkânı.
+
+### Öğe Ekleme Toolbar (v1.8.0)
+
+- **Snippet Toolbar:** Ribbon üzerinde "Öğe Ekle" grubu — 10 hazır XSLT/HTML snippet (Resim, Tablo, Metin, XSL Değer, Link, Çizgi, Kutu, Döngü, Koşul, Kalın).
+- **Tıklama ile Ekleme:** Snippet butonuna tıklayarak XSLT editöründe imleç pozisyonuna kod ekleme.
+- **Editöre Sürükle-Bırak:** Ribbon butonunu sürükleyip XSLT editörüne bırakarak hedef pozisyona snippet ekleme.
+- **Önizlemeye Sürükle-Bırak:** Ribbon butonunu CefSharp önizleme üzerine sürükleyip bırakarak XSLT kaynağında eşleşen pozisyona snippet ekleme.
+- **JavaScript Interop:** HTML5 drag-drop + `CefSharp.PostMessage` ile tarayıcı-C# köprüsü; hover efekti ve görsel drop göstergesi.
 
 ### Lisans Sistemi
 
