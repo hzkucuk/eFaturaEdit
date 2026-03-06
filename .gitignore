@@ -404,3 +404,9 @@ eFaturaEdit/Assets/ndp472-*.exe
 
 # Project-specific: Loose DLL copies (NuGet paketinden gelir)
 eFaturaEdit/ICSharpCode.TextEditorEx.dll
+
+# Project-specific: Geçici dosyalar ve araçlar
+_temp_*
+_fix_*
+nuget.exe
+*.py

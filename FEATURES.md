@@ -1,6 +1,6 @@
 # Özellikler (Features)
 
-## E-Fatura Dizayn Editörü — v2.9.3
+## E-Fatura Dizayn Editörü — v2.10.0
 
 ### Ana Özellikler
 

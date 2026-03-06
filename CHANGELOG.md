@@ -3,6 +3,19 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.10.0] — 2025-07-14 — Partial Class Refactoring + XsltTransformHelper — Form1*.cs, XsltTransformHelper.cs
+
+### Eklenen
+- **Form1 partial class yapısına bölündü:** `Form1.Snippets.cs`, `Form1.Browser.cs`, `Form1.AutoComplete.cs`, `Form1.Wysiwyg.cs` — 1560 satırlık tek dosya ~400 satıra indi.
+- **`XsltTransformHelper` sınıfı oluşturuldu:** Saxon XSLT dönüşüm metotları (`TransformXslFile`, `TransformXml`) tek merkezde. — `XsltTransformHelper.cs`
+
+### Değişen
+- **`ResultHtmlPath` geçici dosyaya taşındı:** `%TEMP%` altında GUID tabanlı benzersiz dosya adı, form kapanışında temizlenir. — `Form1.cs`
+- **Kullanılmayan 7 using yönergesi kaldırıldı.** — `Form1.cs`
+
+### Kaldırılan
+- **Geçici dosyalar temizlendi:** `_temp_read_irsaliye3.py`, `nuget.exe`. `.gitignore` güncellendi.
+
 ## [2.9.3] — 2025-07-13 — Saxon XSLT 3.0 Geçişi + WebView2Loader Düzeltmesi — Form1.cs, e-FaturaEdit.csproj
 
 ### Değişen
