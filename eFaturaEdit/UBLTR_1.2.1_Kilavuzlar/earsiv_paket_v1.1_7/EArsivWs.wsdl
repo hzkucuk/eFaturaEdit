@@ -1,0 +1,175 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://earsiv.vedop3.ggm.gov.org/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" name="EArsivWsService" targetNamespace="http://earsiv.vedop3.ggm.gov.org/">
+  <wsdl:types>
+<xs:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://earsiv.vedop3.ggm.gov.org/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://earsiv.vedop3.ggm.gov.org/">
+   <xs:import namespace="http://www.w3.org/2005/05/xmlmime"/>
+   <xs:element name="getBatchStatus" type="tns:getBatchStatus"/>
+   <xs:element name="getBatchStatusResponse" type="tns:getBatchStatusResponse"/>
+   <xs:element name="getUserList" type="tns:getUserList"/>
+   <xs:element name="getUserListResponse" type="tns:getUserListResponse"/>
+   <xs:element name="sendDocumentFile" type="tns:sendDocumentFile"/>
+   <xs:element name="sendDocumentFileResponse" type="tns:sendDocumentFileResponse"/>
+   <xs:complexType name="sendDocumentFile">
+      <xs:sequence>
+         <xs:element name="Attachment" type="tns:attachment"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="attachment">
+      <xs:sequence>
+         <xs:element name="fileName" type="xs:string"/>
+         <xs:element name="binaryData" type="xs:base64Binary" xmime:expectedContentTypes="application/octet-stream"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="sendDocumentFileResponse">
+      <xs:sequence>
+         <xs:element minOccurs="0" name="return" type="xs:string"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="getUserList">
+      <xs:sequence>
+         <xs:element minOccurs="0" name="type" type="xs:string"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="getUserListResponse">
+      <xs:sequence>
+         <xs:element minOccurs="0" name="return" type="tns:attachment"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="getBatchStatus">
+      <xs:sequence>
+         <xs:element name="paketId" type="xs:string"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="getBatchStatusResponse">
+      <xs:sequence>
+         <xs:element minOccurs="0" name="return" type="tns:durum"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name="durum">
+      <xs:sequence>
+         <xs:element minOccurs="0" name="durumAciklama" type="xs:string"/>
+         <xs:element name="durumKodu" type="xs:int"/>
+         <xs:element minOccurs="0" name="paketId" type="xs:string"/>
+         <xs:element minOccurs="0" name="TCKimlikNo" type="xs:string"/>
+         <xs:element minOccurs="0" name="vergiKimlikNo" type="xs:string"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="EArsivFault" type="tns:EArsivFault"/>
+   <xs:complexType name="EArsivFault">
+      <xs:sequence>
+         <xs:element name="code" nillable="true" type="xs:int"/>
+         <xs:element name="message" nillable="true" type="xs:string"/>
+      </xs:sequence>
+   </xs:complexType>
+   <xs:element name="InterruptedException" type="tns:InterruptedException"/>
+   <xs:complexType name="InterruptedException">
+      <xs:sequence/>
+   </xs:complexType>
+</xs:schema>  </wsdl:types>
+  <wsdl:message name="getBatchStatus">
+    <wsdl:part element="tns:getBatchStatus" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="sendDocumentFile">
+    <wsdl:part element="tns:sendDocumentFile" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="sendDocumentFileResponse">
+    <wsdl:part element="tns:sendDocumentFileResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getUserListResponse">
+    <wsdl:part element="tns:getUserListResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getBatchStatusResponse">
+    <wsdl:part element="tns:getBatchStatusResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="EArsivFault">
+    <wsdl:part element="tns:EArsivFault" name="EArsivFault">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="InterruptedException">
+    <wsdl:part element="tns:InterruptedException" name="InterruptedException">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getUserList">
+    <wsdl:part element="tns:getUserList" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="EArsivWs">
+    <wsdl:operation name="sendDocumentFile">
+      <wsdl:input message="tns:sendDocumentFile" name="sendDocumentFile">
+    </wsdl:input>
+      <wsdl:output message="tns:sendDocumentFileResponse" name="sendDocumentFileResponse">
+    </wsdl:output>
+      <wsdl:fault message="tns:EArsivFault" name="EArsivFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getUserList">
+      <wsdl:input message="tns:getUserList" name="getUserList">
+    </wsdl:input>
+      <wsdl:output message="tns:getUserListResponse" name="getUserListResponse">
+    </wsdl:output>
+      <wsdl:fault message="tns:EArsivFault" name="EArsivFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getBatchStatus">
+      <wsdl:input message="tns:getBatchStatus" name="getBatchStatus">
+    </wsdl:input>
+      <wsdl:output message="tns:getBatchStatusResponse" name="getBatchStatusResponse">
+    </wsdl:output>
+      <wsdl:fault message="tns:InterruptedException" name="InterruptedException">
+    </wsdl:fault>
+      <wsdl:fault message="tns:EArsivFault" name="EArsivFault">
+    </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="EArsivWsServiceSoapBinding" type="tns:EArsivWs">
+    <soap12:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getUserList">
+      <soap12:operation soapAction="urn:GetUserList" style="document"/>
+      <wsdl:input name="getUserList">
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getUserListResponse">
+        <soap12:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EArsivFault">
+        <soap12:fault name="EArsivFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="sendDocumentFile">
+      <soap12:operation soapAction="urn:SendDocumentFile" style="document"/>
+      <wsdl:input name="sendDocumentFile">
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="sendDocumentFileResponse">
+        <soap12:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EArsivFault">
+        <soap12:fault name="EArsivFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getBatchStatus">
+      <soap12:operation soapAction="urn:GetBatchStatus" style="document"/>
+      <wsdl:input name="getBatchStatus">
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getBatchStatusResponse">
+        <soap12:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="InterruptedException">
+        <soap12:fault name="InterruptedException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="EArsivFault">
+        <soap12:fault name="EArsivFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="EArsivWsService">
+    <wsdl:port binding="tns:EArsivWsServiceSoapBinding" name="EArsivWsPort">
+      <soap12:address location="https://test.efatura.gov.tr/earsiv/services/EArsivWsPort"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

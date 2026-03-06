@@ -25,16 +25,26 @@ namespace eFaturaEdit
     }
 
     /// <summary>
-    /// CefSharp önizleme sayfasına enjekte edilecek JavaScript kodu.
+    /// CefSharp ve WebView2 önizleme sayfasına enjekte edilecek JavaScript kodu.
     /// Sayfa üzerine bırakılan öğelerin pozisyon bilgisini C#'a bildirir.
     /// </summary>
     public static class BrowserDropBridge
     {
         /// <summary>
-        /// CefSharp tarayıcısına yüklenen her sayfaya enjekte edilecek JavaScript.
-        /// HTML5 drag-drop olaylarını dinler ve CefSharp.PostMessage ile C#'a bildirir.
+        /// Belirtilen tarayıcı motoruna uygun drop handler JavaScript kodunu döndürür.
+        /// CefSharp: CefSharp.PostMessage(info)
+        /// WebView2: window.chrome.webview.postMessage(info)
         /// </summary>
-        public static readonly string DropHandlerScript = @"
+        public static string GetDropHandlerScript(BrowserEngineType engine)
+        {
+            string postMessageCall = engine == BrowserEngineType.WebView2
+                ? "window.chrome.webview.postMessage(info);"
+                : "CefSharp.PostMessage(info);";
+
+            return DropHandlerTemplate.Replace("/*__POST_MESSAGE__*/", postMessageCall);
+        }
+
+        private static readonly string DropHandlerTemplate = @"
 (function() {
     if (window.__efaturaDropReady) return;
     window.__efaturaDropReady = true;
@@ -74,10 +84,14 @@ namespace eFaturaEdit
         var data = e.dataTransfer.getData('text');
         if (!data) return;
 
-        var prefix = 'EFATURA_SNIPPET:';
+        var prefix = '<!-- EFATURA_SNIPPET:';
+        var suffix = ' -->';
         if (data.indexOf(prefix) !== 0) return;
 
         var snippetKey = data.substring(prefix.length);
+        if (snippetKey.indexOf(suffix) === snippetKey.length - suffix.length) {
+            snippetKey = snippetKey.substring(0, snippetKey.length - suffix.length);
+        }
         var target = e.target;
 
         // Hedef elemanın bilgilerini topla
@@ -98,10 +112,15 @@ namespace eFaturaEdit
         setTimeout(function() { if (marker.parentNode) marker.parentNode.removeChild(marker); }, 2000);
 
         // C#'a bildir
-        CefSharp.PostMessage(info);
+        /*__POST_MESSAGE__*/
     }, true);
 })();
 ";
+
+        /// <summary>
+        /// CefSharp tarayıcısı için drop handler JavaScript kodu (geriye uyumluluk).
+        /// </summary>
+        public static readonly string DropHandlerScript = GetDropHandlerScript(BrowserEngineType.CefSharp);
 
         /// <summary>
         /// Gelen JavaScript mesajından SnippetKey'e göre drop pozisyonunu XSLT kaynağında bulur.

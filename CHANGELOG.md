@@ -3,6 +3,139 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.9.3] — 2025-07-13 — Saxon XSLT 3.0 Geçişi + WebView2Loader Düzeltmesi — Form1.cs, e-FaturaEdit.csproj
+
+### Değişen
+- **XSLT dönüşüm motoru Saxon-HE'ye geçirildi:** `XslCompiledTransform` (XSLT 1.0) yerine `Saxon.Api.Processor` (XSLT 1.0/2.0/3.0) kullanılıyor. Tüm 4 dönüşüm noktası güncellendi. — `Form1.cs`
+- **`TransformXslFile` yardımcı metodu eklendi:** Dosya tabanlı Saxon dönüşümü tek merkezde. — `Form1.cs`
+- **`myXslTrans` alanı ve `System.Xml.Xsl` using kaldırıldı.** — `Form1.cs`
+
+### Düzeltilen
+- **WebView2Loader.dll bulunamadı hatası giderildi:** `Microsoft.Web.WebView2.targets` import'u `.csproj`'a eklendi + PostBuildEvent ile DLL çıktı köküne kopyalanıyor. — `e-FaturaEdit.csproj`
+
+## [2.9.2] — 2025-07-13 — Yol Sabitleri + Metod Sadeleştirme — Form1.cs
+
+### Değişen
+- **Statik yol sabitleri eklendi:** `AppDir`, `XmlDataDir`, `DefaultXmlPath`, `ResultHtmlPath` — 6× tekrarlanan `Path.Combine` çağrısı kaldırıldı. — `Form1.cs`
+- **`iOpen_ItemClick` sadeleştirildi:** Early return pattern, gereksiz `null` atama kaldırıldı, yol sabitleri kullanıldı, tek try-catch bloğu. — `Form1.cs`
+- **`iSave_ItemClick` birleştirildi:** 3 ayrı try-catch → tek blok, `ResultHtmlPath` sabiti kullanıldı. — `Form1.cs`
+
+## [2.9.1] — 2025-07-12 — CefSharp Başlatma Hatası Düzeltmesi — Form1.cs
+
+### Düzeltilen
+- **CefSharp "Cef.IsInitialized was false!" hatası giderildi:** `Cef.Initialize()` çağrısı `CachePath` olmadan CefSharp v145'te sessizce başarısız oluyordu. — `Form1.cs`
+- **`InitializeCef()` metodu eklendi:** `CachePath` (LocalAppData/eFaturaEdit/CefCache), `LogFile` (cef_debug.log), `LogSeverity.Warning` ayarları ve dönüş değeri kontrolü ile güvenli başlatma. — `Form1.cs`
+- **`Cef.IsInitialized` koruması eklendi:** XSLT açma, XML dosya açma ve örnek XML yükleme akışlarında `ChromiumWebBrowser` oluşturulmadan önce kontrol eklendi. — `Form1.cs`
+
+## [2.9.0] — 2025-06-24 — Ribbon Sekme Organizasyonu — Form1.cs
+
+### Değişen
+- **Ribbon sekmelere ayrıldı:** Tek sekmede (Araçlar) yığılmış 13 grup, 4 mantıksal sekmeye dağıtıldı. — `Form1.cs`
+- **Dosya** (Araçlar): Dosya işlemleri (Aç, Kaydet, Farklı Kaydet, DevTools, Yenile, PDF), Örnek Faturalar, Tema, Çıkış.
+- **Biçimlendirme** (yeni): Yazı Biçimi, Hizalama, Stil, Ekle — WYSIWYG araçları ayrı sekmeye taşındı.
+- **Öğeler** (yeni): HTML Öğeleri, XSLT Komutları, Sayfa Düzeni snippet'leri.
+- **UBL-TR** (yeni): e-Fatura, e-Arşiv, e-İrsaliye snippet'leri.
+- **Yeni yönlendirme metodu:** `GetRibbonPageForCategory()` — snippet kategorisini doğru sekmeye yönlendirir.
+
+## [2.8.0] — 2025-06-23 — WYSIWYG Biçimlendirme Toolbar — WysiwygHelper.cs, Form1.cs
+
+### Eklenen
+- **WYSIWYG Biçimlendirme Toolbar:** Ribbon'a 4 yeni grup halinde görsel biçimlendirme araç çubuğu eklendi. — `WysiwygHelper.cs`, `Form1.cs`
+- **Yazı Biçimi (6):** Kalın, İtalik, Altı Çizili, Üstü Çizili, Üst Simge, Alt Simge — mevcut Bold/Italic/Underline butonları aktifleştirildi + 3 yeni buton.
+- **Hizalama (3):** Sola, Ortaya, Sağa hizalama — mevcut Align butonları aktifleştirildi, `<div style="text-align:...">` ile sarar.
+- **Stil (3):** Yazı Rengi (ColorDialog), Arka Plan Rengi (ColorDialog), Yazı Boyutu (8–48pt alt menü).
+- **Ekleme (4):** Yatay Çizgi (`<hr />`), Sıralı Liste (`<ol>`), Madde İşareti (`<ul>`), Kenarlık.
+- **Akıllı Sarmalama:** Seçili metin varsa etiketle sarar; yoksa boş etiket çifti ekleyip imleci arasına konumlar.
+- **FontAwesome İkonlar:** Tüm WYSIWYG butonlarında FontAwesome.Sharp vektörel ikonlar.
+- **Yeni dosya:** `WysiwygHelper.cs` — `WrapSelection`, `WrapWithStyle`, `WrapWithAlignment`, `InsertAtCursor` yardımcı metotları.
+
+## [2.7.0] — 2025-06-23 — XSLT Editör Autocomplete — XsltCompletionProvider.cs, Form1.cs
+
+### Eklenen
+- **Otomatik tamamlama (Autocomplete):** XSLT editörüne (textEditorControlEx1) ICSharpCode.TextEditorEx CodeCompletionWindow tabanlı akıllı öneri sistemi eklendi. — `XsltCompletionProvider.cs`, `Form1.cs`
+- **Tetikleme:** `<` karakteri yazıldığında etiket önerileri, `Ctrl+Space` ile tam liste (XPath + XSLT + Snippet).
+- **XSLT Etiket Önerileri (16):** xsl:value-of, xsl:for-each, xsl:if, xsl:choose, xsl:when, xsl:otherwise, xsl:text, xsl:variable, xsl:template, xsl:apply-templates, xsl:attribute, xsl:element, xsl:call-template, xsl:sort, xsl:copy-of, xsl:number.
+- **UBL-TR XPath Önerileri (~75):** e-Fatura (Invoice) ve e-İrsaliye (DespatchAdvice) belge yapısı — Başlık, Satıcı/Alıcı, Kalem, Toplamlar, Ödeme, Referanslar, Sevkiyat alanları + XPath fonksiyonları.
+- **Snippet Önerileri (140):** Mevcut tüm snippet tanımları tamamlama listesinde gösterilir; seçildiğinde tam XSLT kodu eklenir.
+- **Bağlam Duyarlı Filtreleme:** `select=""` veya `test=""` öznitelikleri içinde XPath önerileri öncelikli gösterilir.
+- **Yeni dosya:** `XsltCompletionProvider.cs` — `ICompletionDataProvider` ve `SnippetCompletionData` implementasyonları.
+
+## [2.6.0] — 2025-06-23 — UBL-TR e-İrsaliye Snippet Seti — XsltSnippets.cs
+
+### Eklenen
+- **33 yeni e-İrsaliye snippet:** UBL-TR İrsaliye V1.2 kılavuzuna göre DespatchAdvice belge tipi için tamamı yeni kategori oluşturuldu. — `XsltSnippets.cs`
+- **Başlık (8):** İrsaliye Başlık Tablosu, İrsaliye No, ETTN, Tarih, Saat, Tip Kodu, Not, Kalem Sayısı.
+- **Taraflar (9):** Sevk Eden Taraf (tablo), Teslim Alan Taraf (tablo), Sevk Eden/Teslim Alan VKN, Unvan, Vergi Dairesi (standalone), Sevk Adresi (Depo/Şube).
+- **Sevkiyat (8):** Sevkiyat Bilgileri (tablo), Şoför Bilgileri, Araç Plakası, Dorse Plakası, Taşıyıcı Firma (tablo), Fiili Sevk Tarihi, Fiili Sevk Saati, Mal Bedeli.
+- **Kalemler (6):** İrsaliye Kalem Tablosu, Kalem Sıra No, Teslim Miktarı, Mal/Hizmet Adı, Birim Kodu, Satıcı Ürün Kodu.
+- **Referanslar (2):** Sipariş Referansı, İlave Doküman.
+- **Kök Eleman:** `/n1:DespatchAdvice` — e-Fatura (`/n1:Invoice`) ile farklı namespace.
+
+## [2.5.0] — 2025-06-23 — UBL-TR Standalone Snippet Tamamlama — XsltSnippets.cs
+
+### Eklenen
+- **29 yeni standalone snippet:** Tablo/döngü içinde gömülü olan tüm UBL-TR alanları bağımsız tekil snippet olarak eklendi. — `XsltSnippets.cs`
+- **Başlık (2):** Fatura No (cbc:ID), Fatura Tarihi (cbc:IssueDate).
+- **Taraflar (10):** Satıcı VKN/TCKN, Satıcı Unvan, Satıcı Vergi Dairesi, Satıcı Telefon, Satıcı E-posta, Alıcı VKN/TCKN, Alıcı Unvan, Alıcı Vergi Dairesi, Alıcı Telefon, Alıcı E-posta.
+- **Kalemler (7):** Kalem Sıra No, Mal/Hizmet Adı, Miktar, Birim Fiyat, Kalem Tutarı, Kalem KDV Tutarı, Kalem İskonto Tutarı.
+- **Toplamlar (5):** Mal/Hizmet Toplamı, Vergiler Hariç Toplam, Vergiler Dahil Toplam, İndirim Toplamı, Ödenecek Tutar.
+- **Vergi (1):** Toplam Vergi Tutarı.
+- **Ödeme (2):** Vade Tarihi, IBAN/Hesap No.
+- **Döviz Kurları (2):** Ödeme Döviz Kuru (PaymentExchangeRate), Vergi Döviz Kuru (TaxExchangeRate).
+
+## [2.4.1] — 2025-06-22 — Kalem KDV/İskonto Oranı Standalone Snippet — XsltSnippets.cs
+
+### Eklenen
+- **2 yeni standalone snippet:** Kalem KDV Oranı (%) ve Kalem İskonto Oranı (%) bağımsız snippet olarak eklendi. — `XsltSnippets.cs`
+- **UBL_LINE_KDVPERCENT:** `cac:TaxTotal/cac:TaxSubtotal/cbc:Percent` — tek değer olarak KDV oranı.
+- **UBL_LINE_ISKONTOPERCENT:** `cac:AllowanceCharge/cbc:MultiplierFactorNumeric` — iskonto oranı (% formatında).
+
+## [2.4.0] — 2025-06-22 — UBL-TR Eksik Snippet Tamamlama — XsltSnippets.cs
+
+### Eklenen
+- **22 yeni UBL-TR snippet:** UBL-TR 1.2.1 kılavuzlarına göre eksik alanlar tamamlandı. — `XsltSnippets.cs`
+- **Kalemler (14):** Satır Açıklaması (Note), Ürün Açıklaması (Description), Birim Kodu (unitCode), Satıcı/Alıcı Ürün Kodu, Marka/Model, Üretici Kodu, Ek Ürün Kimlikleri, Emtia Sınıflandırması, KDV Matrahı, Sipariş/İrsaliye Kalem Ref., Detaylı Kalem Tablosu. — `XsltSnippets.cs`
+- **Başlık (3):** Vergi Para Birimi (TaxCurrencyCode), Fatura Dönemi (InvoicePeriod), İlave Fatura Tipi (AccountingCost). — `XsltSnippets.cs`
+- **Referanslar (3):** Kontrat Referansı, Alındı Referansı, Başlangıç Dokümanı. — `XsltSnippets.cs`
+- **Toplamlar (1):** Yuvarlama Tutarı (PayableRoundingAmount). — `XsltSnippets.cs`
+- **Ödeme (2):** Ödeme Koşulları Detay (ceza oranı/tutarı), Banka Hesap Bilgileri (IBAN/para birimi). — `XsltSnippets.cs`
+- **Taraflar (1):** Mal Sağlayan Taraf (SellerSupplierParty). — `XsltSnippets.cs`
+
+## [2.3.0] — 2025-06-21 — FontAwesome.Sharp Vektör İkon Entegrasyonu — Form1.cs, e-FaturaEdit.csproj
+
+### Eklenen
+- **FontAwesome.Sharp 5.15.4:** Tüm snippet ve kategori butonlarına profesyonel vektör ikonlar. 54 snippet + 5 kategori için renkli FontAwesome ikonları. — `Form1.cs`
+- **SnippetIconMap:** 54 snippet → IconChar eşlemesi (FileInvoice, Building, Coins, Calculator vb.). — `Form1.cs`
+- **CategoryIconMap:** 5 kategori → IconChar eşlemesi (PuzzlePiece, Code, SolarPanel, FileInvoiceDollar, Archive). — `Form1.cs`
+- **Kategori renk sistemi:** Her kategori için ayrı renk (Mavi/Mor/Yeşil/Turuncu/Teal). — `Form1.cs`
+
+### Değişen
+- **İkon sistemi yenilendi:** Unicode/emoji simgeler yerine FontAwesome.Sharp vektör bitmap'ler kullanılıyor. — `Form1.cs`
+- **Ribbon & Context menü:** Toolbar butonları (Glyph) ve sağ tık menü öğeleri (Image) FontAwesome ikonlarıyla güncellendi. — `Form1.cs`
+
+### Bağımlılıklar
+- **FontAwesome.Sharp 5.15.4** NuGet paketi eklendi (.NET Framework 4.7.2 uyumlu). — `packages.config`, `e-FaturaEdit.csproj`
+
+## [2.2.0] — 2025-06-21 — UBL-TR Tam Snippet Seti + Sağ Tık Menü — XsltSnippets.cs, Form1.cs
+
+### Eklenen
+- **54 snippet:** 16 genel (HTML/XSLT/Sayfa Düzeni) + 30 UBL-TR e-Fatura + 8 UBL-TR e-Arşiv snippet. Her biri açıklama ve ikonlu. — `XsltSnippets.cs`
+- **UBL-TR e-Fatura alt kategorileri:** Başlık (9), Taraflar (12), Kalemler (3), Vergi (4), Toplamlar (4), Ödeme (2), Referanslar (4). — `XsltSnippets.cs`
+- **UBL-TR e-Arşiv alt kategorileri:** Teslimat (4), E-Arşiv Özel (4). — `XsltSnippets.cs`
+- **Sağ tık context menü:** Editör üzerinde sağ tık ile Category → SubCategory → Snippet ağaç yapısında hızlı erişim menüsü. — `Form1.cs`
+- **Ribbon alt menü grupları:** UBL-TR kategorilerinde SubCategory'ye göre BarSubItem alt menüleri. — `Form1.cs`
+
+### Değişen
+- **Tooltip açıklamaları:** Her snippet için detaylı Türkçe açıklama ve XPath bilgisi, kısaltılmadan gösterilir (MaxWidth=600). — `Form1.cs`
+- **İkon desteği:** Tüm snippet butonlarına Unicode ikonlar eklendi. — `XsltSnippets.cs`, `Form1.cs`
+- **SnippetInfo sınıfı genişletildi:** SubCategory ve Description özellikleri eklendi. — `XsltSnippets.cs`
+
+## [2.1.0] — 2025-06-20 — Toolbar Kategori Gruplama — XsltSnippets.cs, Form1.cs
+
+### Değişen
+- **Snippet Toolbar kategorilere ayrıldı:** 23 snippet tek "Öğe Ekle" grubu yerine 4 ayrı Ribbon grubuna bölündü: HTML Öğeleri (8), XSLT Komutları (3), Sayfa Düzeni (5), UBL-TR Fatura (8). — `XsltSnippets.cs`, `Form1.cs`
+- **SnippetInfo.Category özelliği:** Her snippet'e kategori bilgisi eklendi; `InitSnippetToolbar()` kategoriye göre `RibbonPageGroup` oluşturur. — `XsltSnippets.cs`, `Form1.cs`
+
 ## [2.0.0] — 2025-06-20 — UBL-TR Entegrasyonu — UblTrSamples.cs, XsltSnippets.cs, Form1.cs, UBL-TR/
 
 ### Eklenen

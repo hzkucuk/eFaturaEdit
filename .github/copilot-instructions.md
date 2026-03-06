@@ -46,6 +46,26 @@ Versiyon **3 dosyada** senkron tutulmalı:
 - Release için `Deployment\Build-Release.ps1` scripti kullanılır.
 - ZIP arşivleri `releases/` klasörüne oluşturulur (Git dışı).
 
+## Git İş Akışı & Commit Kuralları
+- **Commit mesajı formatı:** `[tip]: kısa açıklama` (örn: `fix: statik alan sırası düzeltildi`)
+  - Tipler: `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `test`
+- Her değişiklik sonrası **commit öncesi kontrol listesi:**
+  1. Proje hatasız derleniyor mu?
+  2. CHANGELOG.md güncellendi mi?
+  3. Versiyon numarası senkron mu (AssemblyInfo, .csproj, CHANGELOG)?
+- **Branch stratejisi:** `main` → kararlı, `dev` → geliştirme, `feature/*` → yeni özellikler, `fix/*` → hata düzeltmeleri.
+- **Push öncesi:** `git pull --rebase` ile güncel kalınmalı.
+- **Tag:** Her release'de `vX.Y.Z` formatında tag oluşturulmalı: `git tag -a vX.Y.Z -m "Release X.Y.Z"`.
+
+## README.md Güncelleme Kuralları
+- **Her önemli değişiklikte** README.md güncellenmeli:
+  - Yeni özellik eklendi → "Özellikler" bölümüne ekle.
+  - Bağımlılık değişti (NuGet, runtime) → "Gereksinimler" bölümünü güncelle.
+  - Kurulum/yapılandırma değişti → "Kurulum" bölümünü güncelle.
+  - API/kullanım değişti → "Kullanım" bölümünü güncelle.
+- README.md yapısı: `Proje Adı` → `Açıklama` → `Özellikler` → `Gereksinimler` → `Kurulum` → `Kullanım` → `Lisans`.
+- Ekran görüntüleri `docs/images/` klasöründe tutulmalı.
+
 ## Yanıt Formatı
 1. Değişiklik özeti (1-2 cümle)
 2. Sadece değişen kod bloğu
