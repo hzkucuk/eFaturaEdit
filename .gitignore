@@ -401,6 +401,7 @@ Output/
 
 # Project-specific: Bundled runtime installers
 eFaturaEdit/Assets/ndp472-*.exe
+DXApplication5/Assets/ndp472-*.exe
 
 # Project-specific: Loose DLL copies (NuGet paketinden gelir)
 eFaturaEdit/ICSharpCode.TextEditorEx.dll
@@ -410,3 +411,8 @@ _temp_*
 _fix_*
 nuget.exe
 *.py
+
+# Project-specific: Büyük dosyalar (GitHub 100MB limiti)
+*.rar
+*.msi
+result.html
