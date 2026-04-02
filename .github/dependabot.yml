@@ -1,0 +1,14 @@
+version: 2
+
+updates:
+  # GitHub Actions bagimliliklarini otomatik guncelle
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(deps)"
