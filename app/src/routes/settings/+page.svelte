@@ -129,6 +129,34 @@
             )}
         />
       </div>
+
+      <div class="row">
+        <label for="autosave">Dosyayı otomatik kaydet (yalnızca disk yolu olan dosyalar)</label>
+        <input
+          id="autosave"
+          type="checkbox"
+          checked={settings.autoSave}
+          onchange={(e) =>
+            updateSetting('autoSave', (e.currentTarget as HTMLInputElement).checked)}
+        />
+      </div>
+
+      {#if settings.autoSave}
+        <div class="row">
+          <label for="autosave-delay">Otomatik kaydetme gecikmesi</label>
+          <select
+            id="autosave-delay"
+            value={settings.autoSaveDelayMs}
+            onchange={(e) =>
+              updateSetting('autoSaveDelayMs', +(e.currentTarget as HTMLSelectElement).value)}
+          >
+            <option value={1000}>1 saniye</option>
+            <option value={3000}>3 saniye</option>
+            <option value={5000}>5 saniye</option>
+            <option value={10000}>10 saniye</option>
+          </select>
+        </div>
+      {/if}
     </section>
 
     <section class="group panel-sizes">

@@ -19,10 +19,10 @@ export const manifest: Manifest = manifestJson as Manifest;
 /**
  * Snippet'leri kategori → alt kategori → snippet olarak grupla.
  */
-export function groupSnippetsByCategory(): Map<string, Map<string, Snippet[]>> {
+export function groupSnippetsByCategory(list: Snippet[] = snippets): Map<string, Map<string, Snippet[]>> {
   const grouped = new Map<string, Map<string, Snippet[]>>();
 
-  for (const snippet of snippets) {
+  for (const snippet of list) {
     const category = snippet.category ?? 'Diğer';
     const subCategory = snippet.subCategory ?? '';
 

@@ -41,7 +41,6 @@ export interface Settings {
   wordWrap: boolean;
   theme: Theme;
   showLineNumbers: boolean;
-  showMinimap: boolean;
   autoTransformOnLoad: boolean;
   autoTransformOnSave: boolean;
   autoTransformDebounceMs: number; // 0 = kapalı, 500 = önerilen
@@ -63,7 +62,6 @@ const DEFAULTS: Settings = {
   wordWrap: true,
   theme: 'light',
   showLineNumbers: true,
-  showMinimap: false,
   autoTransformOnLoad: true,
   autoTransformOnSave: true,
   autoTransformDebounceMs: 700,

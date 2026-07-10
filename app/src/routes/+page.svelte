@@ -11,6 +11,17 @@
   import { openFile, saveFile, saveFileAs, reopenFile } from '$lib/fileio';
   import { recentFiles, pushRecent, clearRecent, basename } from '$lib/recent-files.svelte';
   import { dragState, beginPossibleDrag } from '$lib/drag.svelte';
+  import {
+    listUserSamples,
+    loadUserSample,
+    addSamplePair,
+    removeUserSample,
+    openSamplesFolder,
+    type UserSample,
+  } from '$lib/user-samples';
+  import { listUserSnippets, saveUserSnippet, removeUserSnippet } from '$lib/user-snippets';
+  import { ask } from '@tauri-apps/plugin-dialog';
+  import SnippetEditor from '$lib/SnippetEditor.svelte';
   import CodeEditor from '$lib/CodeEditor.svelte';
   import Splitter from '$lib/Splitter.svelte';
   import ContextMenu from '$lib/ContextMenu.svelte';
@@ -23,6 +34,11 @@
   let activeCategory = $state<string>('HTML Öğeleri');
   let snippetFilter = $state('');
   let sampleMenuOpen = $state(false);
+  let userSamples = $state<UserSample[]>([]);
+  let userSnippets = $state<Snippet[]>([]);
+  let snippetEditorOpen = $state(false);
+  let editingSnippet = $state<Snippet | undefined>(undefined);
+  const userSnippetKeys = $derived(new Set(userSnippets.map((s) => s.key)));
   let recentMenuOpen = $state(false);
   let helpOpen = $state(false);
   let exitConfirmOpen = $state(false);
@@ -45,7 +61,8 @@
   $effect(() => updatePanelSize('xsltHeight', xsltHeight));
 
   // ─── Snippet grupları ───────────────────────────────────────────────
-  const groupedSnippets = $derived(groupSnippetsByCategory());
+  const allSnippets = $derived([...snippets, ...userSnippets]);
+  const groupedSnippets = $derived(groupSnippetsByCategory(allSnippets));
   const categories = $derived(Array.from(groupedSnippets.keys()));
   const visibleSnippets = $derived.by<Snippet[]>(() => {
     const subMap = groupedSnippets.get(activeCategory);
@@ -71,7 +88,7 @@
     for (const p of completion.xPathPaths) {
       items.push({ label: p.text, detail: p.description, type: 'variable' });
     }
-    for (const s of snippets) {
+    for (const s of allSnippets) {
       items.push({
         label: s.key,
         detail: s.displayName,
@@ -171,6 +188,109 @@
       if (settings.autoTransformOnLoad) await runTransform();
     } catch (err) {
       status(`Yüklenemedi: ${(err as Error).message}`, true);
+    }
+  }
+
+  // ─── Kullanıcı örnekleri ────────────────────────────────────────────
+  async function refreshUserSamples() {
+    try {
+      userSamples = await listUserSamples();
+    } catch (err) {
+      status(`Kullanıcı örnekleri okunamadı: ${(err as Error).message}`, true);
+    }
+  }
+
+  async function loadUserSampleEntry(sample: UserSample) {
+    sampleMenuOpen = false;
+    try {
+      const { xslt, xml } = await loadUserSample(sample);
+      ignoreNextChange.xslt = true;
+      ignoreNextChange.xml = true;
+      editorState.xsltText = xslt;
+      editorState.xmlText = xml;
+      editorState.xsltPath = sample.xsltPath;
+      editorState.xmlPath = sample.xmlPath;
+      editorState.xsltDirty = false;
+      editorState.xmlDirty = false;
+      xsltEditor?.setValue(xslt);
+      xmlEditor?.setValue(xml);
+      status(`Kullanıcı örneği yüklendi: ${sample.name}`);
+      if (settings.autoTransformOnLoad) await runTransform();
+    } catch (err) {
+      status(`Yüklenemedi: ${(err as Error).message}`, true);
+    }
+  }
+
+  async function addCurrentAsUserSample() {
+    if (!editorState.xsltPath || !editorState.xmlPath) {
+      status('Örnek olarak eklemek için hem XSLT hem XML diskte kayıtlı (kaydedilmiş) olmalı.', true);
+      return;
+    }
+    try {
+      const sample = await addSamplePair(editorState.xsltPath, editorState.xmlPath);
+      status(`Örnek eklendi: ${sample.name}`);
+      await refreshUserSamples();
+    } catch (err) {
+      status(`Örnek eklenemedi: ${(err as Error).message}`, true);
+    }
+  }
+
+  async function removeUserSampleEntry(sample: UserSample, e: MouseEvent) {
+    e.stopPropagation();
+    try {
+      await removeUserSample(sample);
+      status(`Örnek silindi: ${sample.name}`);
+      await refreshUserSamples();
+    } catch (err) {
+      status(`Silinemedi: ${(err as Error).message}`, true);
+    }
+  }
+
+  async function openUserSamplesFolder() {
+    try {
+      await openSamplesFolder();
+    } catch (err) {
+      status(`Klasör açılamadı: ${(err as Error).message}`, true);
+    }
+  }
+
+  // ─── Kullanıcı snippet'leri ─────────────────────────────────────────
+  async function refreshUserSnippets() {
+    try {
+      userSnippets = await listUserSnippets();
+    } catch (err) {
+      status(`Kullanıcı snippet'leri okunamadı: ${(err as Error).message}`, true);
+    }
+  }
+
+  function openEditSnippet(s: Snippet) {
+    editingSnippet = s;
+    snippetEditorOpen = true;
+  }
+
+  async function onSaveSnippet(s: Snippet, originalKey?: string) {
+    try {
+      userSnippets = await saveUserSnippet(s, originalKey);
+      snippetEditorOpen = false;
+      editingSnippet = undefined;
+      status(`Snippet kaydedildi: ${s.key}`);
+    } catch (err) {
+      status(`Snippet kaydedilemedi: ${(err as Error).message}`, true);
+    }
+  }
+
+  async function onDeleteSnippet(s: Snippet, e: MouseEvent) {
+    e.stopPropagation();
+    const confirmed = await ask(`"${s.displayName}" snippet'ini silmek istediğine emin misin?`, {
+      title: 'Snippet Sil',
+      kind: 'warning',
+    });
+    if (!confirmed) return;
+    try {
+      userSnippets = await removeUserSnippet(s.key);
+      status(`Snippet silindi: ${s.key}`);
+    } catch (err) {
+      status(`Silinemedi: ${(err as Error).message}`, true);
     }
   }
 
@@ -596,6 +716,8 @@ document.addEventListener('contextmenu', function(e) {
     window.addEventListener('click', onGlobalClick);
     window.addEventListener('message', onPreviewMessage);
     setupCloseGuard();
+    refreshUserSamples();
+    refreshUserSnippets();
     if (showWelcome) {
       status(`e-Fatura Edit v${manifest.version} — ${snippets.length} snippet · ${xsltCompletions.length} tamamlama · hazır`);
     }
@@ -689,6 +811,31 @@ document.addEventListener('contextmenu', function(e) {
                   </button>
                 {/each}
               {/each}
+
+              <div class="dd-divider"></div>
+              <div class="dd-header">
+                <span>Kullanıcı Örnekleri</span>
+                <button class="dd-clear" onclick={openUserSamplesFolder} title="Örnekler klasörünü Finder'da aç">📁</button>
+              </div>
+              {#if userSamples.length === 0}
+                <div class="dd-empty">Henüz yok — aşağıdan geçerli dosyaları ekleyebilirsin.</div>
+              {/if}
+              {#each userSamples as us (us.name)}
+                <div class="dd-item-row">
+                  <button class="dd-item" onclick={() => loadUserSampleEntry(us)}>
+                    <span class="dd-name">{us.name}</span>
+                  </button>
+                  <button class="dd-remove" onclick={(e) => removeUserSampleEntry(us, e)} title="Bu örneği sil">🗑</button>
+                </div>
+              {/each}
+              <button
+                class="dd-item primary"
+                onclick={addCurrentAsUserSample}
+                disabled={!editorState.xsltPath || !editorState.xmlPath}
+                title={!editorState.xsltPath || !editorState.xmlPath ? 'Önce XSLT ve XML dosyalarını diske kaydet' : 'Açık olan XSLT + XML ikilisini örnek olarak kaydet'}
+              >
+                ➕ Geçerli ikiliyi örnek olarak kaydet
+              </button>
             </div>
           {/if}
         </div>
@@ -712,7 +859,8 @@ document.addEventListener('contextmenu', function(e) {
     <!-- Snippet paneli -->
     <aside class="snippets">
       <div class="snippets-header">
-        <h3>Snippet'ler ({snippets.length})</h3>
+        <h3>Snippet'ler ({allSnippets.length})</h3>
+        <button class="snippet-add" onclick={() => { editingSnippet = undefined; snippetEditorOpen = true; }} title="Yeni snippet ekle">➕</button>
         <input type="text" placeholder="Ara..." bind:value={snippetFilter} class="search" />
         <div class="tabs">
           {#each categories as cat}
@@ -745,6 +893,27 @@ document.addEventListener('contextmenu', function(e) {
             <span class="icon">{snippet.iconText}</span>
             <span class="name">{snippet.displayName}</span>
             <span class="key">{snippet.key}</span>
+            {#if userSnippetKeys.has(snippet.key)}
+              <button
+                class="snippet-edit"
+                title="Düzenle"
+                onmousedown={(e) => e.stopPropagation()}
+                onclick={(e) => {
+                  e.stopPropagation();
+                  openEditSnippet(snippet);
+                }}
+              >
+                ✏️
+              </button>
+              <button
+                class="snippet-delete"
+                title="Sil"
+                onmousedown={(e) => e.stopPropagation()}
+                onclick={(e) => onDeleteSnippet(snippet, e)}
+              >
+                🗑
+              </button>
+            {/if}
           </div>
         {:else}
           <p class="muted">Snippet bulunamadı.</p>
@@ -896,6 +1065,20 @@ document.addEventListener('contextmenu', function(e) {
 <!-- ─── Yardım penceresi ──────────────────────────────────────────── -->
 {#if helpOpen}
   <HelpModal onclose={() => (helpOpen = false)} />
+{/if}
+
+<!-- ─── Snippet ekle/düzenle ──────────────────────────────────────── -->
+{#if snippetEditorOpen}
+  <SnippetEditor
+    snippet={editingSnippet}
+    categories={categories}
+    existingKeys={allSnippets.filter((s) => s.key !== editingSnippet?.key).map((s) => s.key)}
+    onsave={onSaveSnippet}
+    onclose={() => {
+      snippetEditorOpen = false;
+      editingSnippet = undefined;
+    }}
+  />
 {/if}
 
 <!-- ─── Çıkışta kaydetme onayı ────────────────────────────────────── -->
@@ -1085,6 +1268,14 @@ document.addEventListener('contextmenu', function(e) {
     padding: 6px 12px 2px; font-size: 10px; text-transform: uppercase;
     color: #6b7280; letter-spacing: 0.5px; font-weight: 600;
   }
+  .dd-empty { padding: 6px 12px; font-size: 11px; color: #9ca3af; font-style: italic; }
+  .dd-item-row { display: flex; align-items: stretch; }
+  .dd-item-row .dd-item { flex: 1; grid-template-columns: 1fr; }
+  .dd-remove {
+    background: none; border: none; cursor: pointer; padding: 0 10px;
+    font-size: 12px; color: #9ca3af;
+  }
+  .dd-remove:hover { color: #b91c1c; background: #fee2e2; }
 
   /* Ana grid */
   .main-grid { display: grid; overflow: hidden; }
@@ -1097,7 +1288,15 @@ document.addEventListener('contextmenu', function(e) {
   .snippets-header h3 {
     margin: 0 0 0.4rem 0; font-size: 12px; color: #6b7280;
     text-transform: uppercase; letter-spacing: 0.5px;
+    display: inline-block;
   }
+  .snippet-add {
+    float: right; margin-top: -2px;
+    border: 1px solid #cbd0d6; background: #fff; border-radius: 3px;
+    font-size: 11px; padding: 0.1rem 0.4rem; cursor: pointer;
+  }
+  .snippet-add:hover { background: #eef4ff; }
+  .app.dark .snippet-add { background: #3c3c3c; border-color: #555; }
   .search {
     width: 100%; padding: 0.3rem 0.5rem;
     border: 1px solid #cbd0d6; border-radius: 3px; font-size: 12px;
@@ -1120,7 +1319,7 @@ document.addEventListener('contextmenu', function(e) {
   .app.dark .hint { background: #3c3c3c; color: #a0a0a0; }
   .snippet-list { flex: 1; overflow-y: auto; padding: 0.3rem; }
   .snippet-item {
-    display: grid; grid-template-columns: auto 1fr auto;
+    display: grid; grid-template-columns: auto 1fr auto auto auto;
     align-items: center; gap: 0.5rem;
     width: 100%; padding: 0.4rem 0.5rem; margin-bottom: 2px;
     border: 1px solid transparent; background: transparent; border-radius: 3px;
@@ -1134,6 +1333,12 @@ document.addEventListener('contextmenu', function(e) {
   .snippet-item .key {
     font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: #6b7280;
   }
+  .snippet-edit, .snippet-delete {
+    border: none; background: none; cursor: pointer; font-size: 11px;
+    padding: 2px 4px; border-radius: 3px; opacity: 0.6;
+  }
+  .snippet-edit:hover, .snippet-delete:hover { opacity: 1; background: #e5e7eb; }
+  .app.dark .snippet-edit:hover, .app.dark .snippet-delete:hover { background: #3c3c3c; }
   .muted { color: #9ca3af; padding: 1rem; text-align: center; }
 
   /* Editors */
