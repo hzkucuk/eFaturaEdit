@@ -4,13 +4,15 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-/// WebView için geliştirici araçlarını aç (yalnızca debug build).
+/// WebView için geliştirici araçlarını aç.
+///
+/// Release build'de de kasıtlı olarak açık bırakılıyor: önizleme panelindeki
+/// "Stili XSLT'ye Al" özelliği (bkz. +page.svelte) kullanıcının DevTools'un
+/// Styles panelinden CSS düzenleyip bunu XSLT'ye aktarmasına dayanıyor —
+/// bu yalnızca debug build'e kısıtlanırsa dağıtılan uygulamada işe yaramaz.
 #[tauri::command]
 fn open_devtools(webview_window: tauri::WebviewWindow) {
-    #[cfg(debug_assertions)]
     webview_window.open_devtools();
-    #[cfg(not(debug_assertions))]
-    let _ = webview_window; // release build'de gösterme
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

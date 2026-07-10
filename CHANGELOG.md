@@ -3,6 +3,26 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.13.0] — 2026-07-10 — Açık Kaynak Geçişi: Eski WinForms Uygulaması Kaldırıldı — eFaturaEdit/, LICENSE, .github/copilot-instructions.md
+
+### Kaldırılan
+- **`eFaturaEdit/` klasörünün tamamı** — .NET Framework 4.7.2 + DevExpress v14.2 WinForms uygulaması, yerini tamamen `app/` altındaki Tauri uygulamasına bıraktı.
+- **Lisans/aktivasyon sistemi:** `QLicense`, `ActivationControls4Win`, `ActivationControls4Wpf`, `Demo/DemoLicense`, `Demo/DemoActivationTool` projeleri kaldırıldı (RSA lisans doğrulama, donanım parmak izi, aktivasyon UI dahil).
+- **DevExpress bağımlılığı** — ticari/lisanslı UI framework, proje genelinden tamamen çıkarıldı.
+- **CefSharp + WebView2 dual render engine**, **Saxon-HE 10.9.0** (IKVM üzerinden) — WinForms'a özgüydü.
+- Eski installer script'leri: `installforce_setup.ifp`, `setup.iss` (Inno Setup, `tr-TR` kültürü).
+- `eFaturaEditSolution.sln` — yalnızca `src/eFaturaEdit.Core` kaldı; `e-FaturaEdit`, `QLicense`, `ActivationControls4Win`, `eFaturaLicense`, `ActivationTool` proje girdileri temizlendi.
+
+### Eklenen
+- **`LICENSE`** — MIT lisansı, proje ilk kez açık kaynak olarak yayımlanıyor.
+- **`README.md`** — daha önce boş olan dosya, gerçek proje açıklaması/kurulum/kullanım ile dolduruldu.
+- **`.github/copilot-instructions.md`** — üç parçalı (WinForms+Core+Tauri) yapıdan iki parçalı (Core+Tauri) yapıya güncellendi; public repo güvenlik notu eklendi.
+- **`INSTALL.md`** — macOS'ten Windows (`cargo-xwin` + NSIS) ve Linux (Docker + WebKitGTK) cross-compile talimatları eklendi.
+
+### Doğrulama
+- `src/eFaturaEdit.Core` ve `src/eFaturaEdit.DataExport` kaldırma sonrası bağımsız olarak hatasız derleniyor (0 hata).
+- Repo görünürlüğü **public** olarak değiştirildi (önceden private).
+
 ## [2.12.0] — 2026-07-10 — Faz 3: Tauri Masaüstü Uygulaması (Cross-Platform, macOS/Linux/Windows) — app/, src/eFaturaEdit.DataExport/
 
 ### Eklenen — Tauri + SvelteKit Masaüstü Uygulaması

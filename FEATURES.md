@@ -32,17 +32,26 @@ bağımlılığı yok, Tauri v2 + SvelteKit + CodeMirror 6 ile geliştirilmişti
 - **`eFaturaEdit.DataExport` tool'u:** Core POCO'ları TypeScript-friendly JSON'a dönüştürür
   (`npm run data:sync` ile Core → JSON senkronizasyonu).
 
-**Bilinen sınırlamalar:** Kullanıcı tanımlı örnek/snippet klasörü UI'ı yok, XSLT 2.0/3.0 desteği yok
-(native `XSLTProcessor` yalnızca 1.0), çoklu dosya sekmesi ve native menü çubuğu yok.
+**Bilinen sınırlamalar:** XSLT 2.0/3.0 desteği yok (native `XSLTProcessor` yalnızca 1.0),
+çoklu dosya sekmesi ve native menü çubuğu yok.
 
 ### Mimari — Faz 2: Cross-Platform Çekirdek (v2.11.0)
 
 - **`eFaturaEdit.Core` kütüphanesi:** UI-bağımsız veri katmanı. Multi-target `netstandard2.0;net10.0`, sıfır dış NuGet bağımlılığı, Windows/macOS/Linux uyumlu.
 - **İçerik:** 149 UBL-TR snippet (`Snippets/`), 17 GİB örnek XML kataloğu (`Samples/`), 16 XSLT etiket + 77 XPath autocomplete verisi (`Completion/`), `IHardwareIdProvider` soyutlaması (`Platform/`).
-- **Mevcut WinForms projesi:** Core'a `ProjectReference` ile bağlı — mevcut davranış değişmedi. WinForms-özgü yol çözümleyiciler (`UblTrSamplesPaths`) ve editör adaptörü (`XsltCompletionProvider`) WinForms'ta kaldı.
 - **Faz 3 (tamamlandı):** Tauri masaüstü uygulaması (`app/`) Core'u JSON export yoluyla tüketiyor.
 
-### Ana Özellikler (WinForms — mevcut üretim uygulaması)
+---
+
+## Tarihçe: Eski WinForms Uygulaması (v1.0 – v2.12.0, kaldırıldı)
+
+> **v2.13.0'da kaldırıldı.** Aşağıdaki bölümler, projenin öncüsü olan .NET Framework 4.7.2 +
+> DevExpress WinForms uygulamasının (`eFaturaEdit/`) özellik geçmişidir. Bu uygulama, lisans/aktivasyon
+> sistemi (QLicense, ActivationControls4Win) ve DevExpress bağımlılığıyla birlikte depodan tamamen
+> kaldırılmıştır — yerini `app/` altındaki Tauri uygulaması almıştır. Aşağıdaki içerik yalnızca
+> tarihsel referans amaçlıdır, aktif kodda karşılığı yoktur.
+
+### Ana Özellikler (WinForms — kaldırıldı)
 
 - **XSLT Editörü:** E-Fatura dizayn (XSLT) dosyalarını düzenleme — `ICSharpCode.TextEditorEx` tabanlı söz dizimi vurgulama.
 - **Canlı Önizleme:** XSLT dönüşümünü `CefSharp.WinForms` (Chromium) tabanlı tarayıcıda anlık görselleştirme.

@@ -12,7 +12,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
 
     <!-- Package metadata -->
-    <Version>2.12.0</Version>
+    <Version>2.13.0</Version>
     <AssemblyVersion>2.12.0.0</AssemblyVersion>
     <FileVersion>2.12.0.0</FileVersion>
     <Authors>Zafer Bilgisayar</Authors>

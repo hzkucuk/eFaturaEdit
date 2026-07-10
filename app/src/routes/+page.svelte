@@ -43,6 +43,8 @@
   let helpOpen = $state(false);
   let exitConfirmOpen = $state(false);
   let exitInProgress = $state(false);
+  let styleApplyOpen = $state(false);
+  let capturedCss = $state('');
 
   // Editor referansları (bind:this)
   let xsltEditor = $state<CodeEditor>();
@@ -555,6 +557,72 @@
     }
   }
 
+  // ─── DevTools'ta düzenlenen CSS'i XSLT'ye aktarma ───────────────────
+  // Yalnızca CSS/stil: DevTools'ta Styles panelinden yapılan değişiklikler
+  // canlı CSSOM'u (styleSheets[].cssRules) günceller, stil etiketinin
+  // textContent'ini DEĞİL. Bu yüzden mevcut kuralları cssRules üzerinden
+  // yeniden serileştirip yakalıyoruz. Veriden üretilen metin/yapı
+  // değişiklikleri (xsl:value-of, xsl:for-each vb.) genel olarak XSLT
+  // kaynağına güvenilir şekilde geri eşlenemez — bu yüzden kapsam dışı.
+  //
+  // NOT: Etiket adı ("style") aşağıda kasıtlı olarak bir değişkenden
+  // interpolate ediliyor — kaynak kodda "<" + "style" bitişik geçerse
+  // (yorumda, regex'te, string'de fark etmez) Svelte derleyicisinin
+  // script/style blok sınırlarını bulmak için yaptığı ön-tarama yanlış
+  // pozitif verip gerçek kapanış script etiketini yutabiliyor.
+  const STYLE_TAG = 'style';
+  const styleBlockRegex = new RegExp(`(<${STYLE_TAG}[^>]*>)([\\s\\S]*?)(<\\/${STYLE_TAG}>)`, 'i');
+  let cssCaptureResolve: ((css: string) => void) | null = null;
+  let cssCaptureTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function requestCssCapture(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      cssCaptureResolve = resolve;
+      previewFrame?.contentWindow?.postMessage({ type: 'capture-css' }, '*');
+      cssCaptureTimer = setTimeout(() => {
+        if (cssCaptureResolve) {
+          cssCaptureResolve = null;
+          reject(new Error('Önizleme yanıt vermedi (zaman aşımı).'));
+        }
+      }, 2000);
+    });
+  }
+
+  async function captureStyleFromPreview() {
+    if (!editorState.previewHtml) {
+      status('Önce bir önizleme oluşturun.', true);
+      return;
+    }
+    if (!styleBlockRegex.test(editorState.xsltText)) {
+      status('XSLT içinde stil bloğu bulunamadı — bu özellik yalnızca gömülü CSS içeren şablonlarda çalışır.', true);
+      return;
+    }
+    try {
+      const css = await requestCssCapture();
+      if (!css.trim()) {
+        status('Önizlemede yakalanacak CSS kuralı bulunamadı.', true);
+        return;
+      }
+      capturedCss = css;
+      styleApplyOpen = true;
+    } catch (err) {
+      status(`Stil yakalanamadı: ${(err as Error).message}`, true);
+    }
+  }
+
+  function applyCapturedCssToXslt() {
+    const newXslt = editorState.xsltText.replace(styleBlockRegex, (_m, open, _old, close) => `${open}\n${capturedCss}\n${close}`);
+    editorState.xsltText = newXslt;
+    xsltEditor?.setValue(newXslt);
+    styleApplyOpen = false;
+    status('DevTools\'taki stil değişiklikleri XSLT\'ye uygulandı — kaydetmeyi unutmayın.');
+    runTransform();
+  }
+
+  function cancelStyleApply() {
+    styleApplyOpen = false;
+  }
+
   function setPreviewWidth(w: number | null) {
     updateSetting('previewWidth', w);
     status(`Önizleme genişliği: ${w ? w + 'px' : 'Tam'}`);
@@ -581,6 +649,17 @@
 document.addEventListener('contextmenu', function(e) {
   e.preventDefault();
   window.parent.postMessage({ type: 'preview-contextmenu', x: e.clientX, y: e.clientY }, '*');
+});
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== 'capture-css') return;
+  var parts = [];
+  for (var i = 0; i < document.styleSheets.length; i++) {
+    try {
+      var rules = document.styleSheets[i].cssRules;
+      for (var j = 0; j < rules.length; j++) parts.push(rules[j].cssText);
+    } catch (err) { /* erişilemeyen (cross-origin) sheet — atla */ }
+  }
+  window.parent.postMessage({ type: 'css-captured', css: parts.join('\\n') }, '*');
 });
 <\/script>`;
     const html = editorState.previewHtml;
@@ -637,6 +716,12 @@ document.addEventListener('contextmenu', function(e) {
 
   function onPreviewMessage(e: MessageEvent) {
     if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'css-captured') {
+      if (cssCaptureTimer) clearTimeout(cssCaptureTimer);
+      cssCaptureResolve?.(e.data.css ?? '');
+      cssCaptureResolve = null;
+      return;
+    }
     if (e.data.type !== 'preview-contextmenu') return;
     const rect = previewFrame?.getBoundingClientRect();
     if (!rect) return;
@@ -1010,6 +1095,14 @@ document.addEventListener('contextmenu', function(e) {
 
           <span class="mini-sep"></span>
 
+          <button
+            onclick={captureStyleFromPreview}
+            disabled={!editorState.previewHtml}
+            title="DevTools'ta (Styles panelinde) yaptığın CSS değişikliklerini XSLT'deki stil bloğuna aktar"
+          >🎨 Stili XSLT'ye Al</button>
+
+          <span class="mini-sep"></span>
+
           <button onclick={printPreview} disabled={!editorState.previewHtml} title="Yazdır / PDF (Cmd+P)">🖨</button>
         </div>
       </div>
@@ -1103,6 +1196,24 @@ document.addEventListener('contextmenu', function(e) {
   </div>
 {/if}
 
+<!-- ─── DevTools stilini XSLT'ye uygula onayı ─────────────────────── -->
+{#if styleApplyOpen}
+  <div class="exit-overlay" role="presentation">
+    <div class="style-modal" role="alertdialog" aria-label="Stil değişikliklerini XSLT'ye uygula">
+      <h3>🎨 Stil Değişikliklerini XSLT'ye Uygula</h3>
+      <p>
+        DevTools'ta yaptığın CSS değişiklikleri yakalandı. Uygularsan XSLT'deki
+        <code>&lt;style&gt;</code> bloğunun içeriği aşağıdakiyle <b>değiştirilecek</b>
+        (metin/veri içeriği etkilenmez, yalnızca stil).
+      </p>
+      <pre class="style-preview">{capturedCss}</pre>
+      <div class="exit-actions">
+        <button class="exit-btn cancel" onclick={cancelStyleApply}>İptal</button>
+        <button class="exit-btn save" onclick={applyCapturedCssToXslt}>Uygula</button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   :global(:root) {
@@ -1491,6 +1602,33 @@ document.addEventListener('contextmenu', function(e) {
     line-height: 1.5;
     color: #374151;
   }
+  .style-modal {
+    width: min(560px, 92vw);
+    max-height: 80vh;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .app.dark .style-modal { background: #2d2d30; color: #e6e6e6; }
+  .style-modal h3 { margin: 0 0 0.75rem; font-size: 16px; color: #0a5cff; }
+  .style-modal p { margin: 0 0 0.75rem; font-size: 13px; line-height: 1.5; color: #374151; }
+  .style-preview {
+    background: #f5f6f8;
+    border: 1px solid #d5d8dc;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    overflow: auto;
+    max-height: 40vh;
+    margin: 0 0 1.25rem;
+    white-space: pre-wrap;
+  }
+  .app.dark .style-preview { background: #1e1e1e; border-color: #3f3f46; }
   .exit-actions {
     display: flex;
     justify-content: flex-end;

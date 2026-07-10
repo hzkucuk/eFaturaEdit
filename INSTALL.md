@@ -1,11 +1,11 @@
-﻿# Kurulum Rehberi (Installation)
+# Kurulum Rehberi (Installation)
 
 ## Solution Yapısı
 
 ```
 eFaturaEditSolution.sln
 ├── src/
-│   ├── eFaturaEdit.Core/               ← v2.12.0 — cross-platform çekirdek
+│   ├── eFaturaEdit.Core/               ← cross-platform çekirdek
 │   │   ├── Snippets/                   UBL-TR snippet'ler + SnippetInfo
 │   │   ├── Samples/                    UBL-TR örnek XML kataloğu
 │   │   ├── Completion/                 Autocomplete verisi + helpers
@@ -14,30 +14,16 @@ eFaturaEditSolution.sln
 │   │
 │   └── eFaturaEdit.DataExport/         Core → JSON export tool (net10.0 konsol)
 │
-├── app/                                 ← v2.12.0 — Tauri masaüstü uygulaması
-│   ├── src/                            SvelteKit + TypeScript frontend
-│   │   ├── lib/                        CodeEditor, Splitter, HelpModal, drag, settings, ...
-│   │   ├── lib/data/                   Core'dan üretilen JSON'lar (npm run data:sync)
-│   │   └── routes/                     Ana sayfa + /settings
-│   ├── src-tauri/                       Rust backend (Tauri v2)
-│   └── static/samples/                  Örnek XSLT/XML dosyaları
-│
-└── eFaturaEdit/                         Ana WinForms uygulaması (net472)
-    └── e-FaturaEdit.csproj              → eFaturaEdit.Core referansı
+└── app/                                 ← Tauri masaüstü uygulaması (macOS/Linux/Windows)
+    ├── src/                            SvelteKit + TypeScript frontend
+    │   ├── lib/                        CodeEditor, Splitter, HelpModal, drag, settings, ...
+    │   ├── lib/data/                   Core'dan üretilen JSON'lar (npm run data:sync)
+    │   └── routes/                     Ana sayfa + /settings
+    ├── src-tauri/                       Rust backend (Tauri v2)
+    └── static/samples/                  Örnek XSLT/XML dosyaları
 ```
 
 ## Gereksinimler
-
-### WinForms Uygulaması (mevcut üretim)
-
-| Bileşen | Minimum Versiyon |
-|---|---|
-| .NET Framework | 4.7.2 |
-| Visual Studio | 2022+ |
-| DevExpress WinForms | v14.2.15 |
-| İşletim Sistemi | Windows 7 SP1+ |
-
-### Tauri Masaüstü Uygulaması (`app/`) — macOS/Linux/Windows
 
 | Bileşen | Minimum Versiyon |
 |---|---|
@@ -46,18 +32,7 @@ eFaturaEditSolution.sln
 | Node.js | 20+ (test edilen: 26) |
 | npm | 10+ |
 | Xcode Command Line Tools | macOS derlemesi için |
-
-## NuGet Paketleri (WinForms)
-
-| Paket | Versiyon | Amaç |
-|---|---|---|
-| CefSharp.Common | 145.0.260 | Chromium Embedded Framework |
-| CefSharp.WinForms | 145.0.260 | WinForms tarayıcı kontrolü |
-| chromiumembeddedframework.runtime.win-x64 | 145.0.26 | CEF runtime (x64) |
-| chromiumembeddedframework.runtime.win-x86 | 145.0.26 | CEF runtime (x86) |
-| ICSharpCode.TextEditorEx | 1.3.0 | Kod editörü kontrolü |
-| Saxon-HE | 10.9.0 | XSLT 3.0 dönüşüm motoru |
-| Obfuscar | 2.2.38 | Kod obfuskasyon (dev dependency) |
+| WebKitGTK 4.1 + GTK3 (Linux derlemesi için) | `libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev` |
 
 ## npm Paketleri (Tauri App)
 
@@ -69,50 +44,9 @@ eFaturaEditSolution.sln
 | codemirror + @codemirror/{view,state,commands,language,lang-xml,lang-html,autocomplete,search,theme-one-dark} | Kod editörü |
 | thememirror, @lezer/highlight | Editör temaları + syntax highlight |
 
-## Kurulum Adımları — WinForms
+## Kurulum Adımları
 
-1. Depoyu klonlayın:
-   ```bash
-   git clone https://github.com/hzkucuk/eFaturaEdit.git
-   ```
-
-2. Visual Studio ile `E-FaturaEdit.sln` dosyasını açın.
-
-3. NuGet paketlerini geri yükleyin:
-   - **Visual Studio:** Solution Explorer → Sağ tık → "Restore NuGet Packages"
-   - **Komut satırı:** `nuget restore E-FaturaEdit.sln`
-
-4. **DevExpress v14.2** bileşenlerinin sisteminizde kurulu ve lisanslı olduğundan emin olun.
-
-5. Projeyi derleyin (`Ctrl+Shift+B`).
-
-## Yapılandırma
-
-- Uygulama ayarları: `eFaturaEdit\Properties\Settings.settings`
-- Lisans doğrulama sertifikası: `eFaturaEdit\LicenseVerify.cer` (embedded resource)
-- Sertifika şifresi: `eFaturaEdit\Demo\DemoActivationTool\App.config` → `CertificatePassword` (üretim ortamında değiştirin)
-- Örnek XSLT: `eFaturaEdit\diz.xslt`
-- Örnek fatura XML: `eFaturaEdit\fatura.xml`, `eFaturaEdit\XMLDataFiles\`
-
-## Öğe Ekleme Toolbar
-
-Ribbon üzerindeki "Öğe Ekle" grubu ile 15 hazır XSLT/HTML snippet kullanılabilir:
-- **Tıklama:** Butona tıklayarak imleç pozisyonuna snippet ekleme
-- **Editöre sürükle-bırak:** Butonu XSLT editörüne sürükleyip bırakma
-- **Önizlemeye sürükle-bırak:** Butonu CefSharp önizleme üzerine sürükleyip bırakma (JavaScript interop)
-
-## Dağıtım (Inno Setup)
-
-Kurulum paketi **Inno Setup** ile oluşturulmaktadır.
-
-- **Yapılandırma dosyası:** `setup.iss`
-- **Kültür:** `tr-TR`
-- **Versiyon:** `Properties\AssemblyInfo.cs` → `AssemblyVersion` ile senkron tutulmalıdır.
-
-## Kurulum Adımları — Tauri Masaüstü Uygulaması (`app/`)
-
-macOS, Linux ve Windows üzerinde çalışan cross-platform uygulama. Aşağıdaki
-adımlar tüm platformlarda ortaktır (macOS örnek alınmıştır).
+Aşağıdaki adımlar tüm platformlarda ortaktır (macOS örnek alınmıştır).
 
 1. **Rust kurun** (eğer kurulu değilse):
    ```bash
@@ -139,6 +73,7 @@ adımlar tüm platformlarda ortaktır (macOS örnek alınmıştır).
    ```bash
    npm run tauri dev
    ```
+
    İlk çalıştırmada Rust bağımlılıkları derlenir (~1 dakika); sonraki
    çalıştırmalar saniyeler içinde açılır.
 
@@ -146,13 +81,52 @@ adımlar tüm platformlarda ortaktır (macOS örnek alınmıştır).
    ```bash
    npm run tauri build
    ```
-   Çıktı: `app/src-tauri/target/release/bundle/` altında platforma özgü
-   yükleyici (`.dmg`, `.msi`, `.deb`/`.AppImage`).
 
-### Yapılandırma (Tauri App)
+   Çıktı: `app/src-tauri/target/release/bundle/` altında platforma özgü
+   yükleyici (macOS: `.app`/`.dmg`, Windows: `.exe`/NSIS, Linux: `.deb`/`.rpm`/`.AppImage`).
+
+### macOS'ten Windows Cross-Compile
+
+macOS'ten Windows `.exe` + NSIS installer üretmek mümkün (deneysel, Tauri'nin
+kendisi de böyle işaretliyor):
+
+```bash
+rustup target add x86_64-pc-windows-msvc
+cargo install --locked cargo-xwin
+brew install llvm makensis
+export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
+cd app
+npx tauri build --target x86_64-pc-windows-msvc --runner cargo-xwin --bundles nsis
+```
+
+İmzalanmamış installer üretir (Windows SmartScreen uyarısı gösterir) — dağıtım
+öncesi bir code-signing sertifikası düşünülmeli.
+
+### macOS'ten Linux Cross-Compile (Docker ile)
+
+WebKitGTK gerçek native kütüphane gerektirdiği için ham cross-compile yerine
+gerçek bir Linux ortamı (Docker) kullanılmalı:
+
+```bash
+docker run --rm --platform linux/amd64 -v "$(pwd)":/work ubuntu:24.04 bash -c '
+  apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+    build-essential curl wget file pkg-config libwebkit2gtk-4.1-dev libgtk-3-dev \
+    librsvg2-dev libayatana-appindicator3-dev libssl-dev patchelf nodejs npm \
+    fuse libfuse2 &&
+  curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y &&
+  source "$HOME/.cargo/env" && cd /work/app && npm run tauri build
+'
+```
+
+AppImage adımı Docker'da FUSE eksikliği yüzünden başarısız olabilir (`--device
+/dev/fuse --cap-add SYS_ADMIN` ile denenebilir); `.deb`/`.rpm` her durumda
+güvenilir şekilde üretilir.
+
+## Yapılandırma (Tauri App)
 
 - **Bundle identifier:** `com.zaferbilgisayar.efaturaedit` — [tauri.conf.json](app/src-tauri/tauri.conf.json)
 - **Capability/izinler:** [app/src-tauri/capabilities/default.json](app/src-tauri/capabilities/default.json) — dosya sistemi kapsamı (`$HOME`, `$DOCUMENT`, `$APPDATA` vb.), dialog, pencere kapatma izinleri
+- **DevTools:** Release build'de de kasıtlı olarak açık (`"devtools": true` + `tauri` crate'inde `devtools` feature) — önizlemedeki "Stili XSLT'ye Al" özelliği buna dayanıyor.
 - **Kullanıcı ayarları:** Tarayıcı `localStorage`'da saklanır (`efaturaEdit.settings.v3`, `efaturaEdit.recentFiles.v1`)
+- **Kullanıcı verisi:** `$APPDATA/samples/` (kullanıcı örnekleri), `$APPDATA/user-snippets.json` (kullanıcı snippet'leri)
 - **Önizleme geçici dosyaları:** `$APPLOCALDATA/preview/` (yazdırma için tarayıcıya açılan HTML'ler)
-
