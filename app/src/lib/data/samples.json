@@ -1,0 +1,103 @@
+{
+  "samplesRelativePath": "../../UBL-TR/Ornekler",
+  "groups": [
+    {
+      "categoryName": "Temel Fatura",
+      "entries": [
+        {
+          "fileName": "1_TEMEL_FATURA.xml",
+          "displayName": "Temel Fatura"
+        },
+        {
+          "fileName": "6_TEMEL_FATURA_KDV_SIFIR.xml",
+          "displayName": "Temel Fatura (KDV Sıfır)"
+        },
+        {
+          "fileName": "7_TEMEL_FATURA_IADE.xml",
+          "displayName": "Temel Fatura (İade)"
+        }
+      ]
+    },
+    {
+      "categoryName": "Ticari Fatura",
+      "entries": [
+        {
+          "fileName": "2_TICARI_FATURA.xml",
+          "displayName": "Ticari Fatura"
+        },
+        {
+          "fileName": "3_TICARI_FATURA.xml",
+          "displayName": "Ticari Fatura (Red Senaryosu)"
+        },
+        {
+          "fileName": "7_TICARI_FATURA.xml",
+          "displayName": "Ticari Fatura (İade Senaryosu)"
+        }
+      ]
+    },
+    {
+      "categoryName": "Özel Faturalar",
+      "entries": [
+        {
+          "fileName": "TEKNOLOJI_DESTEK.xml",
+          "displayName": "Teknoloji Desteği"
+        }
+      ]
+    },
+    {
+      "categoryName": "Uygulama Yanıtları",
+      "entries": [
+        {
+          "fileName": "2_UYGULAMA_YANITI_KABUL.xml",
+          "displayName": "Uygulama Yanıtı (Kabul)"
+        },
+        {
+          "fileName": "3_UYGULAMA_YANITI_RED.xml",
+          "displayName": "Uygulama Yanıtı (Red)"
+        },
+        {
+          "fileName": "7_UYGULAMA_YANITI_IADE.xml",
+          "displayName": "Uygulama Yanıtı (İade)"
+        }
+      ]
+    },
+    {
+      "categoryName": "Sistem Yanıtları",
+      "entries": [
+        {
+          "fileName": "1_SISTEM_YANITI_MERKEZ.xml",
+          "displayName": "Sistem Yanıtı (Merkez)"
+        },
+        {
+          "fileName": "1_SISTEM_YANITI_POSTA_KUTUSU.xml",
+          "displayName": "Sistem Yanıtı (Posta Kutusu)"
+        },
+        {
+          "fileName": "1_SISTEM_YANITI_GTB_POSTA_KUTUSU.xml",
+          "displayName": "Sistem Yanıtı (GTB Posta Kutusu)"
+        }
+      ]
+    },
+    {
+      "categoryName": "Kullanıcı İşlemleri",
+      "entries": [
+        {
+          "fileName": "4_KULLANICI_ACMA.xml",
+          "displayName": "Kullanıcı Açma"
+        },
+        {
+          "fileName": "5_KULLANICI_SILME.xml",
+          "displayName": "Kullanıcı Silme"
+        },
+        {
+          "fileName": "8_FATURA_SAKLAMA_KULLANICI_ACMA.xml",
+          "displayName": "Saklama Kullanıcı Açma"
+        },
+        {
+          "fileName": "9_FATURA_SAKLAMA_KULLANICI_SILME.xml",
+          "displayName": "Saklama Kullanıcı Silme"
+        }
+      ]
+    }
+  ]
+}

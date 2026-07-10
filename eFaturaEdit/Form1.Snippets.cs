@@ -150,7 +150,7 @@ namespace eFaturaEdit
         /// </summary>
         private void InitSampleXmlToolbar()
         {
-            if (!UblTrSamples.SamplesDirectoryExists())
+            if (!UblTrSamplesPaths.SamplesDirectoryExists())
                 return;
 
             var samplePageGroup = new RibbonPageGroup("Örnek Faturalar");
@@ -192,7 +192,7 @@ namespace eFaturaEdit
             if (string.IsNullOrEmpty(fileName))
                 return;
 
-            string fullPath = UblTrSamples.GetFullPath(fileName);
+            string fullPath = UblTrSamplesPaths.GetFullPath(fileName);
             if (!File.Exists(fullPath))
             {
                 MessageBox.Show(

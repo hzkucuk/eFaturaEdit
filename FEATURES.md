@@ -1,8 +1,48 @@
 # Özellikler (Features)
 
-## E-Fatura Dizayn Editörü — v2.10.0
+## E-Fatura Dizayn Editörü — v2.12.0
 
-### Ana Özellikler
+### 🖥️ Tauri Masaüstü Uygulaması — Faz 3 (v2.12.0, `app/`)
+
+Cross-platform (macOS/Linux/Windows) yeni nesil masaüstü UI. DevExpress/WinForms
+bağımlılığı yok, Tauri v2 + SvelteKit + CodeMirror 6 ile geliştirilmiştir.
+
+- **3 Panel Düzen:** Sol snippet paneli, orta XSLT+XML editörleri, sağ canlı önizleme —
+  hepsi mouse ile yeniden boyutlandırılabilir (`Splitter`).
+- **CodeMirror 6 Editör:** Syntax highlight (özel açık tema renklendirmesi + 10 hazır tema),
+  satır numarası, kod katlama, Türkçeleştirilmiş arama paneli (Cmd/Ctrl+F), undo/redo.
+- **Autocomplete:** 242 öneri (16 XSLT etiketi + 77 XPath + 149 snippet) — `Ctrl+Space` veya `<` ile tetiklenir.
+- **Snippet Sürükle-Bırak:** Custom mouse-tracking implementasyonu (WKWebView'de HTML5 API güvenilmez) —
+  görsel ghost gösterge, hedef editör üzerinde mavi vurgulama.
+- **Dosya İşlemleri:** Aç/Kaydet/Farklı Kaydet (native dialog), `Cmd/Ctrl+S` ile XSLT+XML birlikte kaydetme,
+  kaydetmeden önce syntax kontrolü (hata varsa imleç otomatik hatalı satıra gider), son 10 dosya listesi.
+- **Otomatik Dönüştür:** Yükleme/kaydetme sonrası ve yazarken debounce ile (varsayılan 700ms).
+- **Auto-save:** Ayarlardan açılabilir, belirli gecikmeyle sessiz kaydetme.
+- **Çıkışta Kaydetme Kontrolü:** Kaydedilmemiş değişiklik varsa çıkışı engelleyip
+  "İptal / Kaydetmeden Çık / Kaydet ve Çık" seçenekli onay penceresi gösterir.
+- **Önizleme:** Responsive boyut seçici (320/768/1200/Full), zoom (Cmd +/-/0),
+  sağ tık menüsü (Yazdır/PDF, HTML kopyala, DevTools). Yazdırma sistem tarayıcısına (Safari) devredilir —
+  Tauri WKWebView'de native print paneli güvenilir açılmıyor.
+- **Standards Mode Garantisi:** `XSLTProcessor.transformToDocument()` + `<!DOCTYPE html>`/`<meta charset>`
+  enjeksiyonu — DOCTYPE eksikliği Quirks Mode'a (farklı tablo render) yol açtığı için eklendi.
+- **Ayarlar Sayfası:** Font boyutu, sekme genişliği, kelime kaydırma, 11 tema, autosave/debounce/autocomplete anahtarları.
+- **Yardım Sistemi:** F1 kısayolu ile açılan, sidebar navigasyonlu, aranabilir 11 bölümlük tam dokümantasyon
+  (`HelpModal`) + tüm kontrollerde açıklayıcı tooltip'ler.
+- **Örnek Fatura Kataloğu:** 6 kategori × 17 GİB resmi UBL-TR senaryosu (zarf örnekleri hariç tutuldu).
+- **`eFaturaEdit.DataExport` tool'u:** Core POCO'ları TypeScript-friendly JSON'a dönüştürür
+  (`npm run data:sync` ile Core → JSON senkronizasyonu).
+
+**Bilinen sınırlamalar:** Kullanıcı tanımlı örnek/snippet klasörü UI'ı yok, XSLT 2.0/3.0 desteği yok
+(native `XSLTProcessor` yalnızca 1.0), çoklu dosya sekmesi ve native menü çubuğu yok.
+
+### Mimari — Faz 2: Cross-Platform Çekirdek (v2.11.0)
+
+- **`eFaturaEdit.Core` kütüphanesi:** UI-bağımsız veri katmanı. Multi-target `netstandard2.0;net10.0`, sıfır dış NuGet bağımlılığı, Windows/macOS/Linux uyumlu.
+- **İçerik:** 149 UBL-TR snippet (`Snippets/`), 17 GİB örnek XML kataloğu (`Samples/`), 16 XSLT etiket + 77 XPath autocomplete verisi (`Completion/`), `IHardwareIdProvider` soyutlaması (`Platform/`).
+- **Mevcut WinForms projesi:** Core'a `ProjectReference` ile bağlı — mevcut davranış değişmedi. WinForms-özgü yol çözümleyiciler (`UblTrSamplesPaths`) ve editör adaptörü (`XsltCompletionProvider`) WinForms'ta kaldı.
+- **Faz 3 (tamamlandı):** Tauri masaüstü uygulaması (`app/`) Core'u JSON export yoluyla tüketiyor.
+
+### Ana Özellikler (WinForms — mevcut üretim uygulaması)
 
 - **XSLT Editörü:** E-Fatura dizayn (XSLT) dosyalarını düzenleme — `ICSharpCode.TextEditorEx` tabanlı söz dizimi vurgulama.
 - **Canlı Önizleme:** XSLT dönüşümünü `CefSharp.WinForms` (Chromium) tabanlı tarayıcıda anlık görselleştirme.

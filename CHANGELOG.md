@@ -3,6 +3,109 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.12.0] — 2026-07-10 — Faz 3: Tauri Masaüstü Uygulaması (Cross-Platform, macOS/Linux/Windows) — app/, src/eFaturaEdit.DataExport/
+
+### Eklenen — Tauri + SvelteKit Masaüstü Uygulaması
+- **`app/` — Tauri v2 + Svelte 5 + TypeScript + SvelteKit adapter-static:** macOS/Linux/Windows üzerinde çalışan yeni masaüstü UI, DevExpress/WinForms bağımlılığı yok. — `app/`
+- **[app/src-tauri/](app/src-tauri/):** Rust backend — `tauri v2`, `tauri-plugin-opener`, `tauri-plugin-dialog`, `tauri-plugin-fs`, `serde`/`serde_json`. Bundle identifier: `com.zaferbilgisayar.efaturaedit`. Pencere 1400×900 (min 1000×700), **ilk açılışta maximized**.
+- **`open_devtools` Rust komutu:** Sağ tık menüsünden WebView geliştirici araçlarını açar (yalnızca debug build).
+
+### Eklenen — Editör (CodeMirror 6)
+- **[app/src/lib/CodeEditor.svelte](app/src/lib/CodeEditor.svelte):** CodeMirror 6 tabanlı XSLT/XML editörü — satır numarası, kod katlama, bracket matching, syntax highlight, undo/redo, arama paneli (**Türkçeleştirilmiş**: Ara, Değiştir, Sonraki, Önceki, BÜYÜK/küçük, kelime, regex).
+- **Özel açık tema renklendirmesi:** Tag adı, öznitelik, değer, yorum, namespace prefix için `HighlightStyle` — `light` temada aktif; diğer 10 tema (`thememirror`) kendi paletini kullanır.
+- **Autocomplete:** Core kataloğundan 16 XSLT etiketi + 77 XPath önerisi + 149 snippet = 242 öneri. `<` sonrası veya `Ctrl+Space` ile tetiklenir.
+- **11 tema:** Açık (varsayılan), One Dark, Dracula, Cobalt, Espresso, Solarized Light, Ayu Light, Noctis Lilac, Rosé Pine Dawn, Clouds, Smoothy — Ayarlar sayfasından seçilir.
+- **`insertAtCursor`, `insertAtCoords`, `setValue`, `goToLine`, `undo`, `redo`** — parent component'e expose edilen editör API'si.
+
+### Eklenen — Dosya İşlemleri
+- **[app/src/lib/fileio.ts](app/src/lib/fileio.ts):** Tauri dialog + fs API sarmalayıcısı — Aç/Kaydet/Farklı Kaydet, native macOS dialog.
+- **`Cmd/Ctrl+S`:** XSLT ve XML dosyalarını **birlikte** kaydeder; sadece değişen (dirty) dosyalar yazılır. Kaydetmeden önce syntax kontrolü yapılır — **hata varsa dosya kaydedilmez ve imleç otomatik olarak hatalı satıra konumlanır** (`XsltError.line/column` → `CodeEditor.goToLine()`).
+- **Kaydet butonu görsel indicator:** Turuncu pulse animasyonu + hangi dosyanın (XSLT/XML) değiştiğini gösteren etiket.
+- **[app/src/lib/recent-files.svelte.ts](app/src/lib/recent-files.svelte.ts):** Son 10 açılan dosya, localStorage persist, toolbar'da **🕒 Son ▼** dropdown.
+- **Otomatik dönüştür:** Dosya açıldığında/kaydedildiğinde (ayarlanabilir), ve yazarken debounce ile (varsayılan 700ms) otomatik XSLT dönüşümü.
+- **Auto-save:** Ayarlarda açılabilir — dirty olduktan belirli süre sonra (varsayılan 3sn) sessizce kaydeder (yalnızca zaten bir yolu olan dosyalar için).
+- **Çıkışta kaydetme kontrolü:** Tauri `onCloseRequested` olayı dinlenir; kaydedilmemiş değişiklik varsa özel bir onay penceresi (**İptal / Kaydetmeden Çık / Kaydet ve Çık**) gösterilir. "Kaydet ve Çık" syntax hatası durumunda çıkışı iptal eder.
+
+### Eklenen — Snippet Sistemi
+- **149 snippet**, kategori sekmeleri + arama kutusu ile filtrelenebilir sol panel.
+- **Tıkla-ekle:** Snippet imleç konumuna eklenir.
+- **Sürükle-bırak (custom mouse-tracking):** HTML5 native drag-drop API'si WKWebView'de güvenilmez olduğu için [app/src/lib/drag.svelte.ts](app/src/lib/drag.svelte.ts) ile saf mouse event tabanlı sürükleme implementasyonu — 5px eşik, ESC ile iptal, hedef editör üzerinde görsel gösterge (👻 ghost, hedefte mavi 📌).
+
+### Eklenen — Önizleme
+- **[app/src/lib/xslt.ts](app/src/lib/xslt.ts):** Native `XSLTProcessor` (XSLT 1.0) sarmalayıcısı. `transformToDocument()` + `outerHTML` serileştirme ile **`<!DOCTYPE html>` ve `<meta charset="utf-8">` garantisi** — bu olmadan tarayıcı Quirks Mode'a düşüp tablo kenarlık/genişlik hesaplamalarını farklı render ediyordu (Standards Mode fix).
+- **Responsive boyut seçici:** 📱320 / 📱768 / 🖥️1200 / ⬜Full butonları.
+- **Zoom:** −/%/+ butonları + `Cmd/Ctrl +/-/0` kısayolları.
+- **Yazdırma/PDF:** Önizleme HTML'i `$APPLOCALDATA/preview/` altına yazılıp sistem tarayıcısında (Safari) açılır; kullanıcı orada `Cmd+P` ile native yazdırma/PDF kaydetme yapar. *(Not: Tauri WKWebView'de uygulama içi `window.print()` native paneli güvenilir açmadığı için — sadece `@media print` stillerini anlık tetikleyip geri dönüyor — bu yol tamamen bırakıldı.)*
+- **Sağ tık menüsü:** Yazdır/PDF, HTML kopyala, yeniden dönüştür, Geliştirici Araçları.
+
+### Eklenen — UI/UX
+- **[app/src/lib/Splitter.svelte](app/src/lib/Splitter.svelte):** Mouse ile sürüklenebilir panel ayırıcılar (snippet↔editör, editör↔önizleme, XSLT↔XML).
+- **Toolbar gruplandırması:** Düzenle / Dosya / İşlemler / Yardım ve Ayarlar — görsel kutular halinde.
+- **Hoşgeldin ekranı:** Editörler boşken 3 hızlı başlangıç butonu (Örnek Yükle, XSLT Aç, XML Aç).
+- **[app/src/lib/settings.svelte.ts](app/src/lib/settings.svelte.ts) + [/settings](app/src/routes/settings/+page.svelte):** Editör (font, sekme, wrap, satır no), Görünüm (tema), Davranış (autosave, debounce, autocomplete) ayarları — localStorage persist.
+- **[app/src/lib/editor-state.svelte.ts](app/src/lib/editor-state.svelte.ts):** Modül-scope global state — Ayarlar sayfasına gidip geri dönüldüğünde editör içeriğinin kaybolmaması için.
+
+### Eklenen — Yardım Sistemi
+- **[app/src/lib/HelpModal.svelte](app/src/lib/HelpModal.svelte) + [help-content.ts](app/src/lib/help-content.ts):** Sidebar navigasyonlu, aranabilir, 11 bölümlük tam dokümantasyon (Genel Bakış, Dosya İşlemleri, Örnekler, Snippet'ler, Editör, Önizleme, Klavye Kısayolları, Ayarlar, Panel Boyutları, Sorun Giderme, Hakkında).
+- **F1 kısayolu** ve toolbar **❓ Yardım** butonu ile her yerden erişilebilir.
+- Tüm buton/kontrollere açıklayıcı `title` (tooltip) eklendi.
+
+### Eklenen — eFaturaEdit.DataExport
+- **[src/eFaturaEdit.DataExport/](src/eFaturaEdit.DataExport/eFaturaEdit.DataExport.csproj):** net10.0 konsol tool. Core POCO verilerini camelCase TypeScript-friendly JSON'a dönüştürür. Türkçe karakterler escape edilmez (`JavaScriptEncoder.Create(UnicodeRanges.All)`).
+- **Üretilen dosyalar:** `snippets.json` (149 snippet), `samples.json` (6 kategori × 17 örnek — zarf örnekleri kaldırıldı), `completion.json` (16 XSLT tag + 77 XPath), `manifest.json` (versiyon + timestamp).
+- **`npm run data:sync`** ile Core → JSON senkronizasyonu tek komutla yenilenir.
+
+### Mimari Kararlar
+- **Framework:** Electron değil, **Tauri v2** seçildi. Bundle boyutu ~15 MB (Electron ~150 MB), native WebView (macOS WKWebView + Windows WebView2).
+- **UI:** SvelteKit + adapter-static (client-side SPA) — React/Vue yerine Svelte tercih edildi (küçük bundle, az boilerplate).
+- **XSLT motoru:** Native `XSLTProcessor` (XSLT 1.0). Saxon-JS 2.x yalnızca Node.js için dağıtılıyor (`saxon-js` npm), tarayıcı runtime'ı (`SaxonJS2.rt.js`) Saxonica'nın kapalı download sayfasından manuel indirilmeli — bu nedenle ertelendi.
+- **DevExpress silindi:** Yeni UI'da DevExpress bağımlılığı yok.
+- **Namespace stratejisi (Core → Tauri):** Core POCO'lar → JSON export → TypeScript tipleri. Tek gerçek kaynak = C# Core.
+
+### Bilinen Sınırlamalar
+- Kullanıcı tanımlı örnek klasörü (`user-samples.ts` hazır) için UI henüz yok.
+- Kullanıcı tanımlı/dinamik snippet CRUD (UBL-TR güncellemeleri için) henüz yok.
+- XSLT 2.0/3.0 desteği yok (native `XSLTProcessor` yalnızca 1.0).
+- Çoklu dosya sekmesi, panel tam ekran (F11), native menü çubuğu yok.
+- Uygulama simgesi hâlâ Tauri varsayılanı.
+- Lisans/donanım ID sistemi (QLicense port'u) henüz yok.
+
+### Değişen — Versiyon
+- **2.11.0 → 2.12.0** — MINOR bump (yeni Tauri app + kapsamlı özellik seti, WinForms projesi davranışsal olarak değişmedi).
+
+### Bağımlılıklar (yeni)
+- **Rust 1.97** + Cargo (global), **Node.js 26** + npm 11
+- **Tauri v2** + `tauri-plugin-opener`/`dialog`/`fs` v2 (Rust)
+- **@sveltejs/kit** v2.9 + `adapter-static` v3, **Svelte** v5, **TypeScript** ~5.6, **Vite** v6
+- **@tauri-apps/api** v2 + **@tauri-apps/cli** v2, **@tauri-apps/plugin-dialog/fs** v2
+- **CodeMirror 6:** `@codemirror/{view,state,commands,language,lang-xml,lang-html,autocomplete,search,theme-one-dark}`, `thememirror`, `@lezer/highlight`
+
+## [2.11.0] — 2026-07-10 — Faz 2: eFaturaEdit.Core Ayrımı (Cross-Platform Çekirdek) — src/eFaturaEdit.Core/
+
+### Eklenen
+- **`eFaturaEdit.Core` projesi:** UI-bağımsız çekirdek. SDK-style csproj, multi-target `netstandard2.0;net10.0`. Sıfır dış NuGet bağımlılığı. — `src/eFaturaEdit.Core/eFaturaEdit.Core.csproj`
+- **`Snippets/SnippetInfo.cs`:** POCO snippet meta modeli.
+- **`Snippets/XsltSnippets.cs`:** 140 UBL-TR/HTML/XSLT snippet sözlüğü (WinForms'tan taşındı, tam veri).
+- **`Samples/SampleGroup.cs`, `Samples/SampleEntry.cs`:** UBL-TR örnek XML katalog POCO'ları.
+- **`Samples/UblTrSamples.cs`:** 7 kategori × 30 GİB resmi senaryo XML tanımları (WinForms'tan taşındı, sadece veri kısmı).
+- **`Completion/CompletionItem.cs`:** UI-bağımsız autocomplete girdi modeli.
+- **`Completion/XsltCompletionCatalog.cs`:** 16 XSLT etiket + 74 UBL-TR XPath önerisi + XPath fonksiyonları + `ExtractPreSelection`/`IsInsideXPathAttribute` yardımcıları. WinForms `XsltCompletionProvider` bu kataloğu tüketir.
+- **`Platform/IHardwareIdProvider.cs`:** Donanım parmak izi soyutlaması. Faz 3'te macOS `IOPlatformUUID` implementasyonu eklenecek.
+- **`UblTrSamplesPaths.cs` (WinForms):** `Application.ExecutablePath`'e bağımlı yol çözümleyicileri Core'dan ayrıldı, platforma özgü olarak WinForms tarafında tutuldu.
+
+### Değişen
+- **WinForms projesi:** `UblTrSamples.cs` ve `XsltSnippets.cs` dosyaları kaldırıldı (Core'a taşındı). Core projesine `ProjectReference` eklendi. — `eFaturaEdit/e-FaturaEdit.csproj`
+- **`XsltCompletionProvider.cs` sadeleştirildi:** 337 satır → 143 satır. Tüm öneri verisi ve XPath algılama Core'dan çekiliyor; bu dosya sadece `ICompletionDataProvider` adaptörü ve `SnippetCompletionData` sarmalayıcısı içeriyor.
+- **`Form1.Snippets.cs`:** `UblTrSamples.GetFullPath` / `SamplesDirectoryExists` çağrıları `UblTrSamplesPaths`'a yönlendirildi.
+- **Namespace stratejisi:** Core tipleri de `eFaturaEdit` root namespace altında — WinForms `using` yönergeleri değiştirilmedi.
+
+### Mimari
+- **Cross-platform hazırlık:** Core, gelecek Avalonia (Faz 3) UI'ının veri katmanı olacak. Windows / macOS / Linux üzerinde çalışabilir.
+- **Ertelendi (Faz 3):** Saxon-HE 12.x geçişi ertelendi. NuGet'te Saxon 12 için library paketi bulunmuyor (sadece CLI tool paketleri). Faz 3'te `SaxonHE10Net31Api` (Saxon 10.9 API'nin .NET 8/10 portu — aynı `Saxon.Api` namespace, cross-platform) kullanılacak. `XsltTransformHelper.cs` şimdilik WinForms'ta kaldı.
+
+### Solution
+- Core projesi `eFaturaEditSolution.sln`'e eklendi. GUID: `{C00E2D88-461F-46C8-BBFD-FED85A8F8C78}`.
+
 ## [2.10.0] — 2025-07-14 — Partial Class Refactoring + XsltTransformHelper — Form1*.cs, XsltTransformHelper.cs
 
 ### Eklenen

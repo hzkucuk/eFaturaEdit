@@ -35,7 +35,7 @@
     <TargetCulture>tr-TR</TargetCulture>
     <AutorunEnabled>true</AutorunEnabled>
     <ApplicationRevision>1</ApplicationRevision>
-    <ApplicationVersion>2.10.0.%2a</ApplicationVersion>
+    <ApplicationVersion>2.12.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -261,11 +261,10 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tools.cs" />
-    <Compile Include="UblTrSamples.cs" />
+    <Compile Include="UblTrSamplesPaths.cs" />
     <Compile Include="WebView2BrowserHost.cs" />
     <Compile Include="WysiwygHelper.cs" />
     <Compile Include="XsltCompletionProvider.cs" />
-    <Compile Include="XsltSnippets.cs" />
     <Compile Include="XsltTransformHelper.cs" />
     <EmbeddedResource Include="AboutBox1.resx">
       <DependentUpon>AboutBox1.cs</DependentUpon>
@@ -350,6 +349,10 @@
     </PublishFile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\src\eFaturaEdit.Core\eFaturaEdit.Core.csproj">
+      <Project>{C00E2D88-461F-46C8-BBFD-FED85A8F8C78}</Project>
+      <Name>eFaturaEdit.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="Core\QLicense\QLicense.csproj">
       <Project>{1980e43f-c5e4-4a2b-95a6-1aebdc7ee2b7}</Project>
       <Name>QLicense</Name>

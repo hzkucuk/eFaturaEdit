@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>eFaturaEdit</RootNamespace>
+    <AssemblyName>eFaturaEdit.Core</AssemblyName>
+    <NeutralLanguage>tr-TR</NeutralLanguage>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <!-- Package metadata -->
+    <Version>2.12.0</Version>
+    <AssemblyVersion>2.12.0.0</AssemblyVersion>
+    <FileVersion>2.12.0.0</FileVersion>
+    <Authors>Zafer Bilgisayar</Authors>
+    <Company>Zafer Bilgisayar</Company>
+    <Product>E-Fatura Dizayn Editörü — Core</Product>
+    <Description>UI-bağımsız çekirdek: UBL-TR XSLT snippet'leri, örnek XML kataloğu, autocomplete verileri ve platform soyutlamaları. Windows/macOS/Linux üzerinde çalışır.</Description>
+    <Copyright>Copyright © 2018–2026 Zafer Bilgisayar</Copyright>
+  </PropertyGroup>
+
+</Project>

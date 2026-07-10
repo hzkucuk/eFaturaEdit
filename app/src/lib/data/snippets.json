@@ -1,0 +1,1492 @@
+[
+  {
+    "key": "IMAGE",
+    "category": "HTML Öğeleri",
+    "subCategory": null,
+    "displayName": "Resim",
+    "description": "HTML \u003Cimg\u003E etiketi ekler. src, width ve height öznitelikleriyle görsel yerleştirmek için kullanılır. Logo, imza veya ürün görseli eklemek için idealdir.",
+    "iconText": "\uD83D\uDDBC",
+    "xsltCode": "\u003Cimg src=\u0022logo.png\u0022 alt=\u0022Logo\u0022 style=\u0022width:200px; height:auto;\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:IMAGE --\u003E"
+  },
+  {
+    "key": "TABLE",
+    "category": "HTML Öğeleri",
+    "subCategory": null,
+    "displayName": "Tablo",
+    "description": "HTML \u003Ctable\u003E etiketi ekler. Satır ve sütunlarla düzenli veri gösterimi için kullanılır. Fatura bilgileri, kalem listesi gibi yapılandırılmış veriler için idealdir.",
+    "iconText": "\uD83D\uDCCA",
+    "xsltCode": "\u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022 border=\u00221\u0022\u003E\r\n  \u003Ctr style=\u0022background-color:#f0f0f0; font-weight:bold;\u0022\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EBaşlık 1\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EBaşlık 2\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EBaşlık 3\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EVeri 1\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EVeri 2\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EVeri 3\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:TABLE --\u003E"
+  },
+  {
+    "key": "TEXT",
+    "category": "HTML Öğeleri",
+    "subCategory": null,
+    "displayName": "Metin",
+    "description": "HTML \u003Cp\u003E paragraf etiketi ekler. Düz metin içeriği, açıklama veya bilgilendirme metinleri için kullanılır.",
+    "iconText": "\uD83D\uDCDD",
+    "xsltCode": "\u003Cp style=\u0022font-size:11px; color:#333333;\u0022\u003EMetin içeriği buraya yazılır.\u003C/p\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:TEXT --\u003E"
+  },
+  {
+    "key": "LINK",
+    "category": "HTML Öğeleri",
+    "subCategory": null,
+    "displayName": "Bağlantı",
+    "description": "HTML \u003Ca\u003E bağlantı etiketi ekler. Tıklanabilir bir link oluşturur. Web sitesi, e-posta veya belge referansı için kullanılır.",
+    "iconText": "\uD83D\uDD17",
+    "xsltCode": "\u003Ca href=\u0022https://www.example.com\u0022 target=\u0022_blank\u0022 style=\u0022color:#0066cc; text-decoration:underline;\u0022\u003EBağlantı Metni\u003C/a\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:LINK --\u003E"
+  },
+  {
+    "key": "HR",
+    "category": "HTML Öğeleri",
+    "subCategory": null,
+    "displayName": "Yatay Çizgi",
+    "description": "HTML \u003Chr\u003E yatay çizgi etiketi ekler. Bölümler arası görsel ayırıcı olarak kullanılır. Fatura bölümlerini ayırmak için idealdir.",
+    "iconText": "\uD83D\uDCCF",
+    "xsltCode": "\u003Chr style=\u0022border:none; border-top:1px solid #cccccc; margin:10px 0;\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:HR --\u003E"
+  },
+  {
+    "key": "DIV",
+    "category": "HTML Öğeleri",
+    "subCategory": null,
+    "displayName": "Kutu (Div)",
+    "description": "HTML \u003Cdiv\u003E kutu etiketi ekler. İçerik bloğu oluşturur, kenarlık ve arka plan rengi ile stillenebilir. Bölüm gruplamak için kullanılır.",
+    "iconText": "\uD83D\uDCE6",
+    "xsltCode": "\u003Cdiv style=\u0022border:1px solid #cccccc; padding:10px; margin:5px 0; background-color:#fafafa;\u0022\u003E\r\n  İçerik buraya yazılır.\r\n\u003C/div\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:DIV --\u003E"
+  },
+  {
+    "key": "BOLD",
+    "category": "HTML Öğeleri",
+    "subCategory": null,
+    "displayName": "Kalın Metin",
+    "description": "HTML \u003Cstrong\u003E kalın metin etiketi ekler. Önemli bilgileri vurgulamak için kullanılır. Başlık, etiket veya öne çıkarılacak değerler için idealdir.",
+    "iconText": "\uD83C\uDD71️",
+    "xsltCode": "\u003Cstrong style=\u0022font-size:12px;\u0022\u003EKalın metin\u003C/strong\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:BOLD --\u003E"
+  },
+  {
+    "key": "SPAN",
+    "category": "HTML Öğeleri",
+    "subCategory": null,
+    "displayName": "Etiket",
+    "description": "HTML \u003Cspan\u003E satır içi etiket ekler. Metin içinde bir bölümü stillemek veya XSLT value-of ile değer göstermek için kullanılır.",
+    "iconText": "\uD83C\uDFF7",
+    "xsltCode": "\u003Cspan style=\u0022font-size:11px; color:#000000;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:ID\u0022 /\u003E\u003C/span\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:SPAN --\u003E"
+  },
+  {
+    "key": "VALUEOF",
+    "category": "XSLT Komutları",
+    "subCategory": null,
+    "displayName": "XSL Değer",
+    "description": "XSLT \u003Cxsl:value-of\u003E komutu ekler. XML belgesinden belirtilen XPath ifadesine göre tek bir değer okuyup görüntüler. En temel XSLT veri çekme komutu.",
+    "iconText": "\uD83D\uDD16",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:VALUEOF --\u003E"
+  },
+  {
+    "key": "FOREACH",
+    "category": "XSLT Komutları",
+    "subCategory": null,
+    "displayName": "Döngü",
+    "description": "XSLT \u003Cxsl:for-each\u003E döngü komutu ekler. XML\u0027deki tekrarlanan elemanları (ör: fatura kalemleri) sırayla işlemek için kullanılır. select özniteliğiyle hedef node-set belirtilir.",
+    "iconText": "\uD83D\uDD04",
+    "xsltCode": "\u003Cxsl:for-each select=\u0022/n1:Invoice/cac:InvoiceLine\u0022\u003E\r\n  \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E - \u003Cxsl:value-of select=\u0022cac:Item/cbc:Name\u0022 /\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:FOREACH --\u003E"
+  },
+  {
+    "key": "IF",
+    "category": "XSLT Komutları",
+    "subCategory": null,
+    "displayName": "Koşul",
+    "description": "XSLT \u003Cxsl:if\u003E koşul komutu ekler. Belirtilen test ifadesi doğruysa içindeki blok işlenir. Koşullu görüntüleme için kullanılır (ör: alan doluysa göster).",
+    "iconText": "❓",
+    "xsltCode": "\u003Cxsl:if test=\u0022/n1:Invoice/cbc:Note\u0022\u003E\r\n  \u003Cdiv\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:Note\u0022 /\u003E\u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:IF --\u003E"
+  },
+  {
+    "key": "BARCODE",
+    "category": "Sayfa Düzeni",
+    "subCategory": null,
+    "displayName": "Barkod",
+    "description": "Harici barkod API servisi kullanarak Code128 formatında barkod görüntüsü ekler. data parametresine dinamik veri (fatura no, ETTN vb.) bağlanabilir.",
+    "iconText": "\uD83E\uDDFE",
+    "xsltCode": "\u003Cimg src=\u0022https://barcode.tec-it.com/barcode.ashx?data={BARCODE_DATA}\u0026amp;code=Code128\u0022 alt=\u0022Barkod\u0022 style=\u0022height:40px;\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:BARCODE --\u003E"
+  },
+  {
+    "key": "QR",
+    "category": "Sayfa Düzeni",
+    "subCategory": null,
+    "displayName": "QR Kod",
+    "description": "QR kod görüntüsü ekler. data parametresine fatura URL\u0027i, ETTN veya diğer bilgiler bağlanabilir. 100x100 piksel varsayılan boyut.",
+    "iconText": "\uD83D\uDD32",
+    "xsltCode": "\u003Cimg src=\u0022https://api.qrserver.com/v1/create-qr-code/?size=100x100\u0026amp;data={QR_DATA}\u0022 alt=\u0022QR Kod\u0022 style=\u0022width:100px; height:100px;\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:QR --\u003E"
+  },
+  {
+    "key": "PAGEBREAK",
+    "category": "Sayfa Düzeni",
+    "subCategory": null,
+    "displayName": "Sayfa Sonu",
+    "description": "CSS page-break-after özelliğiyle yazdırma sırasında sayfa sonu ekler. Faturanın farklı bölümlerini ayrı sayfalarda yazdırmak için kullanılır.",
+    "iconText": "\uD83D\uDCC3",
+    "xsltCode": "\u003Cdiv style=\u0022page-break-after:always;\u0022\u003E\u003C/div\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:PAGEBREAK --\u003E"
+  },
+  {
+    "key": "HEADER",
+    "category": "Sayfa Düzeni",
+    "subCategory": null,
+    "displayName": "Üst Bilgi",
+    "description": "Sayfanın üst kısmına sabit üst bilgi alanı ekler. Firma adı, tarih ve logo için kullanılır. Alt kenarlık çizgisi ile gövdeden ayrılır.",
+    "iconText": "⬆",
+    "xsltCode": "\u003Cdiv id=\u0022pageHeader\u0022 style=\u0022width:100%; border-bottom:2px solid #000; padding-bottom:5px; margin-bottom:10px;\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022text-align:left; font-weight:bold;\u0022\u003EFirma Adı\u003C/td\u003E\r\n      \u003Ctd style=\u0022text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:IssueDate\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/table\u003E\r\n\u003C/div\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:HEADER --\u003E"
+  },
+  {
+    "key": "FOOTER",
+    "category": "Sayfa Düzeni",
+    "subCategory": null,
+    "displayName": "Alt Bilgi",
+    "description": "Sayfanın alt kısmına sabit alt bilgi alanı ekler. Yasal uyarılar, sayfa numarası veya \u0027elektronik olarak oluşturulmuştur\u0027 notu için kullanılır.",
+    "iconText": "⬇",
+    "xsltCode": "\u003Cdiv id=\u0022pageFooter\u0022 style=\u0022width:100%; border-top:1px solid #999; padding-top:5px; margin-top:10px; font-size:9px; color:#999; text-align:center;\u0022\u003E\r\n  Bu belge elektronik olarak oluşturulmuştur.\r\n\u003C/div\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:FOOTER --\u003E"
+  },
+  {
+    "key": "UBL_INVOICEHEADER",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Fatura Başlığı",
+    "description": "Fatura No, Tarih, Tipi, Senaryo, Para Birimi ve Not bilgilerini tablo olarak gösterir.\nXPath: /n1:Invoice/cbc:ID, cbc:IssueDate, cbc:InvoiceTypeCode, cbc:ProfileID, cbc:DocumentCurrencyCode, cbc:Note",
+    "iconText": "\uD83D\uDCC4",
+    "xsltCode": "\u003C!-- Fatura Başlık Bilgileri --\u003E\r\n\u003Ctable style=\u0022width:100%; border:1px solid #000; padding:5px;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003EFatura No:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EFatura Tarihi:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:IssueDate\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EFatura Tipi:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:InvoiceTypeCode\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003ESenaryo:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:ProfileID\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EPara Birimi:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:DocumentCurrencyCode\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003ENot:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:Note\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_INVOICEHEADER --\u003E"
+  },
+  {
+    "key": "UBL_UUID",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "ETTN",
+    "description": "Faturanın Evrensel Tekil Tanımlama Numarası (ETTN/UUID). GİB tarafından atanan, her faturaya özgü benzersiz kimlik numarasıdır.\nXPath: /n1:Invoice/cbc:UUID",
+    "iconText": "\uD83D\uDD11",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:UUID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_UUID --\u003E"
+  },
+  {
+    "key": "UBL_ISSUETIME",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Düzenleme Saati",
+    "description": "Faturanın düzenleme saatini gösterir. IssueDate ile birlikte kullanılarak tam tarih-saat bilgisi oluşturulabilir.\nXPath: /n1:Invoice/cbc:IssueTime",
+    "iconText": "\uD83D\uDD50",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:IssueTime\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ISSUETIME --\u003E"
+  },
+  {
+    "key": "UBL_NOTES",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Fatura Notları",
+    "description": "Faturadaki tüm not alanlarını döngüyle listeler. Birden fazla Note elemanı olabilir (Sicil No, İşletme Merkezi, vade bilgisi vb.).\nXPath: //n1:Invoice/cbc:Note (for-each)",
+    "iconText": "\uD83D\uDCDD",
+    "xsltCode": "\u003C!-- Fatura Notları --\u003E\r\n\u003Cxsl:for-each select=\u0022//n1:Invoice/cbc:Note\u0022\u003E\r\n  \u003Cdiv style=\u0022margin:2px 0; font-size:11px;\u0022\u003E\u003Cxsl:value-of select=\u0022.\u0022 /\u003E\u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_NOTES --\u003E"
+  },
+  {
+    "key": "UBL_LINECOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Kalem Sayısı",
+    "description": "Faturadaki toplam kalem sayısını gösterir.\nXPath: /n1:Invoice/cbc:LineCountNumeric",
+    "iconText": "\uD83D\uDD22",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:LineCountNumeric\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINECOUNT --\u003E"
+  },
+  {
+    "key": "UBL_COPYINDICATOR",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Asıl/Kopya",
+    "description": "Faturanın asıl mı yoksa kopya mı olduğunu belirten gösterge. false=Asıl, true=Kopya.\nXPath: /n1:Invoice/cbc:CopyIndicator",
+    "iconText": "\uD83D\uDCCB",
+    "xsltCode": "\u003Cxsl:choose\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:CopyIndicator = \u0027true\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:red; font-weight:bold;\u0022\u003EKOPYA\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:otherwise\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EASIL\u003C/span\u003E\r\n  \u003C/xsl:otherwise\u003E\r\n\u003C/xsl:choose\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_COPYINDICATOR --\u003E"
+  },
+  {
+    "key": "UBL_PROFILEID",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Senaryo Kontrolü",
+    "description": "Fatura senaryosuna göre koşullu renk ve metin gösterimi. TEMELFATURA, TICARIFATURA, IHRACAT, EARSIVFATURA senaryolarını tanır.\nXPath: /n1:Invoice/cbc:ProfileID",
+    "iconText": "\uD83D\uDD00",
+    "xsltCode": "\u003C!-- Fatura Senaryosuna Göre Koşullu Gösterim --\u003E\r\n\u003Cxsl:choose\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:ProfileID = \u0027TEMELFATURA\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:green; font-weight:bold;\u0022\u003ETEMEL FATURA\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:ProfileID = \u0027TICARIFATURA\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:blue; font-weight:bold;\u0022\u003ETİCARİ FATURA\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:ProfileID = \u0027IHRACAT\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:orange; font-weight:bold;\u0022\u003EİHRACAT FATURASI\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:ProfileID = \u0027EARSIVFATURA\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:purple; font-weight:bold;\u0022\u003EE-ARŞİV FATURA\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:otherwise\u003E\r\n    \u003Cspan\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:ProfileID\u0022 /\u003E\u003C/span\u003E\r\n  \u003C/xsl:otherwise\u003E\r\n\u003C/xsl:choose\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PROFILEID --\u003E"
+  },
+  {
+    "key": "UBL_TYPECODE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Fatura Tipi Kontrolü",
+    "description": "Fatura tipine göre koşullu renk ve metin gösterimi. SATIS, IADE, TEVKIFAT, ISTISNA, OZELMATRAH, IHRACKAYITLI tiplerini tanır.\nXPath: /n1:Invoice/cbc:InvoiceTypeCode",
+    "iconText": "\uD83C\uDFF7",
+    "xsltCode": "\u003C!-- Fatura Tipine Göre Koşullu Gösterim --\u003E\r\n\u003Cxsl:choose\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:InvoiceTypeCode = \u0027SATIS\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003ESATIŞ FATURASI\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:InvoiceTypeCode = \u0027IADE\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:red; font-weight:bold;\u0022\u003EİADE FATURASI\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:InvoiceTypeCode = \u0027TEVKIFAT\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:darkred; font-weight:bold;\u0022\u003ETEVKİFAT FATURASI\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:InvoiceTypeCode = \u0027ISTISNA\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:gray; font-weight:bold;\u0022\u003EİSTİSNA FATURASI\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:InvoiceTypeCode = \u0027OZELMATRAH\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EÖZEL MATRAH FATURASI\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:when test=\u0022/n1:Invoice/cbc:InvoiceTypeCode = \u0027IHRACKAYITLI\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022color:orange; font-weight:bold;\u0022\u003EİHRAÇ KAYITLI FATURA\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n  \u003Cxsl:otherwise\u003E\r\n    \u003Cspan\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:InvoiceTypeCode\u0022 /\u003E\u003C/span\u003E\r\n  \u003C/xsl:otherwise\u003E\r\n\u003C/xsl:choose\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TYPECODE --\u003E"
+  },
+  {
+    "key": "UBL_CURRENCYID",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Para Birimi Kontrolü",
+    "description": "Faturanın para birimi kodunu gösterir. TRY/TRL dışı para birimlerinde \u0027Dövizli Fatura\u0027 uyarısı verir.\nXPath: /n1:Invoice/cbc:DocumentCurrencyCode",
+    "iconText": "\uD83D\uDCB1",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:DocumentCurrencyCode\u0022 /\u003E\r\n\u003Cxsl:if test=\u0022/n1:Invoice/cbc:DocumentCurrencyCode != \u0027TRY\u0027 and /n1:Invoice/cbc:DocumentCurrencyCode != \u0027TRL\u0027\u0022\u003E\r\n  \u003Cspan style=\u0022color:red; font-weight:bold;\u0022\u003E (Dövizli Fatura)\u003C/span\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CURRENCYID --\u003E"
+  },
+  {
+    "key": "UBL_TAXCURRENCYCODE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Vergi Para Birimi",
+    "description": "Belge para birimi dışında vergi ödemelerinde kullanılacak para birimini gösterir.\nXPath: /n1:Invoice/cbc:TaxCurrencyCode",
+    "iconText": "\uD83D\uDCB2",
+    "xsltCode": "\u003Cxsl:if test=\u0022/n1:Invoice/cbc:TaxCurrencyCode\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003EVergi Para Birimi: \u003C/span\u003E\r\n  \u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:TaxCurrencyCode\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TAXCURRENCYCODE --\u003E"
+  },
+  {
+    "key": "UBL_INVOICEPERIOD",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Fatura Dönemi",
+    "description": "Faturanın ait olduğu dönem bilgisini gösterir. Başlangıç ve bitiş tarihleri ile açıklama alanlarını içerir.\nXPath: /n1:Invoice/cac:InvoicePeriod (cbc:StartDate, cbc:EndDate, cbc:Description)",
+    "iconText": "\uD83D\uDCC6",
+    "xsltCode": "\u003C!-- Fatura Dönemi --\u003E\r\n\u003Cxsl:if test=\u0022/n1:Invoice/cac:InvoicePeriod\u0022\u003E\r\n  \u003Cdiv style=\u0022padding:4px;\u0022\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EFatura Dönemi: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:InvoicePeriod/cbc:StartDate\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022/n1:Invoice/cac:InvoicePeriod/cbc:EndDate\u0022\u003E\r\n      \u003Cxsl:text\u003E — \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:InvoicePeriod/cbc:EndDate\u0022 /\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022/n1:Invoice/cac:InvoicePeriod/cbc:Description\u0022\u003E\r\n      \u003Cxsl:text\u003E (\u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:InvoicePeriod/cbc:Description\u0022 /\u003E\u003Cxsl:text\u003E)\u003C/xsl:text\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_INVOICEPERIOD --\u003E"
+  },
+  {
+    "key": "UBL_ACCOUNTINGCOST",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "İlave Fatura Tipi",
+    "description": "Mükellefin fatura tipi olarak ilave bir ayrıma gitmesi gerekiyorsa belirlediği farklı fatura tipini gösterir.\nXPath: /n1:Invoice/cbc:AccountingCost",
+    "iconText": "\uD83C\uDFF7",
+    "xsltCode": "\u003Cxsl:if test=\u0022/n1:Invoice/cbc:AccountingCost\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003Eİlave Fatura Tipi: \u003C/span\u003E\r\n  \u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:AccountingCost\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ACCOUNTINGCOST --\u003E"
+  },
+  {
+    "key": "UBL_SUPPLIER",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Satıcı Bilgisi",
+    "description": "Satıcı (tedarikçi) firma bilgileri tablosu. VKN/TCKN, unvan, adres ve vergi dairesi alanlarını gösterir.\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party",
+    "iconText": "\uD83C\uDFE2",
+    "xsltCode": "\u003C!-- Satıcı (Tedarikçi) Bilgileri --\u003E\r\n\u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003ESatıcı VKN/TCKN:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EUnvan:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EAdres:\u003C/td\u003E\r\n    \u003Ctd\u003E\r\n      \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:StreetName\u0022 /\u003E\r\n      \u003Cxsl:text\u003E \u003C/xsl:text\u003E\r\n      \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName\u0022 /\u003E\r\n      / \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:CityName\u0022 /\u003E\r\n    \u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EVergi Dairesi:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SUPPLIER --\u003E"
+  },
+  {
+    "key": "UBL_CUSTOMER",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Alıcı Bilgisi",
+    "description": "Alıcı (müşteri) firma bilgileri tablosu. VKN/TCKN, unvan, adres ve vergi dairesi alanlarını gösterir.\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party",
+    "iconText": "\uD83D\uDC64",
+    "xsltCode": "\u003C!-- Alıcı (Müşteri) Bilgileri --\u003E\r\n\u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003EAlıcı VKN/TCKN:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EUnvan:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyName/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EAdres:\u003C/td\u003E\r\n    \u003Ctd\u003E\r\n      \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName\u0022 /\u003E\r\n      \u003Cxsl:text\u003E \u003C/xsl:text\u003E\r\n      \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName\u0022 /\u003E\r\n      / \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName\u0022 /\u003E\r\n    \u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EVergi Dairesi:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CUSTOMER --\u003E"
+  },
+  {
+    "key": "UBL_SUPPLIER_CONTACT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Satıcı İletişim",
+    "description": "Satıcı firmanın iletişim bilgileri. Telefon, faks ve e-posta adresini tablo olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact (cbc:Telephone, cbc:Telefax, cbc:ElectronicMail)",
+    "iconText": "\uD83D\uDCDE",
+    "xsltCode": "\u003C!-- Satıcı İletişim Bilgileri --\u003E\r\n\u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003ETelefon:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:Telephone\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EFaks:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:Telefax\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EE-posta:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:ElectronicMail\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SUPPLIER_CONTACT --\u003E"
+  },
+  {
+    "key": "UBL_CUSTOMER_CONTACT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Alıcı İletişim",
+    "description": "Alıcı firmanın iletişim bilgileri. Telefon, faks ve e-posta adresini tablo olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact (cbc:Telephone, cbc:Telefax, cbc:ElectronicMail)",
+    "iconText": "\uD83D\uDCF1",
+    "xsltCode": "\u003C!-- Alıcı İletişim Bilgileri --\u003E\r\n\u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003ETelefon:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:Telephone\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EFaks:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:Telefax\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EE-posta:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CUSTOMER_CONTACT --\u003E"
+  },
+  {
+    "key": "UBL_SUPPLIER_ADDRESS",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Satıcı Detaylı Adres",
+    "description": "Satıcı firmanın detaylı adres bilgileri. Oda, bina adı, bina no, sokak, ilçe, il, posta kodu, ülke alanlarını gösterir.\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress (Room, BuildingName, BuildingNumber, StreetName, CitySubdivisionName, CityName, PostalZone, Country)",
+    "iconText": "\uD83C\uDFE0",
+    "xsltCode": "\u003C!-- Satıcı Detaylı Adres --\u003E\r\n\u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003ESokak:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:StreetName\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EBina Adı:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:BuildingName\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EBina No / Oda:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:BuildingNumber\u0022 /\u003E / \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:Room\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003Eİlçe / İl:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName\u0022 /\u003E / \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:CityName\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EPosta Kodu:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:PostalZone\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EÜlke:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cac:Country/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SUPPLIER_ADDRESS --\u003E"
+  },
+  {
+    "key": "UBL_CUSTOMER_ADDRESS",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Alıcı Detaylı Adres",
+    "description": "Alıcı firmanın detaylı adres bilgileri. Oda, bina adı, bina no, sokak, ilçe, il, posta kodu, ülke alanlarını gösterir.\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress",
+    "iconText": "\uD83D\uDCCD",
+    "xsltCode": "\u003C!-- Alıcı Detaylı Adres --\u003E\r\n\u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003ESokak:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EBina Adı:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:BuildingName\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EBina No / Oda:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:BuildingNumber\u0022 /\u003E / \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:Room\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003Eİlçe / İl:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName\u0022 /\u003E / \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EPosta Kodu:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022font-weight:bold;\u0022\u003EÜlke:\u003C/td\u003E\r\n    \u003Ctd\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CUSTOMER_ADDRESS --\u003E"
+  },
+  {
+    "key": "UBL_PERSON",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Kişi Bilgileri",
+    "description": "Gerçek kişi bilgileri. Unvan (Title), Ad, İkinci Ad, Soyad, Ad Soneki ve Uyruk bilgilerini gösterir. TCKN ile düzenlenen faturalarda kullanılır.\nXPath: cac:Party/cac:Person (cbc:Title, cbc:FirstName, cbc:MiddleName, cbc:FamilyName, cbc:NameSuffix, cbc:NationalityID)",
+    "iconText": "\uD83D\uDC65",
+    "xsltCode": "\u003C!-- Kişi Bilgileri (Gerçek Kişi) --\u003E\r\n\u003Cxsl:for-each select=\u0022cac:Person\u0022\u003E\r\n  \u003Cxsl:if test=\u0022cbc:Title\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:Title\u0022 /\u003E\u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003C/xsl:if\u003E\r\n  \u003Cxsl:value-of select=\u0022cbc:FirstName\u0022 /\u003E\r\n  \u003Cxsl:if test=\u0022cbc:MiddleName\u0022\u003E\u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022cbc:MiddleName\u0022 /\u003E\u003C/xsl:if\u003E\r\n  \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022cbc:FamilyName\u0022 /\u003E\r\n  \u003Cxsl:if test=\u0022cbc:NameSuffix\u0022\u003E\u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022cbc:NameSuffix\u0022 /\u003E\u003C/xsl:if\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PERSON --\u003E"
+  },
+  {
+    "key": "UBL_PARTYIDS",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Taraf Kimlikleri",
+    "description": "Tarafın tüm kimlik numaralarını schemeID ile birlikte döngüyle listeler. VKN, TCKN, MERSİS No, Ticaret Sicil No gibi çoklu kimlik bilgilerini gösterir.\nXPath: cac:PartyIdentification/cbc:ID ve @schemeID",
+    "iconText": "\uD83C\uDD94",
+    "xsltCode": "\u003C!-- Taraf Kimlik Numaraları --\u003E\r\n\u003Cxsl:for-each select=\u0022cac:PartyIdentification\u0022\u003E\r\n  \u003Cdiv\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:ID/@schemeID\u0022 /\u003E: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PARTYIDS --\u003E"
+  },
+  {
+    "key": "UBL_WEBSITEURI",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Web Sitesi",
+    "description": "Firmanın web sitesi adresini gösterir. Tıklanabilir bağlantı olarak oluşturulur.\nXPath: cac:Party/cbc:WebsiteURI",
+    "iconText": "\uD83C\uDF10",
+    "xsltCode": "\u003Cxsl:if test=\u0022cbc:WebsiteURI\u0022\u003E\r\n  \u003Ca style=\u0022color:#0066cc;\u0022\u003E\u003Cxsl:attribute name=\u0022href\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:WebsiteURI\u0022 /\u003E\u003C/xsl:attribute\u003E\u003Cxsl:value-of select=\u0022cbc:WebsiteURI\u0022 /\u003E\u003C/a\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_WEBSITEURI --\u003E"
+  },
+  {
+    "key": "UBL_IDENTITYDOC",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Kimlik Belgesi",
+    "description": "Kişinin kimlik belgesi referans numarasını gösterir. Gerçek kişi alıcılarda kimlik doğrulama için kullanılır.\nXPath: cac:IdentityDocumentReference/cbc:ID",
+    "iconText": "\uD83E\uDEAA",
+    "xsltCode": "\u003Cxsl:if test=\u0022cac:IdentityDocumentReference\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003EKimlik No: \u003C/span\u003E\r\n  \u003Cxsl:value-of select=\u0022cac:IdentityDocumentReference/cbc:ID\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IDENTITYDOC --\u003E"
+  },
+  {
+    "key": "UBL_BUYERCUSTOMER",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Mal Alan Taraf",
+    "description": "Mal alan taraf bilgileri. AccountingCustomerParty\u0027den farklı olarak, ihracat ve TAXFREE senaryolarında ayrı bir alıcı tanımlamak için kullanılır.\nXPath: n1:Invoice/cac:BuyerCustomerParty/cac:Party",
+    "iconText": "\uD83D\uDED2",
+    "xsltCode": "\u003C!-- Mal Alan Taraf (BuyerCustomerParty) --\u003E\r\n\u003Cxsl:for-each select=\u0022n1:Invoice/cac:BuyerCustomerParty/cac:Party\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003EKimlik:\u003C/td\u003E\r\n      \u003Ctd\u003E\r\n        \u003Cxsl:for-each select=\u0022cac:PartyIdentification\u0022\u003E\r\n          \u003Cxsl:value-of select=\u0022cbc:ID/@schemeID\u0022 /\u003E: \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003Cxsl:text\u003E \u003C/xsl:text\u003E\r\n        \u003C/xsl:for-each\u003E\r\n      \u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022font-weight:bold;\u0022\u003EUnvan:\u003C/td\u003E\r\n      \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cac:PartyName/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_BUYERCUSTOMER --\u003E"
+  },
+  {
+    "key": "UBL_TAXREPRESENTATIVE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Vergi Temsilcisi",
+    "description": "Vergi temsilcisi / aracı kurum bilgileri. ARACIKURUMVKN schemeID ile tanımlanan aracı kurum VKN\u0027sini ve muafiyet bilgilerini gösterir.\nXPath: n1:Invoice/cac:TaxRepresentativeParty/cac:PartyIdentification/cbc:ID[@schemeID=\u0027ARACIKURUMVKN\u0027]",
+    "iconText": "\uD83C\uDFDB",
+    "xsltCode": "\u003C!-- Vergi Temsilcisi / Aracı Kurum --\u003E\r\n\u003Cxsl:if test=\u0022n1:Invoice/cac:TaxRepresentativeParty\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003EAracı Kurum VKN:\u003C/td\u003E\r\n      \u003Ctd\u003E\u003Cxsl:value-of select=\u0022n1:Invoice/cac:TaxRepresentativeParty/cac:PartyIdentification/cbc:ID[@schemeID=\u0027ARACIKURUMVKN\u0027]\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Cxsl:if test=\u0022n1:Invoice/cac:TaxRepresentativeParty/cac:PartyTaxScheme/cbc:ExemptionReasonCode\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EMuafiyet Kodu:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022n1:Invoice/cac:TaxRepresentativeParty/cac:PartyTaxScheme/cbc:ExemptionReasonCode\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TAXREPRESENTATIVE --\u003E"
+  },
+  {
+    "key": "UBL_SELLERSUPPLIER",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Mal Sağlayan Taraf",
+    "description": "Faturayı düzenleyen haricinde faturadaki mal veya hizmeti sağlayan taraf bilgisi. İhracat ve özel senaryolarda kullanılır.\nXPath: n1:Invoice/cac:SellerSupplierParty/cac:Party",
+    "iconText": "\uD83C\uDFED",
+    "xsltCode": "\u003C!-- Mal Sağlayan Taraf (SellerSupplierParty) --\u003E\r\n\u003Cxsl:if test=\u0022n1:Invoice/cac:SellerSupplierParty\u0022\u003E\r\n  \u003Cxsl:for-each select=\u0022n1:Invoice/cac:SellerSupplierParty/cac:Party\u0022\u003E\r\n    \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003EKimlik:\u003C/td\u003E\r\n        \u003Ctd\u003E\r\n          \u003Cxsl:for-each select=\u0022cac:PartyIdentification\u0022\u003E\r\n            \u003Cxsl:value-of select=\u0022cbc:ID/@schemeID\u0022 /\u003E: \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003Cxsl:text\u003E \u003C/xsl:text\u003E\r\n          \u003C/xsl:for-each\u003E\r\n        \u003C/td\u003E\r\n      \u003C/tr\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EUnvan:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cac:PartyName/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/table\u003E\r\n  \u003C/xsl:for-each\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SELLERSUPPLIER --\u003E"
+  },
+  {
+    "key": "UBL_INVOICELINES",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Fatura Kalemleri",
+    "description": "Fatura kalemlerini tablo halinde döngüyle listeler. Sıra No, Mal/Hizmet Adı, Miktar, Birim Fiyat, KDV Oranı, KDV Tutarı ve Tutar sütunlarını içerir.\nXPath: /n1:Invoice/cac:InvoiceLine (cbc:ID, cac:Item/cbc:Name, cbc:InvoicedQuantity, cac:Price/cbc:PriceAmount, TaxTotal, cbc:LineExtensionAmount)",
+    "iconText": "\uD83D\uDCCB",
+    "xsltCode": "\u003C!-- Fatura Kalem Döngüsü --\u003E\r\n\u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022 border=\u00221\u0022\u003E\r\n  \u003Ctr style=\u0022background-color:#f0f0f0; font-weight:bold;\u0022\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003ESıra\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EMal/Hizmet\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EMiktar\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EBirim Fiyat\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EKDV %\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EKDV Tutarı\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003ETutar\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Cxsl:for-each select=\u0022/n1:Invoice/cac:InvoiceLine\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:Item/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:InvoicedQuantity\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:Price/cbc:PriceAmount\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:TaxTotal/cac:TaxSubtotal/cbc:Percent\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:TaxTotal/cbc:TaxAmount\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:LineExtensionAmount\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/xsl:for-each\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_INVOICELINES --\u003E"
+  },
+  {
+    "key": "UBL_LINE_ALLOWANCE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem İskontosu",
+    "description": "Fatura kalemi düzeyinde iskonto/artırım bilgisini gösterir. İskonto oranı (MultiplierFactorNumeric), tutarı (Amount), baz tutarı (BaseAmount) ve nedenini (AllowanceChargeReason) içerir.\nXPath: cac:InvoiceLine/cac:AllowanceCharge (cbc:ChargeIndicator, cbc:MultiplierFactorNumeric, cbc:Amount, cbc:BaseAmount, cbc:AllowanceChargeReason)",
+    "iconText": "\uD83D\uDCB2",
+    "xsltCode": "\u003C!-- Kalem İskonto/Artırım --\u003E\r\n\u003Cxsl:for-each select=\u0022cac:AllowanceCharge\u0022\u003E\r\n  \u003Cdiv style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    \u003Cxsl:choose\u003E\r\n      \u003Cxsl:when test=\u0022cbc:ChargeIndicator = \u0027false\u0027\u0022\u003Eİskonto: \u003C/xsl:when\u003E\r\n      \u003Cxsl:otherwise\u003EArtırım: \u003C/xsl:otherwise\u003E\r\n    \u003C/xsl:choose\u003E\r\n    %\u003Cxsl:value-of select=\u0022format-number(cbc:MultiplierFactorNumeric * 100, \u0027###.##0,00\u0027, \u0027european\u0027)\u0022 /\u003E\r\n    = \u003Cxsl:value-of select=\u0022cbc:Amount\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022cbc:AllowanceChargeReason\u0022\u003E (\u003Cxsl:value-of select=\u0022cbc:AllowanceChargeReason\u0022 /\u003E)\u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_ALLOWANCE --\u003E"
+  },
+  {
+    "key": "UBL_LINE_WITHHOLDING",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem Tevkifatı",
+    "description": "Fatura kalemi düzeyinde tevkifat bilgisini gösterir. WithholdingTaxTotal altındaki TaxSubtotal bilgilerini döngüyle listeler.\nXPath: cac:InvoiceLine/cac:WithholdingTaxTotal/cac:TaxSubtotal",
+    "iconText": "\uD83D\uDD12",
+    "xsltCode": "\u003C!-- Kalem Tevkifat Bilgisi --\u003E\r\n\u003Cxsl:for-each select=\u0022cac:WithholdingTaxTotal/cac:TaxSubtotal\u0022\u003E\r\n  \u003Cdiv style=\u0022font-size:10px; color:#990000;\u0022\u003E\r\n    Tevkifat: \u003Cxsl:value-of select=\u0022cac:TaxCategory/cac:TaxScheme/cbc:Name\u0022 /\u003E\r\n    %\u003Cxsl:value-of select=\u0022cbc:Percent\u0022 /\u003E\r\n    = \u003Cxsl:value-of select=\u0022cbc:TaxAmount\u0022 /\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_WITHHOLDING --\u003E"
+  },
+  {
+    "key": "UBL_LINE_NOTE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Satır Açıklaması",
+    "description": "Fatura kalemi düzeyinde açıklama/not alanını gösterir. Her kalem için serbest metin olarak girilmiş açıklamayı içerir.\nXPath: cac:InvoiceLine/cbc:Note",
+    "iconText": "\uD83D\uDCDD",
+    "xsltCode": "\u003C!-- Satır Açıklaması (Kalem Notu) --\u003E\r\n\u003Cxsl:if test=\u0022cbc:Note and cbc:Note != \u0027\u0027\u0022\u003E\r\n  \u003Cdiv style=\u0022font-size:10px; color:#555;\u0022\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:Note\u0022 /\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_NOTE --\u003E"
+  },
+  {
+    "key": "UBL_LINE_DESC",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Ürün Açıklaması",
+    "description": "Fatura kalemindeki mal/hizmetin detaylı açıklaması. Item/Description alanında yer alan serbest metin ürün tarifini gösterir.\nXPath: cac:InvoiceLine/cac:Item/cbc:Description",
+    "iconText": "\uD83D\uDCC4",
+    "xsltCode": "\u003C!-- Ürün Açıklaması --\u003E\r\n\u003Cxsl:if test=\u0022cac:Item/cbc:Description\u0022\u003E\r\n  \u003Cdiv style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    \u003Cxsl:value-of select=\u0022cac:Item/cbc:Description\u0022 /\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_DESC --\u003E"
+  },
+  {
+    "key": "UBL_LINE_UNITCODE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Birim Kodu",
+    "description": "Fatura kaleminin miktar birim kodunu gösterir. UN/ECE Rec. 20 birim kodları kullanılır (C62=Adet, KGM=Kilogram, LTR=Litre, MTR=Metre, BX=Kutu vb.).\nXPath: cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode",
+    "iconText": "\uD83D\uDCD0",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cbc:InvoicedQuantity/@unitCode\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_UNITCODE --\u003E"
+  },
+  {
+    "key": "UBL_LINE_SELLERID",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Satıcı Ürün Kodu",
+    "description": "Satıcı tarafından ürüne verilen stok/ürün kodunu gösterir.\nXPath: cac:InvoiceLine/cac:Item/cac:SellersItemIdentification/cbc:ID",
+    "iconText": "\uD83C\uDFED",
+    "xsltCode": "\u003Cxsl:if test=\u0022cac:Item/cac:SellersItemIdentification/cbc:ID\u0022\u003E\r\n  \u003Cspan style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    \u003Cxsl:value-of select=\u0022cac:Item/cac:SellersItemIdentification/cbc:ID\u0022 /\u003E\r\n  \u003C/span\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_SELLERID --\u003E"
+  },
+  {
+    "key": "UBL_LINE_BUYERID",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Alıcı Ürün Kodu",
+    "description": "Alıcı tarafından ürüne verilen stok/ürün kodunu gösterir.\nXPath: cac:InvoiceLine/cac:Item/cac:BuyersItemIdentification/cbc:ID",
+    "iconText": "\uD83D\uDED2",
+    "xsltCode": "\u003Cxsl:if test=\u0022cac:Item/cac:BuyersItemIdentification/cbc:ID\u0022\u003E\r\n  \u003Cspan style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    \u003Cxsl:value-of select=\u0022cac:Item/cac:BuyersItemIdentification/cbc:ID\u0022 /\u003E\r\n  \u003C/span\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_BUYERID --\u003E"
+  },
+  {
+    "key": "UBL_LINE_BRANDMODEL",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Marka / Model",
+    "description": "Fatura kalemindeki ürünün marka ve model bilgisini gösterir.\nXPath: cac:InvoiceLine/cac:Item/cbc:BrandName, cac:Item/cbc:ModelName",
+    "iconText": "\uD83C\uDFF7",
+    "xsltCode": "\u003C!-- Marka / Model --\u003E\r\n\u003Cxsl:if test=\u0022cac:Item/cbc:BrandName or cac:Item/cbc:ModelName\u0022\u003E\r\n  \u003Cspan style=\u0022font-size:10px;\u0022\u003E\r\n    \u003Cxsl:if test=\u0022cac:Item/cbc:BrandName\u0022\u003E\r\n      \u003Cxsl:value-of select=\u0022cac:Item/cbc:BrandName\u0022 /\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cac:Item/cbc:ModelName\u0022\u003E\r\n      \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022cac:Item/cbc:ModelName\u0022 /\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/span\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_BRANDMODEL --\u003E"
+  },
+  {
+    "key": "UBL_LINE_MANUFACTURERID",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Üretici Kodu",
+    "description": "Üretici tarafından ürüne verilen kimlik numarasını gösterir.\nXPath: cac:InvoiceLine/cac:Item/cac:ManufacturersItemIdentification/cbc:ID",
+    "iconText": "\uD83D\uDD27",
+    "xsltCode": "\u003Cxsl:if test=\u0022cac:Item/cac:ManufacturersItemIdentification/cbc:ID\u0022\u003E\r\n  \u003Cspan style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    Üretici Kodu: \u003Cxsl:value-of select=\u0022cac:Item/cac:ManufacturersItemIdentification/cbc:ID\u0022 /\u003E\r\n  \u003C/span\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_MANUFACTURERID --\u003E"
+  },
+  {
+    "key": "UBL_LINE_ADDPROPERTY",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Ek Ürün Kimlikleri",
+    "description": "Ürüne ait ek kimlik bilgilerini döngüyle listeler. Barkod, GTIN, seri numarası gibi ek tanımlayıcıları schemeID ile birlikte gösterir.\nXPath: cac:InvoiceLine/cac:Item/cac:AdditionalItemIdentification",
+    "iconText": "\uD83D\uDD16",
+    "xsltCode": "\u003C!-- Ek Ürün Kimlikleri --\u003E\r\n\u003Cxsl:for-each select=\u0022cac:Item/cac:AdditionalItemIdentification\u0022\u003E\r\n  \u003Cdiv style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:ID/@schemeID\u0022 /\u003E: \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_ADDPROPERTY --\u003E"
+  },
+  {
+    "key": "UBL_LINE_COMMODITY",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Emtia Sınıflandırması",
+    "description": "Ürünün emtia sınıflandırma kodunu gösterir. GTİP kodu veya diğer ürün sınıflandırma sistemleri için kullanılır.\nXPath: cac:InvoiceLine/cac:Item/cac:CommodityClassification/cbc:ItemClassificationCode",
+    "iconText": "\uD83D\uDCCA",
+    "xsltCode": "\u003Cxsl:for-each select=\u0022cac:Item/cac:CommodityClassification\u0022\u003E\r\n  \u003Cdiv style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    \u003Cxsl:if test=\u0022cbc:ItemClassificationCode/@listID\u0022\u003E\r\n      \u003Cxsl:value-of select=\u0022cbc:ItemClassificationCode/@listID\u0022 /\u003E:\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:ItemClassificationCode\u0022 /\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_COMMODITY --\u003E"
+  },
+  {
+    "key": "UBL_LINE_TAXABLEAMT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem KDV Matrahı",
+    "description": "Fatura kalemi düzeyinde vergi matrah tutarını (KDV hesaplanan tutar) gösterir.\nXPath: cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount",
+    "iconText": "\uD83D\uDCB5",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_TAXABLEAMT --\u003E"
+  },
+  {
+    "key": "UBL_LINE_KDVPERCENT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem KDV Oranı",
+    "description": "Fatura kalemi düzeyinde KDV oranını (%) tek değer olarak gösterir. Kalem döngüsü içinde kullanılır.\nXPath: cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:Percent",
+    "iconText": "\uD83D\uDCCA",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cac:TaxTotal/cac:TaxSubtotal/cbc:Percent\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_KDVPERCENT --\u003E"
+  },
+  {
+    "key": "UBL_LINE_ISKONTOPERCENT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem İskonto Oranı",
+    "description": "Fatura kalemi düzeyinde iskonto oranını (%) tek değer olarak gösterir. AllowanceCharge/ChargeIndicator=\u0027false\u0027 olan ilk iskontonun oranını verir. Kalem döngüsü içinde kullanılır.\nXPath: cac:InvoiceLine/cac:AllowanceCharge/cbc:MultiplierFactorNumeric",
+    "iconText": "\uD83D\uDCB2",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022format-number(cac:AllowanceCharge[cbc:ChargeIndicator=\u0027false\u0027][1]/cbc:MultiplierFactorNumeric * 100, \u0027###.##0,00\u0027, \u0027european\u0027)\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_ISKONTOPERCENT --\u003E"
+  },
+  {
+    "key": "UBL_LINE_ORDERREF",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem Sipariş Ref.",
+    "description": "Fatura kalemiyle ilişkili sipariş dokümanı kalemi referansını gösterir.\nXPath: cac:InvoiceLine/cac:OrderLineReference/cbc:LineID",
+    "iconText": "\uD83D\uDCE6",
+    "xsltCode": "\u003Cxsl:if test=\u0022cac:OrderLineReference/cbc:LineID\u0022\u003E\r\n  \u003Cspan style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    Sipariş Kalemi: \u003Cxsl:value-of select=\u0022cac:OrderLineReference/cbc:LineID\u0022 /\u003E\r\n  \u003C/span\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_ORDERREF --\u003E"
+  },
+  {
+    "key": "UBL_LINE_DESPATCHREF",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem İrsaliye Ref.",
+    "description": "Fatura kalemiyle ilişkili irsaliye dokümanı kalemi referansını gösterir.\nXPath: cac:InvoiceLine/cac:DespatchLineReference/cac:LineReference/cbc:LineID",
+    "iconText": "\uD83D\uDE9A",
+    "xsltCode": "\u003Cxsl:if test=\u0022cac:DespatchLineReference\u0022\u003E\r\n  \u003Cspan style=\u0022font-size:10px; color:#666;\u0022\u003E\r\n    İrsaliye Kalemi: \u003Cxsl:value-of select=\u0022cac:DespatchLineReference/cbc:LineID\u0022 /\u003E\r\n  \u003C/span\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_DESPATCHREF --\u003E"
+  },
+  {
+    "key": "UBL_INVOICELINES_DETAIL",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Detaylı Fatura Kalemleri",
+    "description": "Fatura kalemlerini tüm detaylarıyla tablo halinde listeler. Sıra No, Ürün Kodu, Mal/Hizmet Adı, Açıklama, Miktar, Birim, Birim Fiyat, İskonto Oranı, İskonto Tutarı, KDV Oranı, KDV Tutarı ve Tutar sütunlarını içerir.\nXPath: /n1:Invoice/cac:InvoiceLine (tüm alt elemanlar)",
+    "iconText": "\uD83D\uDCCB",
+    "xsltCode": "\u003C!-- Detaylı Fatura Kalem Döngüsü --\u003E\r\n\u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022 border=\u00221\u0022\u003E\r\n  \u003Ctr style=\u0022background-color:#f0f0f0; font-weight:bold; font-size:11px;\u0022\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003ESıra\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EÜrün Kodu\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EMal/Hizmet\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EAçıklama\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EMiktar\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EBirim\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EBirim Fiyat\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003Eİsk.%\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003Eİsk.Tutar\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EKDV %\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EKDV Tutarı\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003ETutar\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Cxsl:for-each select=\u0022/n1:Invoice/cac:InvoiceLine\u0022\u003E\r\n    \u003Ctr style=\u0022font-size:11px;\u0022\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:Item/cac:SellersItemIdentification/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:Item/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\r\n        \u003Cxsl:if test=\u0022cbc:Note and cbc:Note != \u0027\u0027\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:Note\u0022 /\u003E\u003C/xsl:if\u003E\r\n        \u003Cxsl:if test=\u0022cac:Item/cbc:Description\u0022\u003E\u003Cxsl:value-of select=\u0022cac:Item/cbc:Description\u0022 /\u003E\u003C/xsl:if\u003E\r\n      \u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:InvoicedQuantity\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:InvoicedQuantity/@unitCode\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:Price/cbc:PriceAmount\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\r\n        \u003Cxsl:if test=\u0022cac:AllowanceCharge/cbc:MultiplierFactorNumeric\u0022\u003E\r\n          \u003Cxsl:value-of select=\u0022format-number(cac:AllowanceCharge/cbc:MultiplierFactorNumeric * 100, \u0027###.##0,00\u0027, \u0027european\u0027)\u0022 /\u003E\r\n        \u003C/xsl:if\u003E\r\n      \u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\r\n        \u003Cxsl:if test=\u0022cac:AllowanceCharge/cbc:Amount\u0022\u003E\r\n          \u003Cxsl:value-of select=\u0022cac:AllowanceCharge/cbc:Amount\u0022 /\u003E\r\n        \u003C/xsl:if\u003E\r\n      \u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:TaxTotal/cac:TaxSubtotal/cbc:Percent\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:TaxTotal/cbc:TaxAmount\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:LineExtensionAmount\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/xsl:for-each\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_INVOICELINES_DETAIL --\u003E"
+  },
+  {
+    "key": "UBL_TAXTOTAL",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Vergi",
+    "displayName": "Vergi Toplamları",
+    "description": "Fatura düzeyinde tüm vergi alt toplamlarını döngüyle listeler. Her vergi türü için vergi adı, oranı ve tutarını gösterir.\nXPath: /n1:Invoice/cac:TaxTotal/cac:TaxSubtotal (cbc:Percent, cbc:TaxAmount, cac:TaxCategory/cac:TaxScheme/cbc:Name)",
+    "iconText": "\uD83D\uDCB0",
+    "xsltCode": "\u003C!-- Vergi Toplamları --\u003E\r\n\u003Ctable style=\u0022width:50%; margin-left:auto; border-collapse:collapse;\u0022 border=\u00221\u0022\u003E\r\n  \u003Cxsl:for-each select=\u0022/n1:Invoice/cac:TaxTotal/cac:TaxSubtotal\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:TaxCategory/cac:TaxScheme/cbc:Name\u0022 /\u003E (%\u003Cxsl:value-of select=\u0022cbc:Percent\u0022 /\u003E)\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:TaxAmount\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/xsl:for-each\u003E\r\n  \u003Ctr style=\u0022font-weight:bold;\u0022\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EToplam Vergi\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:TaxTotal/cbc:TaxAmount\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TAXTOTAL --\u003E"
+  },
+  {
+    "key": "UBL_WITHHOLDING",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Vergi",
+    "displayName": "Tevkifat Toplamı",
+    "description": "Fatura düzeyinde tevkifat (stopaj) toplamlarını gösterir. WithholdingTaxTotal altındaki alt toplamları döngüyle listeler. Tevkifat faturalarında zorunlu alandır.\nXPath: n1:Invoice/cac:WithholdingTaxTotal/cac:TaxSubtotal (cac:TaxCategory/cac:TaxScheme, cbc:Percent, cbc:TaxAmount)",
+    "iconText": "⚖️",
+    "xsltCode": "\u003C!-- Tevkifat Toplamları --\u003E\r\n\u003Cxsl:if test=\u0022n1:Invoice/cac:WithholdingTaxTotal\u0022\u003E\r\n  \u003Ctable style=\u0022width:50%; margin-left:auto; border-collapse:collapse; border:1px solid #990000;\u0022\u003E\r\n    \u003Ctr style=\u0022background-color:#fff0f0; font-weight:bold;\u0022\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003ETevkifat\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003ETutar\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Cxsl:for-each select=\u0022n1:Invoice/cac:WithholdingTaxTotal/cac:TaxSubtotal\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:TaxCategory/cac:TaxScheme/cbc:Name\u0022 /\u003E (%\u003Cxsl:value-of select=\u0022cbc:Percent\u0022 /\u003E)\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:TaxAmount\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:for-each\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_WITHHOLDING --\u003E"
+  },
+  {
+    "key": "UBL_TAXEXEMPTION",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Vergi",
+    "displayName": "KDV Muafiyeti",
+    "description": "KDV istisna/muafiyet nedeni ve kodunu gösterir. İstisna faturalarında vergi alt toplamında yer alan TaxExemptionReason ve TaxExemptionReasonCode alanlarını içerir.\nXPath: cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode, cbc:TaxExemptionReason",
+    "iconText": "\uD83D\uDEAB",
+    "xsltCode": "\u003C!-- KDV Muafiyet Bilgisi --\u003E\r\n\u003Cxsl:for-each select=\u0022/n1:Invoice/cac:TaxTotal/cac:TaxSubtotal\u0022\u003E\r\n  \u003Cxsl:if test=\u0022cac:TaxCategory/cbc:TaxExemptionReason\u0022\u003E\r\n    \u003Cdiv style=\u0022padding:4px; border:1px solid #cc9900; background-color:#fff9e6; margin:2px 0;\u0022\u003E\r\n      \u003Cspan style=\u0022font-weight:bold;\u0022\u003EMuafiyet Kodu: \u003C/span\u003E\r\n      \u003Cxsl:value-of select=\u0022cac:TaxCategory/cbc:TaxExemptionReasonCode\u0022 /\u003E\r\n      \u003Cbr /\u003E\r\n      \u003Cspan style=\u0022font-weight:bold;\u0022\u003EMuafiyet Nedeni: \u003C/span\u003E\r\n      \u003Cxsl:value-of select=\u0022cac:TaxCategory/cbc:TaxExemptionReason\u0022 /\u003E\r\n    \u003C/div\u003E\r\n  \u003C/xsl:if\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TAXEXEMPTION --\u003E"
+  },
+  {
+    "key": "UBL_TAXTYPEFILTER",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Vergi",
+    "displayName": "Vergi Tipi Filtresi",
+    "description": "Vergi tipine göre (TaxTypeCode) filtrelenmiş vergi toplamlarını gösterir. 0015=KDV, 9015=Tevkifatlı KDV, 4171=ÖTV kodlarını ayrı ayrı listeler.\nXPath: cac:TaxSubtotal[cac:TaxCategory/cac:TaxScheme/cbc:TaxTypeCode=\u00270015\u0027] vb.",
+    "iconText": "\uD83D\uDD0D",
+    "xsltCode": "\u003C!-- Vergi Tipi Koduna Göre Ayrıştırılmış Vergi Tablosu --\u003E\r\n\u003Ctable style=\u0022width:60%; margin-left:auto; border-collapse:collapse;\u0022 border=\u00221\u0022\u003E\r\n  \u003Ctr style=\u0022background-color:#f0f0f0; font-weight:bold;\u0022\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EVergi Tipi\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EMatrah\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003EOran\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003ETutar\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Cxsl:for-each select=\u0022n1:Invoice/cac:TaxTotal/cac:TaxSubtotal\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022padding:4px;\u0022\u003E\r\n        \u003Cxsl:value-of select=\u0022cac:TaxCategory/cac:TaxScheme/cbc:Name\u0022 /\u003E\r\n        (\u003Cxsl:value-of select=\u0022cac:TaxCategory/cac:TaxScheme/cbc:TaxTypeCode\u0022 /\u003E)\r\n      \u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:TaxableAmount\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E%\u003Cxsl:value-of select=\u0022cbc:Percent\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:TaxAmount\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/xsl:for-each\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TAXTYPEFILTER --\u003E"
+  },
+  {
+    "key": "UBL_TOTALS",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Genel Toplam",
+    "description": "Faturanın genel toplam tablosu. Mal/Hizmet toplamı, vergiler hariç, vergiler dahil, iskonto toplamı ve ödenecek tutar alanlarını gösterir.\nXPath: /n1:Invoice/cac:LegalMonetaryTotal (cbc:LineExtensionAmount, TaxExclusiveAmount, TaxInclusiveAmount, AllowanceTotalAmount, PayableAmount)",
+    "iconText": "\uD83E\uDDEE",
+    "xsltCode": "\u003C!-- Genel Toplam (LegalMonetaryTotal) --\u003E\r\n\u003Ctable style=\u0022width:50%; margin-left:auto; border-collapse:collapse;\u0022 border=\u00221\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EMal/Hizmet Toplamı\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EVergiler Hariç\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EVergiler Dahil\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003Eİndirim Toplamı\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr style=\u0022font-weight:bold; font-size:13px;\u0022\u003E\r\n    \u003Ctd style=\u0022padding:4px;\u0022\u003EÖdenecek Tutar\u003C/td\u003E\r\n    \u003Ctd style=\u0022padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TOTALS --\u003E"
+  },
+  {
+    "key": "UBL_CHARGETOTAL",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Artırım Toplamı",
+    "description": "Fatura düzeyinde artırım (charge) toplamını gösterir. AllowanceTotalAmount\u0027ın karşılığıdır.\nXPath: n1:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount",
+    "iconText": "➕",
+    "xsltCode": "\u003Cxsl:if test=\u0022n1:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003EArtırım Toplamı: \u003C/span\u003E\r\n  \u003Cxsl:value-of select=\u0022n1:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CHARGETOTAL --\u003E"
+  },
+  {
+    "key": "UBL_PAYABLEROUNDING",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Yuvarlama Tutarı",
+    "description": "Fatura düzeyinde yuvarlama tutarını gösterir. Ödenecek tutardaki yuvarlamadan kaynaklanan farkı belirtir.\nXPath: n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount",
+    "iconText": "\uD83D\uDD04",
+    "xsltCode": "\u003Cxsl:if test=\u0022n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003EYuvarlama: \u003C/span\u003E\r\n  \u003Cxsl:value-of select=\u0022n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PAYABLEROUNDING --\u003E"
+  },
+  {
+    "key": "UBL_ALLOWANCECHARGE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "İskonto/Artırım",
+    "description": "Fatura düzeyinde iskonto ve artırım bilgilerini döngüyle listeler. ChargeIndicator false=iskonto, true=artırım. Tutar ve nedenini gösterir.\nXPath: /n1:Invoice/cac:AllowanceCharge (cbc:ChargeIndicator, cbc:Amount, cbc:AllowanceChargeReason)",
+    "iconText": "➖",
+    "xsltCode": "\u003C!-- Fatura Düzeyinde İskonto/Artırım --\u003E\r\n\u003Cxsl:for-each select=\u0022cac:AllowanceCharge\u0022\u003E\r\n  \u003Cdiv style=\u0022padding:3px; border-bottom:1px solid #eee;\u0022\u003E\r\n    \u003Cxsl:choose\u003E\r\n      \u003Cxsl:when test=\u0022cbc:ChargeIndicator = \u0027false\u0027\u0022\u003E\r\n        \u003Cspan style=\u0022color:green;\u0022\u003Eİskonto: \u003C/span\u003E\r\n      \u003C/xsl:when\u003E\r\n      \u003Cxsl:otherwise\u003E\r\n        \u003Cspan style=\u0022color:red;\u0022\u003EArtırım: \u003C/span\u003E\r\n      \u003C/xsl:otherwise\u003E\r\n    \u003C/xsl:choose\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:Amount\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022cbc:AllowanceChargeReason\u0022\u003E\r\n      (\u003Cxsl:value-of select=\u0022cbc:AllowanceChargeReason\u0022 /\u003E)\r\n    \u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ALLOWANCECHARGE --\u003E"
+  },
+  {
+    "key": "UBL_EXCHANGERATE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Döviz Kuru",
+    "description": "Dövizli faturalarda kur bilgisini gösterir. Kaynak para birimi, hedef para birimi (TRY) ve hesaplama kurunu içerir. Dövizli toplam hesaplamasında kullanılır.\nXPath: n1:Invoice/cac:PricingExchangeRate/cbc:CalculationRate, cbc:SourceCurrencyCode, cbc:TargetCurrencyCode",
+    "iconText": "\uD83D\uDCB9",
+    "xsltCode": "\u003C!-- Döviz Kuru Bilgisi --\u003E\r\n\u003Cxsl:if test=\u0022/n1:Invoice/cac:PricingExchangeRate\u0022\u003E\r\n  \u003Ctable style=\u0022width:50%; margin-left:auto; border:1px solid #0066cc; padding:5px;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022font-weight:bold;\u0022\u003EDöviz Kuru:\u003C/td\u003E\r\n      \u003Ctd style=\u0022text-align:right;\u0022\u003E\r\n        1 \u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:DocumentCurrencyCode\u0022 /\u003E\r\n        = \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:PricingExchangeRate/cbc:CalculationRate\u0022 /\u003E TRY\r\n      \u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EXCHANGERATE --\u003E"
+  },
+  {
+    "key": "UBL_PAYMENTMEANS",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Ödeme",
+    "displayName": "Ödeme Bilgileri",
+    "description": "Ödeme şekli ve banka hesap bilgilerini döngüyle listeler. Vade tarihi, talimat notu ve hesap bilgilerini gösterir.\nXPath: n1:Invoice/cac:PaymentMeans (cbc:PaymentDueDate, cbc:InstructionNote, cac:PayeeFinancialAccount/cbc:PaymentNote)",
+    "iconText": "\uD83D\uDCB3",
+    "xsltCode": "\u003C!-- Ödeme Bilgileri --\u003E\r\n\u003Cxsl:for-each select=\u0022n1:Invoice/cac:PaymentMeans\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px; margin:3px 0;\u0022\u003E\r\n    \u003Cxsl:if test=\u0022cbc:PaymentDueDate\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003EVade Tarihi:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cbc:PaymentDueDate\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cbc:InstructionNote\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003ETalimat:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cbc:InstructionNote\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cac:PayeeFinancialAccount/cbc:PaymentNote\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EHesap Bilgisi:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cac:PayeeFinancialAccount/cbc:PaymentNote\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PAYMENTMEANS --\u003E"
+  },
+  {
+    "key": "UBL_PAYMENTTERMS",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Ödeme",
+    "displayName": "Ödeme Koşulları",
+    "description": "Ödeme koşulları ve vade notunu gösterir.\nXPath: //n1:Invoice/cac:PaymentTerms/cbc:Note",
+    "iconText": "\uD83D\uDCC5",
+    "xsltCode": "\u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentTerms/cbc:Note\u0022\u003E\r\n  \u003Cdiv style=\u0022padding:4px; border:1px solid #ccc; background-color:#f9f9f9;\u0022\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EÖdeme Koşulları: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022//n1:Invoice/cac:PaymentTerms/cbc:Note\u0022 /\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PAYMENTTERMS --\u003E"
+  },
+  {
+    "key": "UBL_PAYMENTTERMS_DETAIL",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Ödeme",
+    "displayName": "Ödeme Koşulları Detay",
+    "description": "Ödeme koşullarının tüm detaylarını gösterir. Not, gecikme ceza oranı, gecikme ceza tutarı, ödeme tutarı ve son ödeme tarihini içerir.\nXPath: //n1:Invoice/cac:PaymentTerms (cbc:Note, cbc:PenaltySurchargePercent, cbc:PenaltyAmount, cbc:Amount, cbc:PaymentDueDate)",
+    "iconText": "\uD83D\uDCCB",
+    "xsltCode": "\u003C!-- Ödeme Koşulları Detay --\u003E\r\n\u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentTerms\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n    \u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentTerms/cbc:Note\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003EÖdeme Notu:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022//n1:Invoice/cac:PaymentTerms/cbc:Note\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentTerms/cbc:PenaltySurchargePercent\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EGecikme Ceza Oranı:\u003C/td\u003E\r\n        \u003Ctd\u003E%\u003Cxsl:value-of select=\u0022//n1:Invoice/cac:PaymentTerms/cbc:PenaltySurchargePercent\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentTerms/cbc:PenaltyAmount\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EGecikme Ceza Tutarı:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022//n1:Invoice/cac:PaymentTerms/cbc:PenaltyAmount\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentTerms/cbc:Amount\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EÖdeme Tutarı:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022//n1:Invoice/cac:PaymentTerms/cbc:Amount\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentTerms/cbc:PaymentDueDate\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003ESon Ödeme Tarihi:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022//n1:Invoice/cac:PaymentTerms/cbc:PaymentDueDate\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PAYMENTTERMS_DETAIL --\u003E"
+  },
+  {
+    "key": "UBL_PAYMENTMEANS_ACCOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Ödeme",
+    "displayName": "Banka Hesap Bilgileri",
+    "description": "Ödeme şekli ile birlikte banka hesap bilgilerini detaylı gösterir. IBAN, para birimi, ödeme notu ve ödeme kanal kodu alanlarını içerir.\nXPath: n1:Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount (cbc:ID, cbc:CurrencyCode, cbc:PaymentNote)",
+    "iconText": "\uD83C\uDFE6",
+    "xsltCode": "\u003C!-- Banka Hesap Bilgileri --\u003E\r\n\u003Cxsl:for-each select=\u0022n1:Invoice/cac:PaymentMeans\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px; margin:3px 0;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003EÖdeme Şekli:\u003C/td\u003E\r\n      \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cbc:PaymentMeansCode\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Cxsl:if test=\u0022cbc:PaymentChannelCode\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EÖdeme Kanalı:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cbc:PaymentChannelCode\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cbc:PaymentDueDate\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EVade Tarihi:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cbc:PaymentDueDate\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cac:PayeeFinancialAccount/cbc:ID\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EIBAN / Hesap No:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cac:PayeeFinancialAccount/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cac:PayeeFinancialAccount/cbc:CurrencyCode\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EHesap Para Birimi:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cac:PayeeFinancialAccount/cbc:CurrencyCode\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cac:PayeeFinancialAccount/cbc:PaymentNote\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003EÖdeme Açıklaması:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cac:PayeeFinancialAccount/cbc:PaymentNote\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cbc:InstructionNote\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003ETalimat Notu:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cbc:InstructionNote\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PAYMENTMEANS_ACCOUNT --\u003E"
+  },
+  {
+    "key": "UBL_ORDERREF",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Referanslar",
+    "displayName": "Sipariş Referansı",
+    "description": "Faturanın bağlı olduğu sipariş numarası ve tarihini gösterir.\nXPath: n1:Invoice/cac:OrderReference/cbc:ID, cbc:IssueDate",
+    "iconText": "\uD83D\uDCE6",
+    "xsltCode": "\u003Cxsl:if test=\u0022n1:Invoice/cac:OrderReference\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003ESipariş No: \u003C/span\u003E\r\n  \u003Cxsl:value-of select=\u0022n1:Invoice/cac:OrderReference/cbc:ID\u0022 /\u003E\r\n  \u003Cxsl:if test=\u0022n1:Invoice/cac:OrderReference/cbc:IssueDate\u0022\u003E\r\n    \u003Cspan\u003E — Tarih: \u003Cxsl:value-of select=\u0022n1:Invoice/cac:OrderReference/cbc:IssueDate\u0022 /\u003E\u003C/span\u003E\r\n  \u003C/xsl:if\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ORDERREF --\u003E"
+  },
+  {
+    "key": "UBL_DESPATCHREF",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Referanslar",
+    "displayName": "İrsaliye Referansı",
+    "description": "Faturaya bağlı irsaliye numarası ve tarihini döngüyle listeler. Birden fazla irsaliye referansı olabilir.\nXPath: n1:Invoice/cac:DespatchDocumentReference (cbc:ID, cbc:IssueDate)",
+    "iconText": "\uD83D\uDE9A",
+    "xsltCode": "\u003C!-- İrsaliye Referansları --\u003E\r\n\u003Cxsl:for-each select=\u0022n1:Invoice/cac:DespatchDocumentReference\u0022\u003E\r\n  \u003Cdiv\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003Eİrsaliye No: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022cbc:IssueDate\u0022\u003E\r\n      \u003Cspan\u003E — Tarih: \u003Cxsl:value-of select=\u0022cbc:IssueDate\u0022 /\u003E\u003C/span\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_DESPATCHREF --\u003E"
+  },
+  {
+    "key": "UBL_BILLINGREF",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Referanslar",
+    "displayName": "Fatura Referansı",
+    "description": "İade faturalarında referans verilen önceki fatura bilgisi. Önceki fatura numarası ve tarihini gösterir.\nXPath: n1:Invoice/cac:BillingReference/cac:InvoiceDocumentReference (cbc:ID, cbc:IssueDate)",
+    "iconText": "\uD83D\uDCD1",
+    "xsltCode": "\u003Cxsl:if test=\u0022n1:Invoice/cac:BillingReference\u0022\u003E\r\n  \u003Cdiv\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EReferans Fatura No: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022n1:Invoice/cac:BillingReference/cac:InvoiceDocumentReference/cbc:ID\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022n1:Invoice/cac:BillingReference/cac:InvoiceDocumentReference/cbc:IssueDate\u0022\u003E\r\n      \u003Cspan\u003E — Tarih: \u003Cxsl:value-of select=\u0022n1:Invoice/cac:BillingReference/cac:InvoiceDocumentReference/cbc:IssueDate\u0022 /\u003E\u003C/span\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_BILLINGREF --\u003E"
+  },
+  {
+    "key": "UBL_ADDITIONALDOC",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Referanslar",
+    "displayName": "Ek Belgeler",
+    "description": "Faturaya eklenmiş ek belgeleri döngüyle listeler. XSLT dosyası, resim, PDF gibi gömülü ekleri ve belge tipini gösterir.\nXPath: n1:Invoice/cac:AdditionalDocumentReference (cbc:ID, cbc:IssueDate, cbc:DocumentType)",
+    "iconText": "\uD83D\uDCCE",
+    "xsltCode": "\u003C!-- Ek Belgeler --\u003E\r\n\u003Cxsl:for-each select=\u0022n1:Invoice/cac:AdditionalDocumentReference\u0022\u003E\r\n  \u003Cdiv style=\u0022padding:2px 0;\u0022\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EEk Belge: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022cbc:DocumentType\u0022\u003E — \u003Cxsl:value-of select=\u0022cbc:DocumentType\u0022 /\u003E\u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cbc:IssueDate\u0022\u003E — \u003Cxsl:value-of select=\u0022cbc:IssueDate\u0022 /\u003E\u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ADDITIONALDOC --\u003E"
+  },
+  {
+    "key": "UBL_CONTRACTREF",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Referanslar",
+    "displayName": "Kontrat Referansı",
+    "description": "Faturanın bağlı olduğu kontrat/sözleşme bilgisini gösterir.\nXPath: n1:Invoice/cac:ContractDocumentReference (cbc:ID, cbc:IssueDate)",
+    "iconText": "\uD83D\uDCDC",
+    "xsltCode": "\u003Cxsl:if test=\u0022n1:Invoice/cac:ContractDocumentReference\u0022\u003E\r\n  \u003Cdiv\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EKontrat No: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022n1:Invoice/cac:ContractDocumentReference/cbc:ID\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022n1:Invoice/cac:ContractDocumentReference/cbc:IssueDate\u0022\u003E\r\n      \u003Cspan\u003E — Tarih: \u003Cxsl:value-of select=\u0022n1:Invoice/cac:ContractDocumentReference/cbc:IssueDate\u0022 /\u003E\u003C/span\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CONTRACTREF --\u003E"
+  },
+  {
+    "key": "UBL_RECEIPTREF",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Referanslar",
+    "displayName": "Alındı Referansı",
+    "description": "Faturaya bağlı alındı belge numarası ve tarihini döngüyle listeler.\nXPath: n1:Invoice/cac:ReceiptDocumentReference (cbc:ID, cbc:IssueDate)",
+    "iconText": "\uD83D\uDCE5",
+    "xsltCode": "\u003C!-- Alındı Referansları --\u003E\r\n\u003Cxsl:for-each select=\u0022n1:Invoice/cac:ReceiptDocumentReference\u0022\u003E\r\n  \u003Cdiv\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EAlındı No: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022cbc:IssueDate\u0022\u003E\r\n      \u003Cspan\u003E — Tarih: \u003Cxsl:value-of select=\u0022cbc:IssueDate\u0022 /\u003E\u003C/span\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_RECEIPTREF --\u003E"
+  },
+  {
+    "key": "UBL_ORIGINATORDOC",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Referanslar",
+    "displayName": "Başlangıç Dokümanı",
+    "description": "Faturanın düzenlenmesine referans teşkil eden başlangıç belgelerine ait bilgileri gösterir.\nXPath: n1:Invoice/cac:OriginatorDocumentReference (cbc:ID, cbc:IssueDate)",
+    "iconText": "\uD83D\uDCC4",
+    "xsltCode": "\u003Cxsl:if test=\u0022n1:Invoice/cac:OriginatorDocumentReference\u0022\u003E\r\n  \u003Cdiv\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003EBaşlangıç Doküman No: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022n1:Invoice/cac:OriginatorDocumentReference/cbc:ID\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022n1:Invoice/cac:OriginatorDocumentReference/cbc:IssueDate\u0022\u003E\r\n      \u003Cspan\u003E — Tarih: \u003Cxsl:value-of select=\u0022n1:Invoice/cac:OriginatorDocumentReference/cbc:IssueDate\u0022 /\u003E\u003C/span\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ORIGINATORDOC --\u003E"
+  },
+  {
+    "key": "UBL_EA_DELIVERY",
+    "category": "UBL-TR e-Arşiv",
+    "subCategory": "Teslimat",
+    "displayName": "Teslimat Bilgisi",
+    "description": "E-Arşiv faturalarında teslimat bilgileri. Teslimat tarihi ve teslimat adresini gösterir.\nXPath: cac:Delivery (cbc:ActualDeliveryDate, cac:DeliveryAddress)",
+    "iconText": "\uD83D\uDE9B",
+    "xsltCode": "\u003C!-- Teslimat Bilgileri (e-Arşiv) --\u003E\r\n\u003Cxsl:if test=\u0022//n1:Invoice/cac:Delivery\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n    \u003Cxsl:if test=\u0022//n1:Invoice/cac:Delivery/cbc:ActualDeliveryDate\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003ETeslimat Tarihi:\u003C/td\u003E\r\n        \u003Ctd\u003E\u003Cxsl:value-of select=\u0022//n1:Invoice/cac:Delivery/cbc:ActualDeliveryDate\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022//n1:Invoice/cac:Delivery/cac:DeliveryAddress\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022font-weight:bold;\u0022\u003ETeslimat Adresi:\u003C/td\u003E\r\n        \u003Ctd\u003E\r\n          \u003Cxsl:value-of select=\u0022//n1:Invoice/cac:Delivery/cac:DeliveryAddress/cbc:StreetName\u0022 /\u003E\r\n          \u003Cxsl:text\u003E \u003C/xsl:text\u003E\r\n          \u003Cxsl:value-of select=\u0022//n1:Invoice/cac:Delivery/cac:DeliveryAddress/cbc:CitySubdivisionName\u0022 /\u003E\r\n          / \u003Cxsl:value-of select=\u0022//n1:Invoice/cac:Delivery/cac:DeliveryAddress/cbc:CityName\u0022 /\u003E\r\n        \u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EA_DELIVERY --\u003E"
+  },
+  {
+    "key": "UBL_EA_DELIVERYDATE",
+    "category": "UBL-TR e-Arşiv",
+    "subCategory": "Teslimat",
+    "displayName": "Teslimat Tarihi",
+    "description": "Fiili teslimat tarihini gösterir. E-Arşiv faturalarında malın teslim edildiği tarihtir.\nXPath: cbc:ActualDeliveryDate",
+    "iconText": "\uD83D\uDDD3",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022//n1:Invoice/cac:Delivery/cbc:ActualDeliveryDate\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EA_DELIVERYDATE --\u003E"
+  },
+  {
+    "key": "UBL_EA_SHIPMENT",
+    "category": "UBL-TR e-Arşiv",
+    "subCategory": "Teslimat",
+    "displayName": "Sevkiyat Bilgisi",
+    "description": "Sevkiyat (shipment) bilgilerini gösterir. İhracat faturalarında gümrük bilgileri, navlun ve taşıma detayları için kullanılır.\nXPath: cac:Delivery/cac:Shipment",
+    "iconText": "\uD83D\uDEA2",
+    "xsltCode": "\u003C!-- Sevkiyat Bilgileri (e-Arşiv) --\u003E\r\n\u003Cxsl:if test=\u0022//n1:Invoice/cac:Delivery/cac:Shipment\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003ESevkiyat ID:\u003C/td\u003E\r\n      \u003Ctd\u003E\u003Cxsl:value-of select=\u0022//n1:Invoice/cac:Delivery/cac:Shipment/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EA_SHIPMENT --\u003E"
+  },
+  {
+    "key": "UBL_EA_CARRIER",
+    "category": "UBL-TR e-Arşiv",
+    "subCategory": "Teslimat",
+    "displayName": "Taşıyıcı Bilgisi",
+    "description": "Taşıyıcı firma bilgilerini gösterir. E-Arşiv faturalarında malı taşıyan kargo/nakliye firması bilgisi.\nXPath: cac:CarrierParty (PartyIdentification, PartyName, PostalAddress)",
+    "iconText": "\uD83C\uDFD7",
+    "xsltCode": "\u003C!-- Taşıyıcı Bilgileri (e-Arşiv) --\u003E\r\n\u003Cxsl:for-each select=\u0022cac:CarrierParty\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border:1px solid #ccc; padding:5px;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022font-weight:bold; width:30%;\u0022\u003ETaşıyıcı VKN:\u003C/td\u003E\r\n      \u003Ctd\u003E\r\n        \u003Cxsl:for-each select=\u0022cac:PartyIdentification\u0022\u003E\r\n          \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003Cxsl:text\u003E \u003C/xsl:text\u003E\r\n        \u003C/xsl:for-each\u003E\r\n      \u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022font-weight:bold;\u0022\u003ETaşıyıcı Unvan:\u003C/td\u003E\r\n      \u003Ctd\u003E\u003Cxsl:value-of select=\u0022cac:PartyName/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EA_CARRIER --\u003E"
+  },
+  {
+    "key": "UBL_EA_INTERNETSALES",
+    "category": "UBL-TR e-Arşiv",
+    "subCategory": "E-Arşiv Özel",
+    "displayName": "İnternet Satışı",
+    "description": "E-Arşiv faturalarında internet üzerinden yapılan satış bilgileri. Web sitesi URL\u0027si, ödeme şekli ve ödeme tarihi alanlarını içerir.",
+    "iconText": "\uD83D\uDED2",
+    "xsltCode": "\u003C!-- İnternet Satış Bilgisi (e-Arşiv) --\u003E\r\n\u003Cxsl:if test=\u0022//n1:Invoice/cbc:ProfileID = \u0027EARSIVFATURA\u0027\u0022\u003E\r\n  \u003Cdiv style=\u0022padding:4px; border:1px solid #6633cc; background-color:#f5f0ff;\u0022\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003Eİnternet Satışı\u003C/span\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EA_INTERNETSALES --\u003E"
+  },
+  {
+    "key": "UBL_EA_SENDINGTYPE",
+    "category": "UBL-TR e-Arşiv",
+    "subCategory": "E-Arşiv Özel",
+    "displayName": "Gönderim Tipi",
+    "description": "E-Arşiv faturasının gönderim tipini belirler. KAGIT=Kağıt ortamında teslim, ELEKTRONIK=Elektronik ortamda gönderim.",
+    "iconText": "\uD83D\uDCEC",
+    "xsltCode": "\u003C!-- Gönderim Tipi (e-Arşiv) --\u003E\r\n\u003Cxsl:choose\u003E\r\n  \u003Cxsl:when test=\u0022//n1:Invoice/cbc:ProfileID = \u0027EARSIVFATURA\u0027\u0022\u003E\r\n    \u003Cspan style=\u0022font-weight:bold; color:#6633cc;\u0022\u003EE-ARŞİV\u003C/span\u003E\r\n  \u003C/xsl:when\u003E\r\n\u003C/xsl:choose\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EA_SENDINGTYPE --\u003E"
+  },
+  {
+    "key": "UBL_EA_PAYMENTCHANNEL",
+    "category": "UBL-TR e-Arşiv",
+    "subCategory": "E-Arşiv Özel",
+    "displayName": "Ödeme Kanalı",
+    "description": "E-Arşiv faturalarında ödeme kanal kodunu gösterir. Banka, kredi kartı, nakit gibi ödeme kanalı bilgisini içerir.\nXPath: cac:PaymentMeans/cbc:PaymentChannelCode",
+    "iconText": "\uD83C\uDFE7",
+    "xsltCode": "\u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentMeans/cbc:PaymentChannelCode\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003EÖdeme Kanalı: \u003C/span\u003E\r\n  \u003Cxsl:value-of select=\u0022//n1:Invoice/cac:PaymentMeans/cbc:PaymentChannelCode\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EA_PAYMENTCHANNEL --\u003E"
+  },
+  {
+    "key": "UBL_EA_PAYMENTCODE",
+    "category": "UBL-TR e-Arşiv",
+    "subCategory": "E-Arşiv Özel",
+    "displayName": "Ödeme Şekil Kodu",
+    "description": "E-Arşiv faturalarında ödeme şekil kodunu gösterir. UBL-TR PaymentMeansCode değerlerini (Nakit, Çek, Havale, Kredi Kartı vb.) içerir.\nXPath: cac:PaymentMeans/cbc:PaymentMeansCode",
+    "iconText": "\uD83D\uDCB2",
+    "xsltCode": "\u003Cxsl:if test=\u0022//n1:Invoice/cac:PaymentMeans/cbc:PaymentMeansCode\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003EÖdeme Şekli: \u003C/span\u003E\r\n  \u003Cxsl:value-of select=\u0022//n1:Invoice/cac:PaymentMeans/cbc:PaymentMeansCode\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_EA_PAYMENTCODE --\u003E"
+  },
+  {
+    "key": "UBL_ID",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Fatura No",
+    "description": "Fatura numarasını tek değer olarak gösterir. Belgenin benzersiz sıra numarasıdır.\nXPath: /n1:Invoice/cbc:ID",
+    "iconText": "\uD83D\uDD22",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ID --\u003E"
+  },
+  {
+    "key": "UBL_ISSUEDATE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Başlık",
+    "displayName": "Fatura Tarihi",
+    "description": "Faturanın düzenleme tarihini tek değer olarak gösterir. YYYY-MM-DD formatındadır.\nXPath: /n1:Invoice/cbc:IssueDate",
+    "iconText": "\uD83D\uDCC5",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cbc:IssueDate\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ISSUEDATE --\u003E"
+  },
+  {
+    "key": "UBL_SUPPLIER_VKN",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Satıcı VKN/TCKN",
+    "description": "Satıcı firmanın VKN veya TCKN numarasını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID",
+    "iconText": "\uD83C\uDD94",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SUPPLIER_VKN --\u003E"
+  },
+  {
+    "key": "UBL_SUPPLIER_NAME",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Satıcı Unvan",
+    "description": "Satıcı firmanın ticari unvanını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name",
+    "iconText": "\uD83C\uDFE2",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SUPPLIER_NAME --\u003E"
+  },
+  {
+    "key": "UBL_SUPPLIER_TAXOFFICE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Satıcı Vergi Dairesi",
+    "description": "Satıcı firmanın bağlı olduğu vergi dairesinin adını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name",
+    "iconText": "\uD83C\uDFDB",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SUPPLIER_TAXOFFICE --\u003E"
+  },
+  {
+    "key": "UBL_SUPPLIER_PHONE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Satıcı Telefon",
+    "description": "Satıcı firmanın telefon numarasını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:Telephone",
+    "iconText": "\uD83D\uDCDE",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:Telephone\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SUPPLIER_PHONE --\u003E"
+  },
+  {
+    "key": "UBL_SUPPLIER_EMAIL",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Satıcı E-posta",
+    "description": "Satıcı firmanın e-posta adresini tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:ElectronicMail",
+    "iconText": "\uD83D\uDCE7",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:ElectronicMail\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_SUPPLIER_EMAIL --\u003E"
+  },
+  {
+    "key": "UBL_CUSTOMER_VKN",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Alıcı VKN/TCKN",
+    "description": "Alıcı firmanın VKN veya TCKN numarasını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID",
+    "iconText": "\uD83C\uDD94",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CUSTOMER_VKN --\u003E"
+  },
+  {
+    "key": "UBL_CUSTOMER_NAME",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Alıcı Unvan",
+    "description": "Alıcı firmanın ticari unvanını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyName/cbc:Name",
+    "iconText": "\uD83D\uDC64",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyName/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CUSTOMER_NAME --\u003E"
+  },
+  {
+    "key": "UBL_CUSTOMER_TAXOFFICE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Alıcı Vergi Dairesi",
+    "description": "Alıcı firmanın bağlı olduğu vergi dairesinin adını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name",
+    "iconText": "\uD83C\uDFDB",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CUSTOMER_TAXOFFICE --\u003E"
+  },
+  {
+    "key": "UBL_CUSTOMER_PHONE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Alıcı Telefon",
+    "description": "Alıcı firmanın telefon numarasını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:Telephone",
+    "iconText": "\uD83D\uDCF1",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:Telephone\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CUSTOMER_PHONE --\u003E"
+  },
+  {
+    "key": "UBL_CUSTOMER_EMAIL",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Taraflar",
+    "displayName": "Alıcı E-posta",
+    "description": "Alıcı firmanın e-posta adresini tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail",
+    "iconText": "\uD83D\uDCE7",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_CUSTOMER_EMAIL --\u003E"
+  },
+  {
+    "key": "UBL_LINE_ID",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem Sıra No",
+    "description": "Fatura kaleminin sıra numarasını tek değer olarak gösterir. Kalem döngüsü (for-each InvoiceLine) içinde kullanılır.\nXPath: cac:InvoiceLine/cbc:ID",
+    "iconText": "#️⃣",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_ID --\u003E"
+  },
+  {
+    "key": "UBL_LINE_NAME",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Mal/Hizmet Adı",
+    "description": "Fatura kalemindeki mal veya hizmetin adını tek değer olarak gösterir. Kalem döngüsü içinde kullanılır.\nXPath: cac:InvoiceLine/cac:Item/cbc:Name",
+    "iconText": "\uD83D\uDCE6",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cac:Item/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_NAME --\u003E"
+  },
+  {
+    "key": "UBL_LINE_QUANTITY",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Miktar",
+    "description": "Fatura kaleminin miktarını tek değer olarak gösterir. Kalem döngüsü içinde kullanılır.\nXPath: cac:InvoiceLine/cbc:InvoicedQuantity",
+    "iconText": "\uD83D\uDD22",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cbc:InvoicedQuantity\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_QUANTITY --\u003E"
+  },
+  {
+    "key": "UBL_LINE_PRICE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Birim Fiyat",
+    "description": "Fatura kaleminin birim fiyatını tek değer olarak gösterir. Kalem döngüsü içinde kullanılır.\nXPath: cac:InvoiceLine/cac:Price/cbc:PriceAmount",
+    "iconText": "\uD83D\uDCB2",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cac:Price/cbc:PriceAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_PRICE --\u003E"
+  },
+  {
+    "key": "UBL_LINE_AMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem Tutarı",
+    "description": "Fatura kaleminin toplam tutarını (miktar × birim fiyat - iskonto) tek değer olarak gösterir. Kalem döngüsü içinde kullanılır.\nXPath: cac:InvoiceLine/cbc:LineExtensionAmount",
+    "iconText": "\uD83D\uDCB5",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cbc:LineExtensionAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_AMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_LINE_TAXAMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem KDV Tutarı",
+    "description": "Fatura kalemi düzeyinde KDV tutarını tek değer olarak gösterir. Kalem döngüsü içinde kullanılır.\nXPath: cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount",
+    "iconText": "\uD83D\uDCB0",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cac:TaxTotal/cbc:TaxAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_TAXAMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_LINE_DISCOUNTAMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem İskonto Tutarı",
+    "description": "Fatura kalemi düzeyinde iskonto tutarını tek değer olarak gösterir. ChargeIndicator=\u0027false\u0027 olan ilk iskonto tutarını verir. Kalem döngüsü içinde kullanılır.\nXPath: cac:InvoiceLine/cac:AllowanceCharge[cbc:ChargeIndicator=\u0027false\u0027]/cbc:Amount",
+    "iconText": "\uD83C\uDFF7",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cac:AllowanceCharge[cbc:ChargeIndicator=\u0027false\u0027][1]/cbc:Amount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINE_DISCOUNTAMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_LINEEXTENSIONAMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Mal/Hizmet Toplamı",
+    "description": "Mal/hizmet toplam tutarını tek değer olarak gösterir. Tüm kalem tutarlarının toplamıdır.\nXPath: /n1:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount",
+    "iconText": "\uD83E\uDDEE",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_LINEEXTENSIONAMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_TAXEXCLUSIVEAMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Vergiler Hariç Toplam",
+    "description": "Vergiler hariç toplam tutarı tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount",
+    "iconText": "\uD83D\uDCCA",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TAXEXCLUSIVEAMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_TAXINCLUSIVEAMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Vergiler Dahil Toplam",
+    "description": "Vergiler dahil toplam tutarı tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount",
+    "iconText": "\uD83D\uDCCA",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TAXINCLUSIVEAMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_ALLOWANCETOTALAMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "İndirim Toplamı",
+    "description": "Toplam indirim/iskonto tutarını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount",
+    "iconText": "➖",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_ALLOWANCETOTALAMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_PAYABLEAMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Ödenecek Tutar",
+    "description": "Nihai ödenecek tutarı tek değer olarak gösterir. Vergiler dahil toplam ± artırım/indirimler.\nXPath: /n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount",
+    "iconText": "\uD83D\uDCB0",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PAYABLEAMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_TOTALTAXAMOUNT",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Vergi",
+    "displayName": "Toplam Vergi",
+    "description": "Fatura düzeyinde toplam vergi tutarını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:TaxTotal/cbc:TaxAmount",
+    "iconText": "\uD83D\uDCB0",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:TaxTotal/cbc:TaxAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TOTALTAXAMOUNT --\u003E"
+  },
+  {
+    "key": "UBL_PAYMENTDUEDATE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Ödeme",
+    "displayName": "Vade Tarihi",
+    "description": "Faturanın vade tarihini tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:PaymentMeans/cbc:PaymentDueDate",
+    "iconText": "\uD83D\uDCC5",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:PaymentMeans/cbc:PaymentDueDate\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PAYMENTDUEDATE --\u003E"
+  },
+  {
+    "key": "UBL_IBAN",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Ödeme",
+    "displayName": "IBAN/Hesap No",
+    "description": "Ödeme yapılacak banka hesabının IBAN veya hesap numarasını tek değer olarak gösterir.\nXPath: /n1:Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID",
+    "iconText": "\uD83C\uDFE6",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IBAN --\u003E"
+  },
+  {
+    "key": "UBL_PAYMENTEXCHANGERATE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Ödeme Döviz Kuru",
+    "description": "Ödeme döviz kuru bilgisini gösterir. Kaynak ve hedef para birimi ile hesaplama kurunu içerir.\nXPath: /n1:Invoice/cac:PaymentExchangeRate/cbc:CalculationRate",
+    "iconText": "\uD83D\uDCB9",
+    "xsltCode": "\u003Cxsl:if test=\u0022/n1:Invoice/cac:PaymentExchangeRate\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003EÖdeme Kuru: \u003C/span\u003E\r\n  1 \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:PaymentExchangeRate/cbc:SourceCurrencyCode\u0022 /\u003E\r\n  = \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:PaymentExchangeRate/cbc:CalculationRate\u0022 /\u003E\r\n  \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:PaymentExchangeRate/cbc:TargetCurrencyCode\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_PAYMENTEXCHANGERATE --\u003E"
+  },
+  {
+    "key": "UBL_TAXEXCHANGERATE",
+    "category": "UBL-TR e-Fatura",
+    "subCategory": "Toplamlar",
+    "displayName": "Vergi Döviz Kuru",
+    "description": "Vergi hesaplamasında kullanılan döviz kuru bilgisini gösterir.\nXPath: /n1:Invoice/cac:TaxExchangeRate/cbc:CalculationRate",
+    "iconText": "\uD83D\uDCB9",
+    "xsltCode": "\u003Cxsl:if test=\u0022/n1:Invoice/cac:TaxExchangeRate\u0022\u003E\r\n  \u003Cspan style=\u0022font-weight:bold;\u0022\u003EVergi Kuru: \u003C/span\u003E\r\n  1 \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:TaxExchangeRate/cbc:SourceCurrencyCode\u0022 /\u003E\r\n  = \u003Cxsl:value-of select=\u0022/n1:Invoice/cac:TaxExchangeRate/cbc:CalculationRate\u0022 /\u003E\r\n  \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:Invoice/cac:TaxExchangeRate/cbc:TargetCurrencyCode\u0022 /\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_TAXEXCHANGERATE --\u003E"
+  },
+  {
+    "key": "UBL_IR_HEADER",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Başlık",
+    "displayName": "İrsaliye Başlık Tablosu",
+    "description": "Sevk irsaliyesi başlık bilgilerini tablo halinde gösterir: İrsaliye No, ETTN, Tarih, Saat, Tip Kodu, Senaryo, Kalem Sayısı.\nXPath: /n1:DespatchAdvice/cbc:*",
+    "iconText": "\uD83D\uDCCB",
+    "xsltCode": "\u003C!-- İrsaliye Başlık Tablosu --\u003E\r\n\u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold; width:30%;\u0022\u003Eİrsaliye No:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EETTN:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:UUID\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EDüzenleme Tarihi:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:IssueDate\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EDüzenleme Saati:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:IssueTime\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003ETip Kodu:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:DespatchAdviceTypeCode\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003ESenaryo:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:ProfileID\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EKalem Sayısı:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:LineCountNumeric\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_HEADER --\u003E"
+  },
+  {
+    "key": "UBL_IR_ID",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Başlık",
+    "displayName": "İrsaliye No",
+    "description": "Sevk irsaliyesi numarasını tek değer olarak gösterir. 3 hane birim kodu \u002B 4 hane yıl \u002B 9 hane sıra no formatındadır.\nXPath: /n1:DespatchAdvice/cbc:ID",
+    "iconText": "\uD83D\uDD22",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_ID --\u003E"
+  },
+  {
+    "key": "UBL_IR_UUID",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Başlık",
+    "displayName": "İrsaliye ETTN",
+    "description": "Sevk irsaliyesinin Evrensel Tekil Tanımlama Numarasını (ETTN) gösterir. GUID formatındadır.\nXPath: /n1:DespatchAdvice/cbc:UUID",
+    "iconText": "\uD83D\uDD11",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:UUID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_UUID --\u003E"
+  },
+  {
+    "key": "UBL_IR_ISSUEDATE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Başlık",
+    "displayName": "İrsaliye Tarihi",
+    "description": "Sevk irsaliyesinin düzenleme tarihini tek değer olarak gösterir. YYYY-MM-DD formatındadır.\nXPath: /n1:DespatchAdvice/cbc:IssueDate",
+    "iconText": "\uD83D\uDCC5",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:IssueDate\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_ISSUEDATE --\u003E"
+  },
+  {
+    "key": "UBL_IR_ISSUETIME",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Başlık",
+    "displayName": "İrsaliye Saati",
+    "description": "Sevk irsaliyesinin düzenleme saatini tek değer olarak gösterir. HH:MM:SS formatındadır.\nXPath: /n1:DespatchAdvice/cbc:IssueTime",
+    "iconText": "⏰",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:IssueTime\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_ISSUETIME --\u003E"
+  },
+  {
+    "key": "UBL_IR_TYPECODE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Başlık",
+    "displayName": "İrsaliye Tip Kodu",
+    "description": "Sevk irsaliyesi tip kodunu gösterir. SEVK veya MATBUDAN değerini alır.\nXPath: /n1:DespatchAdvice/cbc:DespatchAdviceTypeCode",
+    "iconText": "\uD83D\uDCD1",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:DespatchAdviceTypeCode\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_TYPECODE --\u003E"
+  },
+  {
+    "key": "UBL_IR_NOTE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Başlık",
+    "displayName": "İrsaliye Notu",
+    "description": "Sevk irsaliyesindeki notları listeler. Birden fazla not olabilir.\nXPath: /n1:DespatchAdvice/cbc:Note",
+    "iconText": "\uD83D\uDCDD",
+    "xsltCode": "\u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cbc:Note\u0022\u003E\r\n  \u003Cdiv style=\u0022padding:2px;\u0022\u003E\u003Cxsl:value-of select=\u0022.\u0022 /\u003E\u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_NOTE --\u003E"
+  },
+  {
+    "key": "UBL_IR_LINECOUNT",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Başlık",
+    "displayName": "İrsaliye Kalem Sayısı",
+    "description": "Sevk irsaliyesindeki kalem sayısını tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cbc:LineCountNumeric",
+    "iconText": "\uD83D\uDD22",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cbc:LineCountNumeric\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_LINECOUNT --\u003E"
+  },
+  {
+    "key": "UBL_IR_SUPPLIER",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Sevk Eden Taraf",
+    "description": "Sevk irsaliyesindeki malları sevk eden tarafın bilgilerini tablo olarak gösterir: VKN, Unvan, Vergi Dairesi, Adres, İletişim.\nXPath: /n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party",
+    "iconText": "\uD83C\uDFED",
+    "xsltCode": "\u003C!-- Sevk Eden Taraf --\u003E\r\n\u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold; width:30%;\u0022\u003EVKN/TCKN:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n      \u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyIdentification\u0022\u003E\r\n        \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003Cxsl:if test=\u0022position()!=last()\u0022\u003E\u003Cxsl:text\u003E / \u003C/xsl:text\u003E\u003C/xsl:if\u003E\r\n      \u003C/xsl:for-each\u003E\r\n    \u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EUnvan:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyName/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EVergi Dairesi:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EAdres:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n      \u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress/cbc:StreetName\u0022 /\u003E\r\n      \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress/cbc:BuildingNumber\u0022 /\u003E\r\n      \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName\u0022 /\u003E\r\n      / \u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PostalAddress/cbc:CityName\u0022 /\u003E\r\n    \u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003ETelefon:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:Contact/cbc:Telephone\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_SUPPLIER --\u003E"
+  },
+  {
+    "key": "UBL_IR_CUSTOMER",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Teslim Alan Taraf",
+    "description": "Sevk irsaliyesindeki malları teslim alan tarafın bilgilerini tablo olarak gösterir: VKN, Unvan, Vergi Dairesi, Adres, İletişim.\nXPath: /n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party",
+    "iconText": "\uD83D\uDC64",
+    "xsltCode": "\u003C!-- Teslim Alan Taraf --\u003E\r\n\u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold; width:30%;\u0022\u003EVKN/TCKN:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n      \u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyIdentification\u0022\u003E\r\n        \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003Cxsl:if test=\u0022position()!=last()\u0022\u003E\u003Cxsl:text\u003E / \u003C/xsl:text\u003E\u003C/xsl:if\u003E\r\n      \u003C/xsl:for-each\u003E\r\n    \u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EUnvan:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyName/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EVergi Dairesi:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EAdres:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n      \u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName\u0022 /\u003E\r\n      \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress/cbc:BuildingNumber\u0022 /\u003E\r\n      \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName\u0022 /\u003E\r\n      / \u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName\u0022 /\u003E\r\n    \u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Ctr\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003ETelefon:\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:Contact/cbc:Telephone\u0022 /\u003E\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_CUSTOMER --\u003E"
+  },
+  {
+    "key": "UBL_IR_SUPPLIER_VKN",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Sevk Eden VKN",
+    "description": "Malları sevk eden tarafın VKN/TCKN numarasını tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID",
+    "iconText": "\uD83C\uDD94",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_SUPPLIER_VKN --\u003E"
+  },
+  {
+    "key": "UBL_IR_SUPPLIER_NAME",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Sevk Eden Unvan",
+    "description": "Malları sevk eden tarafın ticari unvanını tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyName/cbc:Name",
+    "iconText": "\uD83C\uDFE2",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyName/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_SUPPLIER_NAME --\u003E"
+  },
+  {
+    "key": "UBL_IR_SUPPLIER_TAXOFFICE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Sevk Eden Vergi Dairesi",
+    "description": "Malları sevk eden tarafın vergi dairesini tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name",
+    "iconText": "\uD83C\uDFDB",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_SUPPLIER_TAXOFFICE --\u003E"
+  },
+  {
+    "key": "UBL_IR_CUSTOMER_VKN",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Teslim Alan VKN",
+    "description": "Malları teslim alan tarafın VKN/TCKN numarasını tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID",
+    "iconText": "\uD83C\uDD94",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_CUSTOMER_VKN --\u003E"
+  },
+  {
+    "key": "UBL_IR_CUSTOMER_NAME",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Teslim Alan Unvan",
+    "description": "Malları teslim alan tarafın ticari unvanını tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyName/cbc:Name",
+    "iconText": "\uD83D\uDC64",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyName/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_CUSTOMER_NAME --\u003E"
+  },
+  {
+    "key": "UBL_IR_CUSTOMER_TAXOFFICE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Teslim Alan Vergi Dairesi",
+    "description": "Malları teslim alan tarafın vergi dairesini tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name",
+    "iconText": "\uD83C\uDFDB",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_CUSTOMER_TAXOFFICE --\u003E"
+  },
+  {
+    "key": "UBL_IR_SHIPMENT",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Sevkiyat",
+    "displayName": "Sevkiyat Bilgileri",
+    "description": "Sevkiyat bilgilerini tablo olarak gösterir: Araç plakası, dorse plakası, şoför bilgileri, fiili sevk tarihi/saati, taşıyıcı firma.\nXPath: /n1:DespatchAdvice/cac:Shipment",
+    "iconText": "\uD83D\uDE9B",
+    "xsltCode": "\u003C!-- Sevkiyat Bilgileri --\u003E\r\n\u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cac:Shipment\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022\u003E\r\n    \u003Cxsl:for-each select=\u0022cac:ShipmentStage/cac:TransportMeans/cac:RoadTransport\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold; width:30%;\u0022\u003EAraç Plakası:\u003C/td\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:LicensePlateID\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:for-each\u003E\r\n    \u003Cxsl:for-each select=\u0022cac:TransportHandlingUnit/cac:TransportEquipment\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EDorse Plakası:\u003C/td\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:for-each\u003E\r\n    \u003Cxsl:for-each select=\u0022cac:ShipmentStage/cac:DriverPerson\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EŞoför:\u003C/td\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n          \u003Cxsl:value-of select=\u0022cbc:FirstName\u0022 /\u003E\u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022cbc:FamilyName\u0022 /\u003E\r\n          \u003Cxsl:if test=\u0022cbc:NationalityID\u0022\u003E — TCKN: \u003Cxsl:value-of select=\u0022cbc:NationalityID\u0022 /\u003E\u003C/xsl:if\u003E\r\n        \u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:for-each\u003E\r\n    \u003Cxsl:if test=\u0022cac:Delivery/cac:Despatch/cbc:ActualDespatchDate\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EFiili Sevk Tarihi:\u003C/td\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n          \u003Cxsl:value-of select=\u0022cac:Delivery/cac:Despatch/cbc:ActualDespatchDate\u0022 /\u003E\r\n          \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022cac:Delivery/cac:Despatch/cbc:ActualDespatchTime\u0022 /\u003E\r\n        \u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cac:Delivery/cac:CarrierParty\u0022\u003E\r\n      \u003Ctr\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003ETaşıyıcı:\u003C/td\u003E\r\n        \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n          \u003Cxsl:value-of select=\u0022cac:Delivery/cac:CarrierParty/cac:PartyName/cbc:Name\u0022 /\u003E\r\n          (\u003Cxsl:value-of select=\u0022cac:Delivery/cac:CarrierParty/cac:PartyIdentification/cbc:ID\u0022 /\u003E)\r\n        \u003C/td\u003E\r\n      \u003C/tr\u003E\r\n    \u003C/xsl:if\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_SHIPMENT --\u003E"
+  },
+  {
+    "key": "UBL_IR_DRIVER",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Sevkiyat",
+    "displayName": "Şoför Bilgileri",
+    "description": "Sevkiyattaki şoför(ler)in ad, soyad, unvan ve TCKN bilgilerini listeler. Birden fazla şoför olabilir.\nXPath: /n1:DespatchAdvice/cac:Shipment/cac:ShipmentStage/cac:DriverPerson",
+    "iconText": "\uD83E\uDDD1",
+    "xsltCode": "\u003C!-- Şoför Bilgileri --\u003E\r\n\u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cac:Shipment/cac:ShipmentStage/cac:DriverPerson\u0022\u003E\r\n  \u003Cdiv style=\u0022padding:2px;\u0022\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:FirstName\u0022 /\u003E\u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022cbc:FamilyName\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022cbc:Title\u0022\u003E — \u003Cxsl:value-of select=\u0022cbc:Title\u0022 /\u003E\u003C/xsl:if\u003E\r\n    \u003Cxsl:if test=\u0022cbc:NationalityID\u0022\u003E (TCKN: \u003Cxsl:value-of select=\u0022cbc:NationalityID\u0022 /\u003E)\u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_DRIVER --\u003E"
+  },
+  {
+    "key": "UBL_IR_VEHICLE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Sevkiyat",
+    "displayName": "Araç Plakası",
+    "description": "Sevkiyat aracının plaka numarasını tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:Shipment/cac:ShipmentStage/cac:TransportMeans/cac:RoadTransport/cbc:LicensePlateID",
+    "iconText": "\uD83D\uDE9B",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:Shipment/cac:ShipmentStage/cac:TransportMeans/cac:RoadTransport/cbc:LicensePlateID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_VEHICLE --\u003E"
+  },
+  {
+    "key": "UBL_IR_TRAILER",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Sevkiyat",
+    "displayName": "Dorse Plakası",
+    "description": "Sevkiyat dorsesinin plaka numarasını gösterir. Birden fazla dorse olabilir.\nXPath: /n1:DespatchAdvice/cac:Shipment/cac:TransportHandlingUnit/cac:TransportEquipment/cbc:ID",
+    "iconText": "\uD83D\uDE9A",
+    "xsltCode": "\u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cac:Shipment/cac:TransportHandlingUnit/cac:TransportEquipment\u0022\u003E\r\n  \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003Cxsl:if test=\u0022position()!=last()\u0022\u003E\u003Cxsl:text\u003E, \u003C/xsl:text\u003E\u003C/xsl:if\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_TRAILER --\u003E"
+  },
+  {
+    "key": "UBL_IR_CARRIER",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Sevkiyat",
+    "displayName": "Taşıyıcı Firma",
+    "description": "Taşıyıcı (kargo/nakliye) firmasının bilgilerini tablo olarak gösterir: VKN, Unvan, Adres.\nXPath: /n1:DespatchAdvice/cac:Shipment/cac:Delivery/cac:CarrierParty",
+    "iconText": "\uD83C\uDFD7",
+    "xsltCode": "\u003C!-- Taşıyıcı Firma Bilgileri --\u003E\r\n\u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cac:Shipment/cac:Delivery/cac:CarrierParty\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold; width:30%;\u0022\u003ETaşıyıcı VKN:\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:PartyIdentification/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003ETaşıyıcı Unvan:\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:PartyName/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003EAdres:\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n        \u003Cxsl:value-of select=\u0022cac:PostalAddress/cbc:CitySubdivisionName\u0022 /\u003E / \u003Cxsl:value-of select=\u0022cac:PostalAddress/cbc:CityName\u0022 /\u003E\r\n      \u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_CARRIER --\u003E"
+  },
+  {
+    "key": "UBL_IR_DESPATCHDATE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Sevkiyat",
+    "displayName": "Fiili Sevk Tarihi",
+    "description": "Fiili sevk tarihini tek değer olarak gösterir. Malların fiilen yola çıktığı tarihtir.\nXPath: /n1:DespatchAdvice/cac:Shipment/cac:Delivery/cac:Despatch/cbc:ActualDespatchDate",
+    "iconText": "\uD83D\uDCC5",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:Shipment/cac:Delivery/cac:Despatch/cbc:ActualDespatchDate\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_DESPATCHDATE --\u003E"
+  },
+  {
+    "key": "UBL_IR_DESPATCHTIME",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Sevkiyat",
+    "displayName": "Fiili Sevk Saati",
+    "description": "Fiili sevk saatini tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:Shipment/cac:Delivery/cac:Despatch/cbc:ActualDespatchTime",
+    "iconText": "⏰",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:Shipment/cac:Delivery/cac:Despatch/cbc:ActualDespatchTime\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_DESPATCHTIME --\u003E"
+  },
+  {
+    "key": "UBL_IR_GOODSVALUE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Sevkiyat",
+    "displayName": "Mal Bedeli",
+    "description": "Gönderideki malların toplam bedelini tek değer olarak gösterir.\nXPath: /n1:DespatchAdvice/cac:Shipment/cac:GoodsItem/cbc:ValueAmount",
+    "iconText": "\uD83D\uDCB0",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:Shipment/cac:GoodsItem/cbc:ValueAmount\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_GOODSVALUE --\u003E"
+  },
+  {
+    "key": "UBL_IR_LINES",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Kalemler",
+    "displayName": "İrsaliye Kalem Tablosu",
+    "description": "İrsaliye kalemlerini tablo olarak listeler: Sıra No, Mal/Hizmet Adı, Miktar, Birim, Satıcı Ürün Kodu.\nXPath: /n1:DespatchAdvice/cac:DespatchLine",
+    "iconText": "\uD83D\uDCCB",
+    "xsltCode": "\u003C!-- İrsaliye Kalem Tablosu --\u003E\r\n\u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022\u003E\r\n  \u003Ctr style=\u0022background-color:#f0f0f0; font-weight:bold;\u0022\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; text-align:center; width:8%;\u0022\u003ESıra\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003EMal/Hizmet\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; text-align:right; width:12%;\u0022\u003EMiktar\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; text-align:center; width:10%;\u0022\u003EBirim\u003C/td\u003E\r\n    \u003Ctd style=\u0022border:1px solid #999; padding:4px; width:15%;\u0022\u003EÜrün Kodu\u003C/td\u003E\r\n  \u003C/tr\u003E\r\n  \u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cac:DespatchLine\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; text-align:center;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:Item/cbc:Name\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; text-align:right;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:DeliveredQuantity\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; text-align:center;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:DeliveredQuantity/@unitCode\u0022 /\u003E\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022cac:Item/cac:SellersItemIdentification/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/xsl:for-each\u003E\r\n\u003C/table\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_LINES --\u003E"
+  },
+  {
+    "key": "UBL_IR_LINE_ID",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Kalemler",
+    "displayName": "Kalem Sıra No (İrs.)",
+    "description": "İrsaliye kaleminin sıra numarasını tek değer olarak gösterir. DespatchLine döngüsü içinde kullanılır.\nXPath: cac:DespatchLine/cbc:ID",
+    "iconText": "#️⃣",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_LINE_ID --\u003E"
+  },
+  {
+    "key": "UBL_IR_LINE_QUANTITY",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Kalemler",
+    "displayName": "Teslim Miktarı",
+    "description": "İrsaliye kalemindeki teslim edilen miktarı tek değer olarak gösterir. DespatchLine döngüsü içinde kullanılır.\nXPath: cac:DespatchLine/cbc:DeliveredQuantity",
+    "iconText": "\uD83D\uDD22",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cbc:DeliveredQuantity\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_LINE_QUANTITY --\u003E"
+  },
+  {
+    "key": "UBL_IR_LINE_NAME",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Kalemler",
+    "displayName": "Mal/Hizmet Adı (İrs.)",
+    "description": "İrsaliye kalemindeki mal veya hizmetin adını tek değer olarak gösterir. DespatchLine döngüsü içinde kullanılır.\nXPath: cac:DespatchLine/cac:Item/cbc:Name",
+    "iconText": "\uD83D\uDCE6",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cac:Item/cbc:Name\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_LINE_NAME --\u003E"
+  },
+  {
+    "key": "UBL_IR_LINE_UNITCODE",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Kalemler",
+    "displayName": "Birim Kodu (İrs.)",
+    "description": "İrsaliye kaleminin birim kodunu tek değer olarak gösterir (NIU, KGM, LTR vb.). DespatchLine döngüsü içinde kullanılır.\nXPath: cac:DespatchLine/cbc:DeliveredQuantity/@unitCode",
+    "iconText": "\uD83D\uDCCF",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cbc:DeliveredQuantity/@unitCode\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_LINE_UNITCODE --\u003E"
+  },
+  {
+    "key": "UBL_IR_LINE_SELLERID",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Kalemler",
+    "displayName": "Satıcı Ürün Kodu (İrs.)",
+    "description": "İrsaliye kalemindeki satıcının ürün kodunu tek değer olarak gösterir. DespatchLine döngüsü içinde kullanılır.\nXPath: cac:DespatchLine/cac:Item/cac:SellersItemIdentification/cbc:ID",
+    "iconText": "\uD83C\uDFF7",
+    "xsltCode": "\u003Cxsl:value-of select=\u0022cac:Item/cac:SellersItemIdentification/cbc:ID\u0022 /\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_LINE_SELLERID --\u003E"
+  },
+  {
+    "key": "UBL_IR_ORDERREF",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Referanslar",
+    "displayName": "Sipariş Referansı (İrs.)",
+    "description": "İrsaliyedeki sipariş referans bilgisini tablo olarak gösterir: Sipariş No ve Tarihi.\nXPath: /n1:DespatchAdvice/cac:OrderReference",
+    "iconText": "\uD83D\uDCCE",
+    "xsltCode": "\u003Cxsl:if test=\u0022/n1:DespatchAdvice/cac:OrderReference\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold; width:30%;\u0022\u003ESipariş No:\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:OrderReference/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003ESipariş Tarihi:\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:OrderReference/cbc:IssueDate\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_ORDERREF --\u003E"
+  },
+  {
+    "key": "UBL_IR_ADDITIONALDOC",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Referanslar",
+    "displayName": "İlave Doküman (İrs.)",
+    "description": "İrsaliyedeki ilave doküman referanslarını listeler. MATBUDAN tipinde matbu belge seri-sıra no ve tarihi gösterilir.\nXPath: /n1:DespatchAdvice/cac:AdditionalDocumentReference",
+    "iconText": "\uD83D\uDCC4",
+    "xsltCode": "\u003Cxsl:for-each select=\u0022/n1:DespatchAdvice/cac:AdditionalDocumentReference\u0022\u003E\r\n  \u003Cdiv style=\u0022padding:2px;\u0022\u003E\r\n    \u003Cspan style=\u0022font-weight:bold;\u0022\u003E\u003Cxsl:value-of select=\u0022cbc:DocumentType\u0022 /\u003E: \u003C/span\u003E\r\n    \u003Cxsl:value-of select=\u0022cbc:ID\u0022 /\u003E\r\n    \u003Cxsl:if test=\u0022cbc:IssueDate\u0022\u003E — \u003Cxsl:value-of select=\u0022cbc:IssueDate\u0022 /\u003E\u003C/xsl:if\u003E\r\n  \u003C/div\u003E\r\n\u003C/xsl:for-each\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_ADDITIONALDOC --\u003E"
+  },
+  {
+    "key": "UBL_IR_PHYSICALLOCATION",
+    "category": "UBL-TR e-İrsaliye",
+    "subCategory": "Taraflar",
+    "displayName": "Sevk Adresi (Depo/Şube)",
+    "description": "Sevk eden tarafın fiziksel konum (depo/şube) adresini gösterir. DespatchSupplierParty altındaki PhysicalLocation elemanıdır.\nXPath: /n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PhysicalLocation",
+    "iconText": "\uD83D\uDCCD",
+    "xsltCode": "\u003Cxsl:if test=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PhysicalLocation\u0022\u003E\r\n  \u003Ctable style=\u0022width:100%; border-collapse:collapse;\u0022\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold; width:30%;\u0022\u003EŞube/Depo:\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PhysicalLocation/cbc:ID\u0022 /\u003E\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n    \u003Ctr\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px; font-weight:bold;\u0022\u003ESevk Adresi:\u003C/td\u003E\r\n      \u003Ctd style=\u0022border:1px solid #999; padding:4px;\u0022\u003E\r\n        \u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PhysicalLocation/cac:Address/cbc:StreetName\u0022 /\u003E\r\n        \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PhysicalLocation/cac:Address/cbc:BuildingNumber\u0022 /\u003E\r\n        \u003Cxsl:text\u003E \u003C/xsl:text\u003E\u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PhysicalLocation/cac:Address/cbc:CitySubdivisionName\u0022 /\u003E\r\n        / \u003Cxsl:value-of select=\u0022/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PhysicalLocation/cac:Address/cbc:CityName\u0022 /\u003E\r\n      \u003C/td\u003E\r\n    \u003C/tr\u003E\r\n  \u003C/table\u003E\r\n\u003C/xsl:if\u003E",
+    "dragDataString": "\u003C!-- EFATURA_SNIPPET:UBL_IR_PHYSICALLOCATION --\u003E"
+  }
+]

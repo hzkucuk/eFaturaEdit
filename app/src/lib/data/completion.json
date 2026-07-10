@@ -1,0 +1,471 @@
+{
+  "xsltTags": [
+    {
+      "text": "xsl:value-of select=\u0022\u0022",
+      "description": "XPath değerini çıktıya yazar",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:for-each select=\u0022\u0022",
+      "description": "Düğüm kümesi üzerinde döngü",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:if test=\u0022\u0022",
+      "description": "Koşullu blok",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:choose",
+      "description": "Çoklu koşul bloğu (switch)",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:when test=\u0022\u0022",
+      "description": "choose içinde koşul dalı",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:otherwise",
+      "description": "choose içinde varsayılan dal",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:text",
+      "description": "Sabit metin çıktısı",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:variable name=\u0022\u0022",
+      "description": "Değişken tanımı",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:template match=\u0022\u0022",
+      "description": "Şablon eşleşme tanımı",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:apply-templates",
+      "description": "Alt şablonları uygula",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:attribute name=\u0022\u0022",
+      "description": "Dinamik HTML özniteliği",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:element name=\u0022\u0022",
+      "description": "Dinamik HTML elemanı",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:call-template name=\u0022\u0022",
+      "description": "İsimle şablon çağır",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:sort select=\u0022\u0022",
+      "description": "for-each içinde sıralama",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:copy-of select=\u0022\u0022",
+      "description": "Düğümü olduğu gibi kopyala",
+      "imageIndex": 0
+    },
+    {
+      "text": "xsl:number",
+      "description": "Otomatik numara üretici",
+      "imageIndex": 0
+    }
+  ],
+  "xPathPaths": [
+    {
+      "text": "/n1:Invoice/cbc:ID",
+      "description": "Fatura No",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:UUID",
+      "description": "ETTN",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:IssueDate",
+      "description": "Fatura Tarihi",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:IssueTime",
+      "description": "Düzenleme Saati",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:InvoiceTypeCode",
+      "description": "Fatura Tipi (SATIS, IADE, TEVKİFAT...)",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:ProfileID",
+      "description": "Senaryo (TICARIFATURA, TEMELFATURA...)",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:DocumentCurrencyCode",
+      "description": "Para Birimi (TRY, USD, EUR...)",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:Note",
+      "description": "Fatura Notu",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:LineCountNumeric",
+      "description": "Kalem Sayısı",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:CopyIndicator",
+      "description": "Asıl/Suret",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cbc:AccountingCost",
+      "description": "Muhasebe Maliyet Kodu",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID",
+      "description": "Satıcı VKN/TCKN",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name",
+      "description": "Satıcı Unvan",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name",
+      "description": "Satıcı Vergi Dairesi",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:Telephone",
+      "description": "Satıcı Telefon",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:ElectronicMail",
+      "description": "Satıcı E-posta",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:CityName",
+      "description": "Satıcı İl",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName",
+      "description": "Satıcı İlçe",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:StreetName",
+      "description": "Satıcı Adres",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID",
+      "description": "Alıcı VKN/TCKN",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyName/cbc:Name",
+      "description": "Alıcı Unvan",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cac:TaxScheme/cbc:Name",
+      "description": "Alıcı Vergi Dairesi",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:Telephone",
+      "description": "Alıcı Telefon",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:Contact/cbc:ElectronicMail",
+      "description": "Alıcı E-posta",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CityName",
+      "description": "Alıcı İl",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:CitySubdivisionName",
+      "description": "Alıcı İlçe",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:StreetName",
+      "description": "Alıcı Adres",
+      "imageIndex": 1
+    },
+    {
+      "text": "cbc:ID",
+      "description": "Kalem Sıra No",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:Item/cbc:Name",
+      "description": "Mal/Hizmet Adı",
+      "imageIndex": 1
+    },
+    {
+      "text": "cbc:InvoicedQuantity",
+      "description": "Miktar",
+      "imageIndex": 1
+    },
+    {
+      "text": "cbc:InvoicedQuantity/@unitCode",
+      "description": "Birim Kodu",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:Price/cbc:PriceAmount",
+      "description": "Birim Fiyat",
+      "imageIndex": 1
+    },
+    {
+      "text": "cbc:LineExtensionAmount",
+      "description": "Kalem Tutarı",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:TaxTotal/cbc:TaxAmount",
+      "description": "Kalem KDV Tutarı",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:TaxTotal/cac:TaxSubtotal/cbc:Percent",
+      "description": "KDV Oranı (%)",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:AllowanceCharge[cbc:ChargeIndicator=\u0027false\u0027]/cbc:Amount",
+      "description": "İskonto Tutarı",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:AllowanceCharge[cbc:ChargeIndicator=\u0027false\u0027]/cbc:MultiplierFactorNumeric",
+      "description": "İskonto Oranı (%)",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:Item/cac:SellersItemIdentification/cbc:ID",
+      "description": "Satıcı Ürün Kodu",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:Item/cac:BuyersItemIdentification/cbc:ID",
+      "description": "Alıcı Ürün Kodu",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:Item/cbc:Description",
+      "description": "Ürün Açıklaması",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:Item/cbc:BrandName",
+      "description": "Marka",
+      "imageIndex": 1
+    },
+    {
+      "text": "cac:Item/cbc:ModelName",
+      "description": "Model",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount",
+      "description": "Mal/Hizmet Toplamı",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount",
+      "description": "Vergiler Hariç Toplam",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount",
+      "description": "Vergiler Dahil Toplam",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount",
+      "description": "Toplam İndirim",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount",
+      "description": "Ödenecek Tutar",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:TaxTotal/cbc:TaxAmount",
+      "description": "Toplam Vergi",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:PaymentMeans/cbc:PaymentDueDate",
+      "description": "Vade Tarihi",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID",
+      "description": "IBAN/Hesap No",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:PaymentMeans/cbc:PaymentMeansCode",
+      "description": "Ödeme Şekli Kodu",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:PaymentTerms/cbc:Note",
+      "description": "Ödeme Koşulları Notu",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:OrderReference/cbc:ID",
+      "description": "Sipariş Referans No",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:DespatchDocumentReference/cbc:ID",
+      "description": "İrsaliye Referans No",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:Invoice/cac:ContractDocumentReference/cbc:ID",
+      "description": "Kontrat Referans No",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cbc:ID",
+      "description": "İrsaliye No",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cbc:UUID",
+      "description": "İrsaliye ETTN",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cbc:IssueDate",
+      "description": "İrsaliye Tarihi",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cbc:IssueTime",
+      "description": "İrsaliye Saati",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cbc:DespatchAdviceTypeCode",
+      "description": "İrsaliye Tip Kodu",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyName/cbc:Name",
+      "description": "Sevk Eden Unvan",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cac:DespatchSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID",
+      "description": "Sevk Eden VKN",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyName/cbc:Name",
+      "description": "Teslim Alan Unvan",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cac:DeliveryCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID",
+      "description": "Teslim Alan VKN",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cac:Shipment/cac:ShipmentStage/cac:TransportMeans/cac:RoadTransport/cbc:LicensePlateID",
+      "description": "Araç Plakası",
+      "imageIndex": 1
+    },
+    {
+      "text": "/n1:DespatchAdvice/cac:Shipment/cac:Delivery/cac:Despatch/cbc:ActualDespatchDate",
+      "description": "Fiili Sevk Tarihi",
+      "imageIndex": 1
+    },
+    {
+      "text": "cbc:DeliveredQuantity",
+      "description": "Teslim Miktarı (İrsaliye kalem)",
+      "imageIndex": 1
+    },
+    {
+      "text": "position()",
+      "description": "Geçerli düğüm pozisyonu",
+      "imageIndex": 1
+    },
+    {
+      "text": "last()",
+      "description": "Son düğüm pozisyonu",
+      "imageIndex": 1
+    },
+    {
+      "text": "count()",
+      "description": "Düğüm sayısı",
+      "imageIndex": 1
+    },
+    {
+      "text": "sum()",
+      "description": "Sayısal toplam",
+      "imageIndex": 1
+    },
+    {
+      "text": "format-number()",
+      "description": "Sayı formatlama",
+      "imageIndex": 1
+    },
+    {
+      "text": "translate()",
+      "description": "Karakter dönüştürme",
+      "imageIndex": 1
+    },
+    {
+      "text": "substring()",
+      "description": "Alt metin alma",
+      "imageIndex": 1
+    },
+    {
+      "text": "concat()",
+      "description": "Metin birleştirme",
+      "imageIndex": 1
+    },
+    {
+      "text": "normalize-space()",
+      "description": "Boşluk temizleme",
+      "imageIndex": 1
+    },
+    {
+      "text": "string-length()",
+      "description": "Metin uzunluğu",
+      "imageIndex": 1
+    }
+  ]
+}
