@@ -30,6 +30,8 @@
     "fs:allow-app-read",
     "fs:allow-app-write",
     "fs:allow-app-meta",
+    "updater:default",
+    "process:allow-restart",
     "core:path:default",
     "core:window:allow-close",
     "core:window:allow-destroy",

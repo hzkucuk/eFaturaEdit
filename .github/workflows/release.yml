@@ -106,9 +106,17 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Otomatik güncelleme imzası. Uygulama, güncellemeyi yalnızca bu
+          # anahtarla imzalanmışsa kabul eder (pubkey tauri.conf'ta gömülü).
+          # Anahtar kaybolursa kurulu uygulamalara bir daha güncelleme
+          # gönderilemez — yedeği ~/.tauri/efaturaedit.key.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: ./app
           tagName: ${{ github.ref_name }}
+          # Updater'ın okuduğu manifest (latest.json) release'e eklensin.
+          includeUpdaterJson: true
           releaseName: 'e-Fatura Edit ${{ github.ref_name }}'
           releaseBody: |
             e-Fatura Edit ${{ github.ref_name }} — otomatik derlenmiş kurulum paketleri.

@@ -14,6 +14,8 @@
   import { onMount } from 'svelte';
   import { manifest } from '$lib/data';
   import { openUrl } from '@tauri-apps/plugin-opener';
+  import { updater, checkForUpdate } from '$lib/updater.svelte';
+  import UpdateModal from '$lib/UpdateModal.svelte';
 
   const REPO_URL = 'https://github.com/hzkucuk/eFaturaEdit';
 
@@ -383,6 +385,26 @@
           <div class="about-ver">Sürüm {manifest.version}</div>
         </div>
       </div>
+
+      <div class="row">
+        <span class="static-label">Güncelleme</span>
+        <span class="upd-cell">
+          <button
+            class="link-btn"
+            onclick={() => void checkForUpdate(true)}
+            disabled={updater.stage === 'checking'}
+          >
+            {updater.stage === 'checking' ? 'Denetleniyor…' : 'Güncellemeleri denetle'}
+          </button>
+          {#if updater.stage === 'none'}
+            <span class="upd-ok">✓ En güncel sürümü kullanıyorsun</span>
+          {:else if updater.stage === 'available'}
+            <span class="upd-new">🎉 v{updater.version} yayınlandı</span>
+          {:else if updater.stage === 'error'}
+            <span class="upd-err">Denetlenemedi: {updater.error}</span>
+          {/if}
+        </span>
+      </div>
       <p class="hint">
         Türkiye e-Fatura / e-Arşiv / e-İrsaliye (UBL-TR) belgeleri için XSLT
         tasarım düzenleyicisi. Tam XSLT 1.0/2.0/3.0 (Saxon-HE), canlı önizleme,
@@ -417,7 +439,30 @@
   </div>
 </div>
 
+<!-- Elle denetlemede güncelleme bulunursa kurulum penceresi burada da açılsın. -->
+<UpdateModal />
+
 <style>
+  .upd-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+  .upd-ok {
+    font-size: 12px;
+    color: #16a34a;
+  }
+  .upd-new {
+    font-size: 12px;
+    color: #2563eb;
+    font-weight: 600;
+  }
+  .upd-err {
+    font-size: 12px;
+    color: #dc2626;
+  }
+
   /* Sabit açık renk yerine temaya duyarlı: koyu tema kök <html.dark>'tan gelir. */
   :global(body) {
     background: #f5f6f8;

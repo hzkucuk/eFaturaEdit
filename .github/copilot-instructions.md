@@ -97,6 +97,16 @@ Her versiyon artışı sonrası uygulama otomatik derlenip **GitHub Release** ol
   `tauri build --verbose` gerekir. Release CI'da artık **saniyesinde yakalayan bir CP1252 kontrolü**
   var. `ç ö ü â é` CP1252'de VARDIR, sorun değildir; `name` alanı yalnızca macOS `Info.plist`'ine
   gider (UTF-8) ve Türkçe kalabilir.
+- 🔑 **Updater imza anahtarı (KAYBEDİLEMEZ).** Otomatik güncelleme, paketleri bir minisign anahtarıyla
+  imzalar; uygulama, `tauri.conf.json`'a gömülü **açık anahtarla** doğrulayamadığı hiçbir güncellemeyi
+  kurmaz. Özel anahtar GitHub Secret'larında (`TAURI_SIGNING_PRIVATE_KEY` + `..._PASSWORD`), yerel
+  yedeği `~/.tauri/efaturaedit.key`(+`.password`). **Bu anahtar kaybolursa kurulu uygulamalara bir daha
+  güncelleme gönderilemez** — herkes elle yeni sürüm indirmek zorunda kalır. Açık anahtarı değiştirmek
+  de aynı sonucu doğurur: eski kurulumlar yeni imzayı reddeder. Anahtarı asla rotate etme.
+- Updater paketleri `bundle.createUpdaterArtifacts: true` ile üretilir ve `includeUpdaterJson: true`
+  release'e `latest.json` ekler. Uygulama bu dosyayı
+  `releases/latest/download/latest.json` adresinden okur → **release taslak (draft) bırakılmamalı**,
+  yoksa "latest" onu göstermez ve güncelleme akışı sessizce durur.
 - Bu Mac'te 4 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** bu CI ile yapılır.
 - Etiket zaten varsa: `git tag -d vX.Y.Z && git push origin :vX.Y.Z` ile silip yeniden oluştur.
   **Ancak** o etiketin release'i yayımlanmış/derleniyorsa silme — bir sonraki yamayı yeni sürüm

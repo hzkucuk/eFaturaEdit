@@ -32,6 +32,8 @@
   import ContextMenu from '$lib/ContextMenu.svelte';
   import HelpModal from '$lib/HelpModal.svelte';
   import AIAssistant from '$lib/AIAssistant.svelte';
+  import UpdateModal from '$lib/UpdateModal.svelte';
+  import { checkForUpdate } from '$lib/updater.svelte';
   import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
   import { instrumentXslt, type XsltElementRef } from '$lib/xslt-map';
   import type { Completion } from '@codemirror/autocomplete';
@@ -1466,6 +1468,9 @@ window.addEventListener('message', function(e) {
     refreshUserSnippets();
     void loadApiKeys(); // API anahtarlarını OS anahtar zincirinden belleğe yükle
     void setupFileEntry();
+    // Güncelleme denetimi: açılışı bekletmesin diye ertelenir ve sessizdir
+    // (internet yoksa veya dev modundaysak kullanıcıya hata gösterilmez).
+    setTimeout(() => void checkForUpdate(), 3000);
     if (showWelcome) {
       status(`e-Fatura Edit v${manifest.version} — ${snippets.length} snippet · ${xsltCompletions.length} tamamlama · hazır`);
     }
@@ -1994,6 +1999,9 @@ window.addEventListener('message', function(e) {
     {/snippet}
   </ContextMenu>
 {/if}
+
+<!-- ─── Otomatik güncelleme bildirimi ─────────────────────────────── -->
+<UpdateModal />
 
 <!-- ─── Yardım penceresi ──────────────────────────────────────────── -->
 {#if helpOpen}

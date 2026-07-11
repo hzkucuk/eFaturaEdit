@@ -1,6 +1,6 @@
 [package]
 name = "efatura-edit"
-version = "2.21.1"
+version = "2.22.0"
 description = "E-Fatura Dizayn Editörü — Tauri + SvelteKit + Saxon-JS"
 authors = ["Zafer Bilgisayar"]
 edition = "2021"
@@ -31,4 +31,6 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 # Secret Service) şifreli sakla. Linux'ta C bağımlılığı olmadan derlensin diye
 # saf-Rust secret-service + RustCrypto backend'i seçilir.
 keyring = { version = "3", default-features = false, features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+tauri-plugin-updater = "2.10.1"
+tauri-plugin-process = "2.3.1"
 

@@ -3,6 +3,32 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.22.0] — 2026-07-12 — Otomatik Güncelleme
+
+### Eklenen
+- **Otomatik güncelleme (Tauri updater).** Uygulama açılışta sessizce yeni sürüm denetler; varsa
+  sürüm notlarıyla birlikte bir pencere gösterir. **İndirme/kurma yalnızca kullanıcı onaylarsa**
+  başlar; ilerleme çubuğu gösterilir, kurulum bitince uygulama yeniden başlar.
+- **Elle denetleme:** Ayarlar → Hakkında → "Güncellemeleri denetle". Güncelse "✓ En güncel sürümü
+  kullanıyorsun" der.
+- Açılıştaki denetim **3 saniye ertelenir** ve sessizdir — internet yoksa veya geliştirme modundaysak
+  kullanıcıya hata gösterilmez (elle denetlemede ise hata görünür).
+- Release CI artık her platform için updater paketleri (`.app.tar.gz`, `.msi.zip`, `.AppImage.tar.gz`)
+  ve imzalarını üretip release'e `latest.json` manifestini ekliyor.
+
+### Güvenlik
+- **İmzalı güncelleme.** Paketler minisign anahtarıyla imzalanır; uygulama, `tauri.conf.json`'a gömülü
+  **açık anahtarla doğrulayamadığı hiçbir güncellemeyi kurmaz**. Doğrulama Rust tarafında yapılır,
+  arayüz kodu onu atlayamaz. Özel anahtar GitHub Secret'larında tutulur, repoda yoktur.
+
+### Not
+- Bu, updater içeren **ilk** sürüm. v2.21.x ve öncesini kullananlar bu sürüme **bir kez elle**
+  geçmelidir; sonrasındaki güncellemeler otomatik gelir.
+- Linux'ta otomatik güncelleme yalnızca **AppImage** için çalışır (`.deb`/`.rpm` paket yöneticisiyle
+  yönetildiğinden updater onlara dokunmaz).
+
+---
+
 ## [2.21.1] — 2026-07-12 — Windows MSI Paketlemesi Onarıldı (CP1252 / Türkçe karakter)
 
 ### Düzeltilen

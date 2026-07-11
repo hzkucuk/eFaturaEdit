@@ -1,6 +1,6 @@
 {
   "name": "efatura-edit",
-  "version": "2.21.1",
+  "version": "2.22.0",
   "description": "E-Fatura Dizayn Editörü — Tauri + SvelteKit + Saxon-JS",
   "type": "module",
   "scripts": {
@@ -27,6 +27,8 @@
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@tauri-apps/plugin-fs": "^2.5.1",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.1",
     "codemirror": "^6.0.2",
     "monaco-editor": "^0.55.1",
     "thememirror": "^2.0.1"

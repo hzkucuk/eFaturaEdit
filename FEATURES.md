@@ -116,6 +116,15 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   düz metin yazılmaz; eski düz-metin anahtarlar ilk açılışta otomatik olarak anahtar zincirine taşınır.
   Kaynak: [`app/src-tauri/src/lib.rs`](app/src-tauri/src/lib.rs) (`secret_set` / `secret_get`)
 
+### 🔄 Otomatik Güncelleme (v2.22.0)
+
+- Açılışta sessizce yeni sürüm denetlenir; varsa sürüm notlarıyla bir pencere çıkar.
+  **İndirme/kurma yalnızca kullanıcı onaylarsa** başlar; ilerleme gösterilir, bitince uygulama yeniden başlar.
+- Elle denetleme: **Ayarlar → Hakkında → "Güncellemeleri denetle"**.
+- **İmzalı:** Paketler minisign anahtarıyla imzalanır; uygulama, gömülü açık anahtarla doğrulayamadığı
+  hiçbir güncellemeyi kurmaz. Doğrulama Rust tarafında yapılır.
+- Linux'ta yalnızca **AppImage** için çalışır (`.deb`/`.rpm` paket yöneticisinin sorumluluğundadır).
+
 ### 📦 Dağıtım
 
 - **GitHub Releases:** Her sürüm 4 platform için otomatik derlenip yayımlanır —
