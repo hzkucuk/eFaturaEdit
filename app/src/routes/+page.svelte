@@ -57,6 +57,11 @@
   let aiApplyPreviewHtml = $state(''); // popup içindeki sonuç önizlemesi
   let aiApplyPreviewError = $state(''); // sonuç geçersiz XML üretiyorsa hata metni
   let aiApplyShowFull = $state(false); // 'full' önerinin dev metnini isteğe bağlı göster
+  let aiApplyZoom = $state(0.6); // popup içi önizleme yakınlaştırması (0.25–2.0)
+
+  function zoomAiApply(delta: number) {
+    aiApplyZoom = Math.max(0.25, Math.min(2.0, +(aiApplyZoom + delta).toFixed(2)));
+  }
 
   // Uygulanabilecek gerçek bir değişiklik var mı? (Tüm düzenlemeler
   // eşleşmediyse newText mevcut metne eşittir, uygulanacak bir şey yok.)
@@ -1331,8 +1336,10 @@ window.addEventListener('message', function(e) {
 <!-- ─── AI önerisini uygulama onayı ───────────────────────────────── -->
 {#if aiApplyOpen}
   <div class="exit-overlay" role="presentation">
-    <div class="style-modal" role="alertdialog" aria-label="AI önerisini uygula">
+    <div class="style-modal ai-apply-modal" role="alertdialog" aria-label="AI önerisini uygula">
       <h3>🤖 AI Önerisini Uygula</h3>
+      <div class="ai-apply-body">
+      <div class="ai-apply-left">
       {#if aiApplySuggestion?.kind === 'edits'}
         <p>
           <b>{aiApplyTarget.toUpperCase()}</b> dosyasına <b>{aiApplySuggestion.edits.length}</b>
@@ -1388,16 +1395,34 @@ window.addEventListener('message', function(e) {
           düzenlemeleri güncel dosyaya göre tamamlamasını isteyin. Hata: {aiApplyPreviewError}
         </p>
       {/if}
-      <div class="ai-result-preview-head">
-        🔍 Sonuç önizlemesi (uygulanınca böyle görünür)
-        {#if aiApplyPreviewLoading}<span class="ai-preview-loading-tag">oluşturuluyor…</span>{/if}
       </div>
-      <iframe
-        class="ai-result-preview"
-        title="Sonuç önizlemesi"
-        srcdoc={aiApplyPreviewHtml}
-        sandbox="allow-same-origin"
-      ></iframe>
+
+      <!-- Sağ sütun: uygulanınca oluşacak sonucun canlı, ölçeklenebilir önizlemesi -->
+      <div class="ai-apply-right">
+        <div class="ai-result-preview-head">
+          <span>🔍 Sonuç önizlemesi</span>
+          {#if aiApplyPreviewLoading}<span class="ai-preview-loading-tag">oluşturuluyor…</span>{/if}
+          <div class="ai-preview-zoom">
+            <button onclick={() => zoomAiApply(-0.1)} title="Uzaklaştır">−</button>
+            <span class="ai-preview-zoom-val">{Math.round(aiApplyZoom * 100)}%</span>
+            <button onclick={() => zoomAiApply(0.1)} title="Yakınlaştır">+</button>
+            <button onclick={() => (aiApplyZoom = 0.6)} title="Sıfırla">⟲</button>
+          </div>
+        </div>
+        <div class="ai-preview-frame-wrap">
+          <iframe
+            class="ai-result-preview"
+            title="Sonuç önizlemesi"
+            srcdoc={aiApplyPreviewHtml}
+            sandbox="allow-same-origin"
+            style:transform="scale({aiApplyZoom})"
+            style:transform-origin="top left"
+            style:width="{100 / aiApplyZoom}%"
+            style:height="{100 / aiApplyZoom}%"
+          ></iframe>
+        </div>
+      </div>
+      </div>
 
       <div class="exit-actions">
         <button class="exit-btn cancel" onclick={cancelAiApply}>İptal</button>
@@ -1880,6 +1905,27 @@ window.addEventListener('message', function(e) {
     opacity: 0.5;
     cursor: not-allowed;
   }
+  /* AI onay modalı: solda diff/açıklama, sağda ölçeklenebilir canlı önizleme. */
+  .ai-apply-modal {
+    width: min(1180px, 96vw);
+  }
+  .ai-apply-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 1rem;
+    min-height: 0;
+    flex: 1;
+  }
+  .ai-apply-left {
+    overflow-y: auto;
+    min-width: 0;
+    max-height: 62vh;
+  }
+  .ai-apply-right {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
   .ai-result-preview-head {
     font-size: 12px;
     font-weight: 600;
@@ -1894,15 +1940,44 @@ window.addEventListener('message', function(e) {
     color: #9ca3af;
     font-style: italic;
   }
-  .ai-result-preview {
-    width: 100%;
-    height: 300px;
+  .ai-preview-zoom {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+  .ai-preview-zoom button {
+    padding: 0.1rem 0.4rem;
+    border: 1px solid #cbd0d6;
+    background: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    line-height: 1.3;
+  }
+  .ai-preview-zoom button:hover { background: #eef4ff; }
+  .ai-preview-zoom-val {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    color: #6b7280;
+    min-width: 38px;
+    text-align: center;
+  }
+  .ai-preview-frame-wrap {
+    flex: 1;
+    min-height: 320px;
+    max-height: 62vh;
+    overflow: auto;
     border: 1px solid #d5d8dc;
     border-radius: 6px;
     background: #fff;
-    margin-bottom: 1rem;
   }
-  .app.dark .ai-result-preview { border-color: #3f3f46; }
+  .ai-result-preview {
+    display: block;
+    border: none;
+    background: #fff;
+  }
+  .app.dark .ai-preview-frame-wrap { border-color: #3f3f46; }
   .ai-fulltext-note {
     font-size: 12px;
     color: #6b7280;

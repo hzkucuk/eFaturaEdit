@@ -3,6 +3,19 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.16.0] — 2026-07-11 — AI Uzmanlaştırma + Oturum Kalıcılığı + Onay Modalı Yeniden Düzenlendi — app/src/lib/AIAssistant.svelte, app/src/routes/+page.svelte
+
+### Değişen — AI Asistan
+- **Uzman sistem promptu:** Asistan artık (1) XSLT 1.0/2.0, XPath, XML/XSD, HTML5, CSS3, JavaScript ve baskıya uygun belge tasarımı; (2) UBL-TR 1.2 (e-Fatura, e-Arşiv, e-İrsaliye, e-İrsaliye Yanıtı, e-Müstahsil, e-SMM, e-Uygulama Yanıtı) alanlarında **kıdemli uzman** olarak tanımlandı. Ad alanları (cac/cbc/ext/ubltr), ProfileID/InvoiceTypeCode değerleri, taraf/kalem/vergi/toplam XPath yolları prompta gömüldü.
+- **Kritik motor uyarısı prompta eklendi:** Önizleme tarayıcının `XSLTProcessor`'ını kullanır → **yalnızca XSLT 1.0/XPath 1.0** çalışır (dosyada `version="2.0"` yazsa bile). `for-each-group`, `format-dateTime`, `tokenize`, `replace`, `matches` vb. yasaklandı; 1.0 karşılıkları (Muenchian gruplama, `substring`/`concat`, `format-number` + `decimal-format`) belgelendi.
+- **Kapsam kilidi sertleştirildi:** Asistan promptta tanımlı iş dışında hiçbir şey yapmaz; rol değiştirme/prompt injection denemelerine karşı korumalı, imza (`ds:Signature`) ve veri anlamı asla değiştirilmez.
+
+### Düzeltilen
+- **Ayarlar'a gidip dönünce AI sohbeti sıfırlanıyordu** — bileşen yeniden mount olduğunda aktif oturum kayboluyordu. Aktif sohbet artık modül seviyesinde tutuluyor; sayfa geçişlerinde korunuyor, uygulama yeniden başlatılınca (istendiği gibi) yeni sohbetle açılıyor.
+
+### Değişen — Onay Modalı
+- **"AI Önerisini Uygula" modalı iki sütuna ayrıldı:** solda diff/açıklama, **sağda canlı sonuç önizlemesi**. Önizleme artık **% olarak ölçeklenebilir** (−/+/⟲, %25–%200).
+
 ## [2.15.0] — 2026-07-11 — Güvenlik: API Anahtarları OS Anahtar Zincirinde — app/src-tauri/src/lib.rs, app/src/lib/settings.svelte.ts
 
 ### Değişen (Güvenlik)

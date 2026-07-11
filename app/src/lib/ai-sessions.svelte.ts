@@ -58,6 +58,25 @@ function persist(): void {
   }
 }
 
+/**
+ * O an açık olan sohbet — modül seviyesinde tutulur.
+ *
+ * Neden: Ayarlar sayfasına gidip geri dönüldüğünde AIAssistant bileşeni
+ * yeniden mount olur; bu referans olmasaydı sohbet sıfırlanıp yeni boş
+ * oturuma düşerdi. Modül, uygulama çalıştığı sürece yaşar — uygulama
+ * yeniden başlatılınca sıfırlanır, yani "açılışta yeni sohbet" davranışı
+ * korunur.
+ */
+let activeSession: AiSession | null = null;
+
+export function getActiveSession(): AiSession | null {
+  return activeSession;
+}
+
+export function setActiveSession(session: AiSession | null): void {
+  activeSession = session;
+}
+
 /** Kayıtlı oturumlar, en son güncellenen en üstte. */
 export function listSessions(): AiSession[] {
   return [...sessions].sort((a, b) => b.updatedAt - a.updatedAt);
