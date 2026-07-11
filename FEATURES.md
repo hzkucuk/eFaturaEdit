@@ -89,6 +89,14 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   ayrı rotalar ve kapsamlı bileşenler dahil **tüm alanlara** yansır.
 - **Dosya işlemleri:** Aç / Kaydet / Farklı Kaydet (native dialog), `Cmd/Ctrl+S` ile XSLT+XML birlikte
   kaydetme, kaydetmeden önce syntax kontrolü (hata varsa imleç hatalı satıra gider), son 10 dosya listesi.
+- **Sürükle-bırak:** `.xslt`/`.xsl`/`.xml` dosyalarını Finder/Explorer'dan doğrudan pencereye bırak.
+  Tauri'nin native sürükle-bırak olayı kullanılır (HTML5 drag API WKWebView'de güvenilmez).
+- **"Birlikte Aç":** Uygulama `.xslt`/`.xsl` ve `.xml` türlerini işletim sistemine kaydeder —
+  sağ tık → Birlikte Aç → e-Fatura Edit.
+- **İçeriğe göre yönlendirme:** Hedef editör uzantıya değil **içeriğe** göre seçilir; XSLT ad alanını
+  bildiren belge şablondur. Böylece `.xml` uzantılı bir şablon veri alanına düşmez (ve tersi).
+- **Varsayılan veri eşlemesi:** XSLT tek başına açılırsa paketli varsayılan UBL-TR faturasıyla otomatik
+  eşlenir — önizleme anında derlenir, elle XML aramana gerek kalmaz.
 - **Otomatik dönüştür:** Yükleme/kaydetme sonrası ve yazarken debounce ile (varsayılan 700 ms).
 - **Auto-save:** Ayarlardan açılabilir, belirtilen gecikmeyle sessiz kaydetme.
 - **Çıkışta kaydetme kontrolü:** Kaydedilmemiş değişiklik varsa çıkışı engelleyip

@@ -3,6 +3,34 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.21.0] — 2026-07-12 — Sürükle-Bırak, "Birlikte Aç" ve Varsayılan Veri Eşlemesi
+
+### Eklenen
+- **Finder/Explorer'dan sürükle-bırak:** `.xslt` / `.xsl` / `.xml` dosyalarını doğrudan pencereye
+  bırakarak açabilirsin. Sürükleme sırasında tam ekran bir bırakma göstergesi çıkar.
+  Tauri'nin **native** sürükle-bırak olayı kullanılır (HTML5 drag-drop WKWebView'de güvenilir değil
+  ve webview'de zaten kapalıdır) — `getCurrentWebview().onDragDropEvent`.
+- **"Birlikte Aç" (dosya ilişkilendirmesi):** Uygulama artık `.xslt`/`.xsl` ve `.xml` dosya türlerini
+  işletim sistemine kaydeder; Finder/Explorer'da sağ tık → Birlikte Aç → e-Fatura Edit çalışır.
+  Uygulama kapalıyken açılan dosyalar Rust tarafında kuyruğa alınır (`take_opened_files`), açıkken
+  gelenler `files-opened` olayıyla iletilir. macOS `RunEvent::Opened`, Windows/Linux argv kullanır.
+- **Varsayılan veri eşlemesi:** XSLT tek başına açıldığında (sürükleme, "Birlikte Aç" veya Aç düğmesi)
+  ve elde XML verisi yoksa, paketli varsayılan UBL-TR faturasıyla otomatik eşlenir — önizleme anında
+  derlenir. Önceden şablon açılsa bile veri olmadığı için dönüşüm hiç çalışmıyordu.
+  Bu veriye disk yolu atanmaz; kullanıcı isterse "Farklı Kaydet" der.
+
+### Güvenlik / Doğruluk
+- **Şablon veri alanına, veri şablon alanına düşmez.** Hedef editör **uzantıya değil, içeriğe** göre
+  seçilir: belge XSLT ad alanını (`http://www.w3.org/1999/XSL/Transform`) bildiriyorsa şablondur.
+  Uzantıya güvenmek yanlış olurdu — XSLT de geçerli bir XML'dir ve `.xml` olarak kaydedilmiş şablonlar
+  vardır. Bu koruma sürükle-bırakta, "Birlikte Aç"ta ve **Aç düğmelerinde** de geçerli: "XML Aç" ile bir
+  şablon seçersen reddedilir (aksi halde dönüşümün girdisi şablonun kendisi olur ve önizleme sessizce
+  anlamsız çıkardı).
+- Birden çok dosya bırakılırsa her türden ilki alınır; atlananlar durum çubuğunda **açıkça bildirilir**,
+  sessizce yutulmaz.
+
+---
+
 ## [2.20.1] — 2026-07-11 — Intel macOS Release Derlemesi Onarıldı — .github/workflows/release.yml
 
 ### Düzeltilen

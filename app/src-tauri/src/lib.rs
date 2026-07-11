@@ -1,6 +1,9 @@
 mod ai;
 mod xslt;
 
+use std::sync::Mutex;
+use tauri::{Emitter, Manager};
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -52,22 +55,79 @@ fn secret_get(account: String) -> Result<Option<String>, String> {
     }
 }
 
+/// "Birlikte Aç" / uygulama ikonuna bırakma ile gelen dosya yolları.
+///
+/// Bu olay frontend hazır olmadan tetiklenebilir (macOS'ta `Opened`, pencere
+/// oluşmadan önce gelebilir), o yüzden yollar burada biriktirilir; arayüz
+/// açılışta `take_opened_files` ile kuyruğu boşaltır. Uygulama zaten
+/// çalışırken gelen açılışlar ayrıca `files-opened` olayıyla yayınlanır.
+#[derive(Default)]
+struct PendingOpen(Mutex<Vec<String>>);
+
+/// Bekleyen dosya yollarını al ve kuyruğu boşalt.
+#[tauri::command]
+fn take_opened_files(state: tauri::State<'_, PendingOpen>) -> Vec<String> {
+    match state.0.lock() {
+        Ok(mut q) => std::mem::take(&mut *q),
+        Err(_) => Vec::new(),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
+        .manage(PendingOpen::default())
         .invoke_handler(tauri::generate_handler![
             greet,
             open_devtools,
             secret_set,
             secret_get,
+            take_opened_files,
             xslt::xslt_transform,
             ai::ai_chat,
             ai::ai_list_models
         ])
-        .run(tauri::generate_context!())
+        .setup(|app| {
+            // Windows/Linux: "Birlikte Aç" dosyayı komut satırı argümanı olarak
+            // geçirir. (macOS bunun yerine aşağıdaki `Opened` olayını kullanır.)
+            #[cfg(not(target_os = "macos"))]
+            {
+                let files: Vec<String> = std::env::args()
+                    .skip(1)
+                    .filter(|a| !a.starts_with('-') && std::path::Path::new(a).is_file())
+                    .collect();
+                if !files.is_empty() {
+                    if let Ok(mut q) = app.state::<PendingOpen>().0.lock() {
+                        q.extend(files);
+                    }
+                }
+            }
+            let _ = app;
+            Ok(())
+        })
+        .build(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    app.run(|_app, _event| {
+        // macOS: Finder → "Birlikte Aç" (uygulama kapalıyken de açıkken de gelir).
+        #[cfg(target_os = "macos")]
+        if let tauri::RunEvent::Opened { urls } = _event {
+            let files: Vec<String> = urls
+                .iter()
+                .filter_map(|u| u.to_file_path().ok())
+                .map(|p| p.to_string_lossy().into_owned())
+                .collect();
+            if !files.is_empty() {
+                if let Ok(mut q) = _app.state::<PendingOpen>().0.lock() {
+                    q.extend(files.clone());
+                }
+                // Arayüz zaten ayaktaysa hemen haber ver; değilse kuyrukta bekler.
+                let _ = _app.emit("files-opened", files);
+            }
+        }
+    });
 }

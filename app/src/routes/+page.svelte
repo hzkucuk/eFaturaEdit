@@ -3,6 +3,8 @@
   import { goto } from '$app/navigation';
   import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
+  import { getCurrentWebview } from '@tauri-apps/api/webview';
+  import { listen } from '@tauri-apps/api/event';
   import { snippets, samples, completion, manifest, groupSnippetsByCategory } from '$lib/data';
   import { cssSnippets } from '$lib/data/css-snippets';
   import { xsltSnippets } from '$lib/data/xslt-snippets';
@@ -346,17 +348,56 @@
     }
   }
 
+  /**
+   * XSLT tek başına açıldıysa (sürükle-bırak, "Birlikte Aç" veya Aç düğmesi)
+   * önizleme boş kalmasın: paketli varsayılan UBL-TR verisiyle eşle.
+   *
+   * Yol atanmaz ve `dirty` işaretlenmez — bu veri diske ait değildir; kullanıcı
+   * kaydetmek isterse "Farklı Kaydet" der. Zaten XML yüklüyse dokunulmaz.
+   * @returns varsayılan veri yüklendiyse `true`
+   */
+  async function ensureXmlData(): Promise<boolean> {
+    if (editorState.xmlText.trim()) return false;
+    try {
+      const res = await fetch('/samples/default.xml');
+      if (!res.ok) throw new Error(`default.xml: ${res.status}`);
+      const xml = await res.text();
+      ignoreNextChange.xml = true;
+      editorState.xmlText = xml;
+      editorState.xmlPath = null;
+      editorState.xmlDirty = false;
+      xmlEditor?.setValue(xml);
+      return true;
+    } catch (err) {
+      status(`Varsayılan XML verisi yüklenemedi: ${(err as Error).message}`, true);
+      return false;
+    }
+  }
+
   async function openXslt() {
     try {
       const result = await openFile('xslt');
       if (!result) return;
+      if (!isXsltDoc(result.content)) {
+        status(
+          `${basename(result.path)} bir XSLT şablonu değil (XSLT ad alanı yok). ` +
+            'Veri dosyasını "XML Aç" ile yükleyin.',
+          true
+        );
+        return;
+      }
       ignoreNextChange.xslt = true;
       editorState.xsltText = result.content;
       editorState.xsltPath = result.path;
       editorState.xsltDirty = false;
       xsltEditor?.setValue(result.content);
       pushRecent(result.path, 'xslt');
-      status(`XSLT açıldı: ${result.path}`);
+      const paired = await ensureXmlData();
+      status(
+        paired
+          ? `XSLT açıldı: ${result.path} — varsayılan XML verisiyle eşlendi`
+          : `XSLT açıldı: ${result.path}`
+      );
       if (settings.autoTransformOnLoad && editorState.xmlText) await runTransform();
     } catch (err) {
       status(`XSLT açılamadı: ${(err as Error).message}`, true);
@@ -367,6 +408,16 @@
     try {
       const result = await openFile('xml');
       if (!result) return;
+      // Şablonu veri alanına almayı reddet — aksi halde dönüşümün girdisi
+      // şablonun kendisi olur ve önizleme sessizce anlamsız çıkar.
+      if (isXsltDoc(result.content)) {
+        status(
+          `${basename(result.path)} bir XSLT şablonu, veri dosyası değil. ` +
+            '"XSLT Aç" ile şablon editörüne yükleyin.',
+          true
+        );
+        return;
+      }
       ignoreNextChange.xml = true;
       editorState.xmlText = result.content;
       editorState.xmlPath = result.path;
@@ -377,6 +428,94 @@
       if (settings.autoTransformOnLoad && editorState.xsltText) await runTransform();
     } catch (err) {
       status(`XML açılamadı: ${(err as Error).message}`, true);
+    }
+  }
+
+  /** XSLT ad alanı — bir belgeyi şablon yapan tek kesin işaret. */
+  const XSLT_NS = 'http://www.w3.org/1999/XSL/Transform';
+
+  /**
+   * Belge bir XSLT şablonu mu?
+   *
+   * Uzantıya güvenilmez: XSLT de geçerli bir XML'dir, `.xml` olarak kaydedilmiş
+   * şablonlar vardır (ve tersi). Belirleyici olan, XSLT ad alanının bildirilmiş
+   * olmasıdır — UBL-TR fatura verisi bunu asla içermez. Kök öğe genelde ilk
+   * birkaç KB'dadır; tüm dosyayı taramaya gerek yok.
+   */
+  function isXsltDoc(text: string): boolean {
+    return text.slice(0, 8192).includes(XSLT_NS);
+  }
+
+  /**
+   * Dışarıdan gelen dosya yollarını (Finder/Explorer'dan sürükleme veya
+   * "Birlikte Aç") doğru editöre yükler.
+   *
+   * Hedef editör **içeriğe** göre seçilir, uzantıya değil: şablon şablon
+   * editörüne, veri veri editörüne. Böylece `.xml` uzantılı bir XSLT yanlışlıkla
+   * veri alanına düşmez (ve tersi). Aynı türden birden çok dosya bırakılırsa
+   * ilki alınır. XSLT tek başına geldiyse `ensureXmlData()` ile varsayılan
+   * veriye eşlenir ki önizleme hemen derlensin.
+   */
+  async function openPaths(paths: string[]) {
+    const ext = (p: string) => p.slice(p.lastIndexOf('.') + 1).toLowerCase();
+    const candidates = paths.filter((p) => ['xslt', 'xsl', 'xml'].includes(ext(p)));
+
+    if (candidates.length === 0) {
+      status('Yalnızca .xslt, .xsl ve .xml dosyaları açılabilir.', true);
+      return;
+    }
+
+    try {
+      // Önce hepsini oku ve İÇERİĞİNE göre sınıflandır.
+      const files = await Promise.all(
+        candidates.map(async (p) => {
+          const r = await reopenFile(p);
+          return { ...r, xslt: isXsltDoc(r.content) };
+        })
+      );
+
+      const xsltFile = files.find((f) => f.xslt);
+      const xmlFile = files.find((f) => !f.xslt);
+      const loaded: string[] = [];
+      const skipped: string[] = [];
+
+      // Aynı türden fazlası varsa ilkini al, kalanını sessizce yutma — söyle.
+      for (const f of files) {
+        if (f !== xsltFile && f !== xmlFile) {
+          skipped.push(basename(f.path));
+        }
+      }
+
+      if (xsltFile) {
+        ignoreNextChange.xslt = true;
+        editorState.xsltText = xsltFile.content;
+        editorState.xsltPath = xsltFile.path;
+        editorState.xsltDirty = false;
+        xsltEditor?.setValue(xsltFile.content);
+        pushRecent(xsltFile.path, 'xslt');
+        loaded.push(`şablon: ${basename(xsltFile.path)}`);
+      }
+      if (xmlFile) {
+        ignoreNextChange.xml = true;
+        editorState.xmlText = xmlFile.content;
+        editorState.xmlPath = xmlFile.path;
+        editorState.xmlDirty = false;
+        xmlEditor?.setValue(xmlFile.content);
+        pushRecent(xmlFile.path, 'xml');
+        loaded.push(`veri: ${basename(xmlFile.path)}`);
+      }
+
+      // XSLT geldi ama veri yoksa → varsayılan UBL-TR verisiyle eşle.
+      if (xsltFile && (await ensureXmlData())) loaded.push('varsayılan XML verisi');
+
+      const note = skipped.length > 0 ? ` (atlandı: ${skipped.join(', ')})` : '';
+      status(`Açıldı — ${loaded.join(' · ')}${note}`);
+
+      if (settings.autoTransformOnLoad && editorState.xsltText && editorState.xmlText) {
+        await runTransform();
+      }
+    } catch (err) {
+      status(`Dosya açılamadı: ${(err as Error).message}`, true);
     }
   }
 
@@ -1260,6 +1399,10 @@ window.addEventListener('message', function(e) {
   // gerçekten kapanmasına izin verilir (sonsuz döngüyü engeller).
   let forceClose = false;
   let unlistenClose: (() => void) | null = null;
+  let unlistenDrop: (() => void) | null = null;
+  let unlistenOpened: (() => void) | null = null;
+  /** Pencere üzerine dosya sürükleniyor mu (bırakma alanı göstergesi). */
+  let dropActive = $state(false);
 
   async function setupCloseGuard() {
     try {
@@ -1322,10 +1465,43 @@ window.addEventListener('message', function(e) {
     refreshUserSamples();
     refreshUserSnippets();
     void loadApiKeys(); // API anahtarlarını OS anahtar zincirinden belleğe yükle
+    void setupFileEntry();
     if (showWelcome) {
       status(`e-Fatura Edit v${manifest.version} — ${snippets.length} snippet · ${xsltCompletions.length} tamamlama · hazır`);
     }
   });
+
+  /**
+   * Dosyanın uygulamaya DIŞARIDAN girdiği iki yolu bağlar:
+   *  1. Finder/Explorer'dan pencereye sürükle-bırak (Tauri'nin native olayı —
+   *     HTML5 drag-drop WKWebView'de güvenilir değil, zaten webview'de kapalı).
+   *  2. "Birlikte Aç": uygulama kapalıyken açıldıysa Rust tarafında kuyruğa
+   *     alınmıştır (`take_opened_files`); açıkken gelirse `files-opened` olayı.
+   */
+  async function setupFileEntry() {
+    try {
+      unlistenDrop = await getCurrentWebview().onDragDropEvent((e) => {
+        const p = e.payload;
+        if (p.type === 'enter' || p.type === 'over') {
+          dropActive = true;
+        } else if (p.type === 'leave') {
+          dropActive = false;
+        } else if (p.type === 'drop') {
+          dropActive = false;
+          void openPaths(p.paths);
+        }
+      });
+
+      unlistenOpened = await listen<string[]>('files-opened', (e) => {
+        void openPaths(e.payload);
+      });
+
+      const pending = await invoke<string[]>('take_opened_files');
+      if (pending.length > 0) await openPaths(pending);
+    } catch (err) {
+      console.error('Dosya giriş noktaları bağlanamadı:', err);
+    }
+  }
 
   onDestroy(() => {
     if (typeof window !== 'undefined') {
@@ -1336,10 +1512,23 @@ window.addEventListener('message', function(e) {
     if (debounceTimer) clearTimeout(debounceTimer);
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     unlistenClose?.();
+    unlistenDrop?.();
+    unlistenOpened?.();
   });
 </script>
 
 <div class="app" class:dark={themeKind(settings.theme) === 'dark'}>
+  {#if dropActive}
+    <!-- Finder/Explorer'dan dosya sürükleniyor — Tauri'nin native olayıyla tetiklenir. -->
+    <div class="drop-overlay">
+      <div class="drop-card">
+        <span class="drop-icon">📥</span>
+        <strong>Dosyayı bırak</strong>
+        <span class="drop-hint">.xslt / .xsl → şablon editörü · .xml → veri editörü</span>
+      </div>
+    </div>
+  {/if}
+
   <!-- ─── Toolbar ────────────────────────────────────────────────── -->
   <header class="toolbar">
     <div class="brand">
@@ -2284,6 +2473,43 @@ window.addEventListener('message', function(e) {
     font-weight: 600;
   }
   .wz-apply:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* Dosya bırakma göstergesi — tüm pencereyi kaplar, tıklamayı engellemez. */
+  .drop-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    pointer-events: none;
+  }
+  .drop-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 2rem 3rem;
+    border: 3px dashed #60a5fa;
+    border-radius: 14px;
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  }
+  .drop-icon {
+    font-size: 40px;
+  }
+  .drop-hint {
+    font-size: 12px;
+    color: #64748b;
+  }
+  :global(html.dark) .drop-card {
+    background: #1e293b;
+    color: #e5e7eb;
+    border-color: #3b82f6;
+  }
+  :global(html.dark) .drop-hint { color: #9aa1ac; }
+
   /* Kaynak eşlemesi satırı — tıklanınca XSLT editöründe ilgili satıra atlar. */
   .wz-src {
     margin-bottom: 0.6rem;
