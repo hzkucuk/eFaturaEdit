@@ -67,7 +67,7 @@ jobs:
 
       - name: XSLT sidecar derle (Saxon-HE native-image)
         shell: bash
-        run: ./build.sh
+        run: bash build.sh
         working-directory: ./sidecar
 
       - name: Frontend bağımlılıkları
