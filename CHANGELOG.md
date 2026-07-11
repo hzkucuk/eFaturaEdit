@@ -3,6 +3,23 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.22.1] — 2026-07-12 — Güncelleme Penceresinde Gerçek Sürüm Notları
+
+### Düzeltilen
+- **Güncelleme penceresi "neyin değiştiğini" göstermiyordu.** Sürüm notları alanına CI'daki sabit
+  şablon metni ("otomatik derlenmiş kurulum paketleri… Windows: .msi / .exe…") düşüyordu; yani
+  kullanıcı, güncellemede ne olduğunu değil hangi paketlerin bulunduğunu okuyordu. Oysa güncelleme
+  bildiriminin bütün anlamı o notlarda.
+- Release CI artık sürüm notlarını **`CHANGELOG.md`'nin ilgili bölümünden** üretiyor. Bu metin hem
+  GitHub Release'de hem de `latest.json` üzerinden **uygulama içindeki güncelleme penceresinde** çıkar.
+  CHANGELOG'da o sürümün girdisi yoksa boş nota düşmez, güvenli bir başlığa geriler.
+
+### Not
+- Bu sürüm aynı zamanda otomatik güncellemenin **ilk uçtan uca testidir**: v2.22.0 kurulu bir
+  uygulamanın açılışta bu sürümü kendiliğinden bulup sürüm notlarıyla birlikte sunması beklenir.
+
+---
+
 ## [2.22.0] — 2026-07-12 — Otomatik Güncelleme
 
 ### Eklenen

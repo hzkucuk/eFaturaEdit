@@ -102,6 +102,37 @@ jobs:
         run: npm ci
         working-directory: ./app
 
+      # Sürüm notları CHANGELOG'dan gelsin. Bu metin hem GitHub Release'de hem de
+      # kullanıcının gördüğü GÜNCELLEME PENCERESİNDE (latest.json → notes) çıkar;
+      # sabit bir şablon metni orada "neyin değiştiği"ni anlatmaz.
+      - name: Sürüm notlarını CHANGELOG'dan çıkar
+        id: notes
+        shell: bash
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          BODY=$(awk -v ver="$VER" '
+            $0 ~ "^## \\[" ver "\\]" { flag=1; next }
+            flag && /^## \[/ { exit }
+            flag { print }
+          ' CHANGELOG.md | sed '/^---$/d')
+          # CHANGELOG'da o sürümün girdisi yoksa boş nota düşme.
+          if [ -z "$(printf '%s' "$BODY" | tr -d '[:space:]')" ]; then
+            BODY="e-Fatura Edit ${GITHUB_REF_NAME}"
+          fi
+          {
+            echo 'body<<CHANGELOG_EOF'
+            printf '%s\n' "$BODY"
+            echo ''
+            echo '---'
+            echo ''
+            echo '**Kurulum:** Windows `.msi` / `.exe` · macOS `.dmg` (Apple Silicon ve Intel ayrı) · Linux `.deb` / `.rpm` / `.AppImage`'
+            echo ''
+            echo 'Tam XSLT 1.0/2.0/3.0 desteği (Saxon-HE motoru dahili).'
+            echo ''
+            echo '> Paketler kod imzasızdır; ilk açılışta işletim sistemi "bilinmeyen geliştirici" uyarısı gösterebilir.'
+            echo 'CHANGELOG_EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Derle & Release yayınla
         uses: tauri-apps/tauri-action@v0
         env:
@@ -118,17 +149,7 @@ jobs:
           # Updater'ın okuduğu manifest (latest.json) release'e eklensin.
           includeUpdaterJson: true
           releaseName: 'e-Fatura Edit ${{ github.ref_name }}'
-          releaseBody: |
-            e-Fatura Edit ${{ github.ref_name }} — otomatik derlenmiş kurulum paketleri.
-
-            - **Windows:** `.msi` / `.exe` (NSIS)
-            - **macOS:** `.dmg` (Apple Silicon ve Intel için ayrı paketler)
-            - **Linux:** `.deb` / `.rpm` / `.AppImage`
-
-            Tam XSLT 1.0/2.0/3.0 desteği (Saxon-HE motoru dahili).
-
-            > Not: Paketler kod imzasızdır; ilk açılışta işletim sistemi
-            > "bilinmeyen geliştirici" uyarısı gösterebilir.
+          releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
