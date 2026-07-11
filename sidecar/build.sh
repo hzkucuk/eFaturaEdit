@@ -27,10 +27,21 @@ case "${OSTYPE:-}" in
 esac
 CP="lib/Saxon-HE.jar${SEP}lib/xmlresolver.jar${SEP}lib/xmlresolver-data.jar"
 
-if ! command -v native-image >/dev/null 2>&1; then
+# native-image'ı çöz: Windows'ta komut "native-image.cmd"dir ve Git Bash
+# `command -v native-image` ile bulunamaz.
+if command -v native-image >/dev/null 2>&1; then
+  NATIVE_IMAGE="native-image"
+elif command -v native-image.cmd >/dev/null 2>&1; then
+  NATIVE_IMAGE="native-image.cmd"
+elif [ -n "${JAVA_HOME:-}" ] && [ -x "$JAVA_HOME/bin/native-image" ]; then
+  NATIVE_IMAGE="$JAVA_HOME/bin/native-image"
+elif [ -n "${JAVA_HOME:-}" ] && [ -f "$JAVA_HOME/bin/native-image.cmd" ]; then
+  NATIVE_IMAGE="$JAVA_HOME/bin/native-image.cmd"
+else
   echo "HATA: native-image bulunamadı. GraalVM kurup JAVA_HOME/PATH ayarlayın." >&2
   exit 1
 fi
+echo "==> native-image: $NATIVE_IMAGE"
 
 # Tauri sidecar'ları hedef üçlüsü (target triple) son eki ister.
 TRIPLE="$(rustc -vV | awk '/^host:/ {print $2}')"
@@ -48,8 +59,8 @@ mkdir -p "$BIN_DIR"
 # IncludeLocales/AddAllCharsets: format-dateTime gibi XSLT 2.0 fonksiyonları
 # locale verisi ister; native-image varsayılan olarak yalnızca en içerir.
 # Türkçe belgeler için tr de gerekir.
-native-image \
-  -cp "$CP:$OUT_DIR" \
+"$NATIVE_IMAGE" \
+  -cp "$CP${SEP}$OUT_DIR" \
   -o "$TARGET" \
   --no-fallback \
   -H:ConfigurationFileDirectories=native-config \
@@ -62,5 +73,5 @@ native-image \
   Transform
 
 # native-image Windows'ta çıktıya otomatik .exe ekler.
-[ -f "$TARGET.exe" ] && TARGET="$TARGET.exe"
+if [ -f "$TARGET.exe" ]; then TARGET="$TARGET.exe"; fi
 echo "==> Hazır: $TARGET ($(du -h "$TARGET" | cut -f1))"
