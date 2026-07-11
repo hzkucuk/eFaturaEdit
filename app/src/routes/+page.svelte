@@ -793,7 +793,12 @@
    */
   const previewHtmlWithBridge = $derived.by(() => {
     if (!editorState.previewHtml) return '';
-    const bridge = `<script>
+    // Kaynakta bitişik script açılış/kapanış metni YAZILMAZ (yorumda bile):
+    // Svelte'in blok-sınırı ön taraması bunu gerçek bir etiket sanıp bileşenin
+    // kendi script bloğunu erken kapatıyor (bkz. STYLE_TAG deseni). Bu yüzden
+    // etiket adı değişkenden interpolasyonla üretilir.
+    const SCRIPT_TAG = 'script';
+    const bridgeJs = `
 document.addEventListener('contextmenu', function(e) {
   e.preventDefault();
   window.parent.postMessage({ type: 'preview-contextmenu', x: e.clientX, y: e.clientY }, '*');
@@ -809,7 +814,104 @@ window.addEventListener('message', function(e) {
   }
   window.parent.postMessage({ type: 'css-captured', css: parts.join('\\n') }, '*');
 });
-<\/script>`;
+
+/* ─── Görsel düzenleyici (WYSIWYG Faz 1) ────────────────────────────────
+   Seçim modu açıkken: fare üzerindeki öğeyi çerçevele, tıklanınca öğenin
+   seçicisini + hesaplanmış stillerini uygulamaya bildir. Uygulama, stil
+   panelindeki her değişiklikte buraya canlı CSS gönderir; XSLT'ye yalnızca
+   "Uygula" denince yazılır.                                            */
+var __wz = { on: false, hl: null, live: null };
+var __WZ_PROPS = ['color','background-color','font-size','font-weight','font-style',
+  'text-align','text-transform','padding','margin','border-width','border-style',
+  'border-color','border-radius','width','height','display'];
+
+function __wzHl() {
+  if (__wz.hl) return __wz.hl;
+  var d = document.createElement('div');
+  d.setAttribute('data-wz', 'hl');
+  d.style.cssText = 'position:fixed;pointer-events:none;z-index:2147483647;' +
+    'border:2px solid #0a5cff;background:rgba(10,92,255,0.10);border-radius:2px;';
+  document.body.appendChild(d);
+  __wz.hl = d;
+  return d;
+}
+function __wzFrame(el) {
+  var r = el.getBoundingClientRect();
+  var h = __wzHl();
+  h.style.display = 'block';
+  h.style.left = r.left + 'px';
+  h.style.top = r.top + 'px';
+  h.style.width = r.width + 'px';
+  h.style.height = r.height + 'px';
+}
+/* Öğe için kararlı bir CSS seçicisi üret: id > class > en yakın id'li atadan
+   nth-of-type yolu. Şablonlarda id yaygın olduğundan çoğu öğe #id'ye düşer. */
+function __wzSelector(el) {
+  if (el.id) return '#' + el.id;
+  var parts = [];
+  var n = el;
+  while (n && n.nodeType === 1 && n !== document.documentElement) {
+    if (n.id) { parts.unshift('#' + n.id); break; }
+    var seg = n.tagName.toLowerCase();
+    var cls = (n.getAttribute('class') || '').trim().split(/\\s+/).filter(Boolean);
+    if (cls.length) {
+      seg += '.' + cls.join('.');
+    } else if (n.parentElement) {
+      var i = 1, s = n;
+      while ((s = s.previousElementSibling)) { if (s.tagName === n.tagName) i++; }
+      seg += ':nth-of-type(' + i + ')';
+    }
+    parts.unshift(seg);
+    n = n.parentElement;
+    if (parts.length > 5) break;
+  }
+  return parts.join(' > ');
+}
+function __wzComputed(el) {
+  var cs = getComputedStyle(el);
+  var o = {};
+  for (var i = 0; i < __WZ_PROPS.length; i++) {
+    o[__WZ_PROPS[i]] = cs.getPropertyValue(__WZ_PROPS[i]);
+  }
+  return o;
+}
+document.addEventListener('mouseover', function(e) {
+  if (!__wz.on) return;
+  if (e.target && e.target.getAttribute && e.target.getAttribute('data-wz')) return;
+  __wzFrame(e.target);
+}, true);
+document.addEventListener('click', function(e) {
+  if (!__wz.on) return;
+  e.preventDefault();
+  e.stopPropagation();
+  var el = e.target;
+  __wzFrame(el);
+  window.parent.postMessage({
+    type: 'wysiwyg-select',
+    selector: __wzSelector(el),
+    tag: el.tagName.toLowerCase(),
+    computed: __wzComputed(el)
+  }, '*');
+}, true);
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+  if (e.data.type === 'wysiwyg-mode') {
+    __wz.on = !!e.data.on;
+    document.body.style.cursor = __wz.on ? 'crosshair' : '';
+    if (!__wz.on && __wz.hl) __wz.hl.style.display = 'none';
+  }
+  if (e.data.type === 'wysiwyg-live') {
+    if (!__wz.live) {
+      /* Not: kaynakta bitişik "<" + "style" yazmamak için createElement. */
+      __wz.live = document.createElement('style');
+      __wz.live.setAttribute('data-wz', 'live');
+      document.head.appendChild(__wz.live);
+    }
+    __wz.live.textContent = e.data.css || '';
+  }
+});
+`;
+    const bridge = `<${SCRIPT_TAG}>${bridgeJs}</${SCRIPT_TAG}>`;
     const html = editorState.previewHtml;
     const bodyCloseIdx = html.lastIndexOf('</body>');
     if (bodyCloseIdx !== -1) {
@@ -862,8 +964,124 @@ window.addEventListener('message', function(e) {
     }
   }
 
+  // ─── Görsel düzenleyici (WYSIWYG Faz 1) ─────────────────────────────
+  // Önizlemede tıkla-seç → stil panelinden düzenle → anlık önizleme (iframe'e
+  // canlı CSS enjekte edilir, XSLT'ye dokunulmaz) → "Uygula" ile XSLT'nin
+  // stil bloğuna CSS kuralı olarak yazılır (AI'sız, deterministik).
+  // NOT: yorumlarda bile bitişik stil/script etiketi YAZILMAZ — Svelte'in
+  // blok-sınırı ön taraması yanlış pozitif verip bileşenin script bloğunu
+  // erken kapatıyor (bkz. STYLE_TAG / SCRIPT_TAG interpolasyon deseni).
+  interface WzSelection {
+    selector: string;
+    tag: string;
+    computed: Record<string, string>;
+  }
+  let wzMode = $state(false);
+  let wzSel = $state<WzSelection | null>(null);
+  let wzEdits = $state<Record<string, string>>({});
+
+  /** Düzenlenen özelliklerden CSS kuralı üret (boş değerler atlanır). */
+  const wzRule = $derived.by(() => {
+    if (!wzSel) return '';
+    const decls = Object.entries(wzEdits)
+      .filter(([, v]) => v !== '' && v != null)
+      .map(([k, v]) => `  ${k}: ${v};`);
+    if (decls.length === 0) return '';
+    return `${wzSel.selector} {\n${decls.join('\n')}\n}`;
+  });
+
+  // Her değişiklikte iframe'e canlı CSS gönder — anlık görsel geri bildirim.
+  $effect(() => {
+    const css = wzRule;
+    previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-live', css }, '*');
+  });
+
+  function toggleWzMode() {
+    wzMode = !wzMode;
+    previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-mode', on: wzMode }, '*');
+    if (!wzMode) {
+      wzSel = null;
+      wzEdits = {};
+      previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-live', css: '' }, '*');
+      status('Görsel düzenleyici kapatıldı.');
+    } else {
+      status('Görsel düzenleyici açık — önizlemede bir öğeye tıklayın.');
+    }
+  }
+
+  function wzSet(prop: string, value: string) {
+    wzEdits = { ...wzEdits, [prop]: value };
+  }
+
+  /** `getComputedStyle` rgb()/rgba() döndürür; <input type="color"> hex ister. */
+  function rgbToHex(value: string | undefined): string {
+    if (!value) return '#000000';
+    if (value.startsWith('#')) return value;
+    const m = value.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (!m) return '#000000';
+    const hex = (n: string) => Number(n).toString(16).padStart(2, '0');
+    return `#${hex(m[1])}${hex(m[2])}${hex(m[3])}`;
+  }
+
+  function wzReset() {
+    wzEdits = {};
+  }
+
+  /**
+   * Görsel düzenlemeyi XSLT'ye yaz.
+   *
+   * Deterministik: AI'a gerek yok. Kural XSLT'nin stil bloğuna eklenir;
+   * aynı seçici için kural zaten varsa o kural GÜNCELLENİR (yinelenmez).
+   * Sonuç, mevcut onay modalına hedefli bir bul/değiştir düzenlemesi olarak
+   * verilir → diff + canlı önizleme + onayda otomatik kaydetme çalışır.
+   */
+  function wzApply() {
+    if (!wzSel || !wzRule) return;
+    const xslt = editorState.xsltText;
+    const m = xslt.match(styleBlockRegex);
+    if (!m) {
+      status(
+        'XSLT içinde bir <' + STYLE_TAG + '> bloğu bulunamadı — önce bir stil bloğu ekleyin.',
+        true,
+      );
+      return;
+    }
+    const inner = m[2];
+
+    // Bu seçici için mevcut kural var mı? (satır başında, süslü parantezli)
+    const escaped = wzSel.selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const existing = new RegExp(`(^|\\n)[ \\t]*${escaped}[ \\t]*\\{[^}]*\\}`, 'm');
+    const found = inner.match(existing);
+
+    let search: string;
+    let replace: string;
+    if (found) {
+      // Mevcut kuralı güncelle — SEARCH birebir o kural.
+      search = found[0].replace(/^\n/, '');
+      replace = wzRule;
+    } else {
+      // Kural yok → stil bloğunun SONUNA ekle. Kapanış etiketi benzersiz bir
+      // çıpa; SEARCH kısa kalır, diff okunur olur.
+      const closing = m[3];
+      search = closing;
+      replace = `\n${wzRule}\n${closing}`;
+    }
+
+    requestAiApply({ kind: 'edits', target: 'xslt', edits: [{ search, replace }] });
+  }
+
   function onPreviewMessage(e: MessageEvent) {
     if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'wysiwyg-select') {
+      wzSel = {
+        selector: e.data.selector ?? '',
+        tag: e.data.tag ?? '',
+        computed: e.data.computed ?? {},
+      };
+      wzEdits = {};
+      status(`Seçildi: ${wzSel.selector}`);
+      return;
+    }
     if (e.data.type === 'css-captured') {
       if (cssCaptureTimer) clearTimeout(cssCaptureTimer);
       cssCaptureResolve?.(e.data.css ?? '');
@@ -1260,6 +1478,13 @@ window.addEventListener('message', function(e) {
           <span class="mini-sep"></span>
 
           <button
+            class:active={wzMode}
+            onclick={toggleWzMode}
+            disabled={!editorState.previewHtml}
+            title="Görsel düzenleyici: önizlemede bir öğeye tıklayıp stilini panelden değiştir"
+          >🎯 Seç & Düzenle</button>
+
+          <button
             onclick={captureStyleFromPreview}
             disabled={!editorState.previewHtml}
             title="DevTools'ta (Styles panelinde) yaptığın CSS değişikliklerini XSLT'deki stil bloğuna aktar"
@@ -1270,6 +1495,80 @@ window.addEventListener('message', function(e) {
           <button onclick={printPreview} disabled={!editorState.previewHtml} title="Yazdır / PDF (Cmd+P)">🖨</button>
         </div>
       </div>
+
+      {#if wzMode}
+        <div class="wz-panel">
+          {#if !wzSel}
+            <p class="wz-hint">🎯 Önizlemede düzenlemek istediğin öğeye tıkla.</p>
+          {:else}
+            <div class="wz-head">
+              <code class="wz-sel">{wzSel.selector}</code>
+              <span class="wz-tag">&lt;{wzSel.tag}&gt;</span>
+              <button class="wz-reset" onclick={wzReset} title="Değişiklikleri sıfırla">↺</button>
+              <button class="wz-apply" onclick={wzApply} disabled={!wzRule}>✓ XSLT'ye Uygula</button>
+            </div>
+
+            <div class="wz-grid">
+              <label>Yazı rengi
+                <input type="color" value={wzEdits['color'] ?? rgbToHex(wzSel.computed['color'])}
+                  oninput={(e) => wzSet('color', (e.currentTarget as HTMLInputElement).value)} />
+              </label>
+              <label>Arka plan
+                <input type="color" value={wzEdits['background-color'] ?? rgbToHex(wzSel.computed['background-color'])}
+                  oninput={(e) => wzSet('background-color', (e.currentTarget as HTMLInputElement).value)} />
+              </label>
+              <label>Yazı boyutu
+                <input type="text" placeholder={wzSel.computed['font-size']} value={wzEdits['font-size'] ?? ''}
+                  oninput={(e) => wzSet('font-size', (e.currentTarget as HTMLInputElement).value)} />
+              </label>
+              <label>Kalınlık
+                <select value={wzEdits['font-weight'] ?? ''}
+                  onchange={(e) => wzSet('font-weight', (e.currentTarget as HTMLSelectElement).value)}>
+                  <option value="">(değiştirme)</option>
+                  <option value="normal">normal</option>
+                  <option value="bold">bold</option>
+                  <option value="600">600</option>
+                </select>
+              </label>
+              <label>Hizalama
+                <select value={wzEdits['text-align'] ?? ''}
+                  onchange={(e) => wzSet('text-align', (e.currentTarget as HTMLSelectElement).value)}>
+                  <option value="">(değiştirme)</option>
+                  <option value="left">sol</option>
+                  <option value="center">orta</option>
+                  <option value="right">sağ</option>
+                </select>
+              </label>
+              <label>İç boşluk
+                <input type="text" placeholder={wzSel.computed['padding']} value={wzEdits['padding'] ?? ''}
+                  oninput={(e) => wzSet('padding', (e.currentTarget as HTMLInputElement).value)} />
+              </label>
+              <label>Kenarlık
+                <input type="text" placeholder="1px solid #ccc" value={wzEdits['border'] ?? ''}
+                  oninput={(e) => wzSet('border', (e.currentTarget as HTMLInputElement).value)} />
+              </label>
+              <label>Köşe
+                <input type="text" placeholder={wzSel.computed['border-radius']} value={wzEdits['border-radius'] ?? ''}
+                  oninput={(e) => wzSet('border-radius', (e.currentTarget as HTMLInputElement).value)} />
+              </label>
+              <label>Genişlik
+                <input type="text" placeholder={wzSel.computed['width']} value={wzEdits['width'] ?? ''}
+                  oninput={(e) => wzSet('width', (e.currentTarget as HTMLInputElement).value)} />
+              </label>
+            </div>
+
+            {#if wzRule}
+              <pre class="wz-rule">{wzRule}</pre>
+            {/if}
+            <p class="wz-warn">
+              ⚠️ Bu bir CSS <b>kuralıdır</b>: seçiciye uyan <b>tüm</b> öğeleri etkiler
+              (ör. tek bir fatura satırı değil, hepsi). Yalnızca belirli bir satır
+              için seçiciye <code>:nth-child(n)</code> ekleyebilirsin.
+            </p>
+          {/if}
+        </div>
+      {/if}
+
       <div class="preview-frame-wrap">
         <div
           class="preview-frame-container"
@@ -1752,6 +2051,115 @@ window.addEventListener('message', function(e) {
   .hint-lg { margin-top: 1.5rem; font-size: 11px; color: #6b7280; }
 
   /* Preview */
+  /* ── Görsel düzenleyici paneli (WYSIWYG Faz 1) ────────────────────── */
+  .wz-panel {
+    flex-shrink: 0;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 0.6rem 0.75rem;
+    background: #fff;
+    border-bottom: 1px solid #d5d8dc;
+    font-size: 12px;
+  }
+  .wz-hint { margin: 0; color: #6b7280; }
+  .wz-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .wz-sel {
+    font-family: ui-monospace, Menlo, monospace;
+    background: #eef4ff;
+    color: #0a5cff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    font-size: 11px;
+  }
+  .wz-tag { color: #9ca3af; font-size: 11px; }
+  .wz-reset,
+  .wz-apply {
+    padding: 0.25rem 0.6rem;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid #cbd0d6;
+    background: #fff;
+  }
+  .wz-reset { margin-left: auto; }
+  .wz-apply {
+    background: #0a5cff;
+    border-color: #0a5cff;
+    color: #fff;
+    font-weight: 600;
+  }
+  .wz-apply:disabled { opacity: 0.5; cursor: not-allowed; }
+  .wz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.4rem 0.75rem;
+  }
+  .wz-grid label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    font-size: 11px;
+    color: #4b5563;
+  }
+  .wz-grid input[type='text'],
+  .wz-grid select {
+    width: 90px;
+    padding: 0.15rem 0.3rem;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    font-size: 11px;
+    background: #fff;
+  }
+  .wz-grid input[type='color'] {
+    width: 34px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .wz-rule {
+    margin: 0.6rem 0 0.4rem;
+    padding: 0.4rem 0.5rem;
+    background: #f5f6f8;
+    border: 1px solid #d5d8dc;
+    border-radius: 5px;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .wz-warn {
+    margin: 0;
+    font-size: 11px;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 5px;
+    padding: 0.35rem 0.5rem;
+    line-height: 1.4;
+  }
+  :global(html.dark) .wz-panel { background: #252526; border-bottom-color: #3f3f46; }
+  :global(html.dark) .wz-grid label { color: #c9ccd1; }
+  :global(html.dark) .wz-grid input[type='text'],
+  :global(html.dark) .wz-grid select,
+  :global(html.dark) .wz-reset {
+    background: #2d2d30;
+    border-color: #4b5563;
+    color: #e6e6e6;
+  }
+  :global(html.dark) .wz-rule { background: #1e1e1e; border-color: #3f3f46; color: #d4d4d8; }
+  :global(html.dark) .wz-sel { background: #172554; border-color: #1e3a8a; color: #93c5fd; }
+  :global(html.dark) .wz-warn { background: #3d3117; border-color: #6b5320; color: #fbbf24; }
+
   .preview { position: relative; display: flex; flex-direction: column; background: #f0f2f5; overflow: hidden; }
   .app.dark .preview { background: #1a1a1a; }
   .preview-frame-wrap {

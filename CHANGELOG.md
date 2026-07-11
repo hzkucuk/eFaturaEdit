@@ -3,6 +3,18 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.19.0] — 2026-07-11 — Görsel Düzenleyici (WYSIWYG Faz 1): Tıkla-Seç + Stil Paneli — app/src/routes/+page.svelte
+
+### Eklenen — Görsel Düzenleyici (🎯 Seç & Düzenle)
+- **Önizlemede tıkla-seç:** Mod açıkken fare üzerindeki öğe çerçevelenir; tıklanınca öğenin kararlı CSS seçicisi (id → class → en yakın id'li atadan `nth-of-type` yolu) ve hesaplanmış stilleri uygulamaya bildirilir (iframe köprüsü genişletildi).
+- **Stil paneli:** Yazı rengi/boyutu/kalınlığı/hizalaması, arka plan, iç boşluk, kenarlık, köşe, genişlik — kontroller öğenin mevcut değerleriyle dolu gelir.
+- **Anlık önizleme:** Her değişiklikte iframe'e canlı CSS enjekte edilir — XSLT'ye dokunulmadan, dönüşüm beklenmeden anında görülür.
+- **XSLT'ye uygula (deterministik, AI'sız):** Üretilen CSS kuralı XSLT'nin stil bloğuna yazılır; aynı seçici için kural varsa **güncellenir** (yinelenmez). Sonuç mevcut onay modalından geçer → kırmızı/yeşil diff + canlı sonuç önizlemesi + onayda otomatik kaydetme.
+- **Şeffaf uyarı:** Bir CSS kuralı seçiciye uyan **tüm** öğeleri etkiler (tek bir fatura satırı değil, hepsi) — panel bunu açıkça belirtir; tek satır için `:nth-child(n)` önerilir. Bu, şablon mantığının doğası olduğundan gizlenmez.
+
+### Düzeltilen (geliştirici notu)
+- Kaynak dosyada **yorumların içinde bile** bitişik stil/script etiketi yazmak Svelte'in blok-sınırı ön taramasını bozuyor (bileşenin script bloğunu erken kapatıyor). İki yerde bu tuzağa düşüldü ve giderildi; etiket adları artık `STYLE_TAG`/`SCRIPT_TAG` değişkenlerinden interpolasyonla üretiliyor.
+
 ## [2.18.0] — 2026-07-11 — Prompt Caching + Koyu Tema Düzeltmesi + Uygula-Kaydet — app/src-tauri/src/ai.rs, app/src/routes/+layout.svelte
 
 ### Eklenen — Prompt Caching (token maliyeti ~%90 düşürüldü)
