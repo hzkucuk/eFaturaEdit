@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import { goto } from '$app/navigation';
   import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { snippets, samples, completion, manifest, groupSnippetsByCategory } from '$lib/data';
+  import { cssSnippets } from '$lib/data/css-snippets';
   import type { Snippet } from '$lib/data/types';
   import { transformXml, validateXml, XsltError } from '$lib/xslt';
   import { settings, updatePanelSize, updateSetting, themeKind } from '$lib/settings.svelte';
@@ -26,6 +27,8 @@
   import Splitter from '$lib/Splitter.svelte';
   import ContextMenu from '$lib/ContextMenu.svelte';
   import HelpModal from '$lib/HelpModal.svelte';
+  import AIAssistant from '$lib/AIAssistant.svelte';
+  import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
   import type { Completion } from '@codemirror/autocomplete';
 
   // ─── UI state ────────────────────────────────────────────────────────
@@ -45,6 +48,37 @@
   let exitInProgress = $state(false);
   let styleApplyOpen = $state(false);
   let capturedCss = $state('');
+  let aiApplyOpen = $state(false);
+  let aiApplyTarget = $state<AiTarget>('xslt');
+  let aiApplySuggestion = $state<AiSuggestion | null>(null);
+  let aiApplyNewText = $state(''); // onaylanınca editöre yazılacak TAM metin
+  let aiApplyUnmatched = $state<AiEdit[]>([]);
+  let aiApplyPreviewLoading = $state(false);
+  let aiApplyPreviewHtml = $state(''); // popup içindeki sonuç önizlemesi
+  let aiApplyPreviewError = $state(''); // sonuç geçersiz XML üretiyorsa hata metni
+  let aiApplyShowFull = $state(false); // 'full' önerinin dev metnini isteğe bağlı göster
+
+  // Uygulanabilecek gerçek bir değişiklik var mı? (Tüm düzenlemeler
+  // eşleşmediyse newText mevcut metne eşittir, uygulanacak bir şey yok.)
+  const aiApplyHasChange = $derived.by(() => {
+    const current = aiApplyTarget === 'xslt' ? editorState.xsltText : editorState.xmlText;
+    return aiApplyNewText !== current;
+  });
+
+  // Yalnızca "tam dosya" önerisi için: öneri tam bir belge gibi görünmüyorsa
+  // (kök öğe yok ya da mevcut dosyadan çok kısa) tüm dosyayı bir parçayla ezip
+  // bozabilir — uyar. Hedefli düzenlemelerde bu risk yok.
+  const aiApplyLooksPartial = $derived.by(() => {
+    if (aiApplySuggestion?.kind !== 'full') return false;
+    const code = aiApplyNewText.trim();
+    if (!code) return false;
+    const hasRoot = aiApplyTarget === 'xslt'
+      ? /<\?xml|<xsl:stylesheet|<xsl:transform/i.test(code)
+      : /<\?xml|<\w[\w:-]*[\s>]/.test(code.slice(0, 200));
+    const current = (aiApplyTarget === 'xslt' ? editorState.xsltText : editorState.xmlText).trim();
+    const muchShorter = current.length > 200 && code.length < current.length * 0.5;
+    return !hasRoot || muchShorter;
+  });
 
   // Editor referansları (bind:this)
   let xsltEditor = $state<CodeEditor>();
@@ -58,12 +92,14 @@
   let snippetsWidth = $state(settings.panelSizes.snippetsWidth);
   let editorsWidth = $state(settings.panelSizes.editorsWidth);
   let xsltHeight = $state(settings.panelSizes.xsltHeight);
+  let aiPanelHeight = $state(settings.panelSizes.aiPanelHeight);
   $effect(() => updatePanelSize('snippetsWidth', snippetsWidth));
   $effect(() => updatePanelSize('editorsWidth', editorsWidth));
   $effect(() => updatePanelSize('xsltHeight', xsltHeight));
+  $effect(() => updatePanelSize('aiPanelHeight', aiPanelHeight));
 
   // ─── Snippet grupları ───────────────────────────────────────────────
-  const allSnippets = $derived([...snippets, ...userSnippets]);
+  const allSnippets = $derived([...snippets, ...cssSnippets, ...userSnippets]);
   const groupedSnippets = $derived(groupSnippetsByCategory(allSnippets));
   const categories = $derived(Array.from(groupedSnippets.keys()));
   const visibleSnippets = $derived.by<Snippet[]>(() => {
@@ -623,6 +659,68 @@
     styleApplyOpen = false;
   }
 
+  // ─── AI Asistan: önerilen değişikliği onaydan sonra uygula ──────────
+  // Hedefli düzenlemeler (bul/değiştir) mevcut dosyaya doğru yerinden uygulanır;
+  // "tam dosya" önerisi ise içeriği baştan yazar. Her iki durumda da sonuç
+  // önce onay modalında gösterilir, editöre ancak onayla yazılır.
+  function requestAiApply(suggestion: AiSuggestion) {
+    const target = suggestion.target;
+    const current = target === 'xslt' ? editorState.xsltText : editorState.xmlText;
+    aiApplyTarget = target;
+    aiApplySuggestion = suggestion;
+    if (suggestion.kind === 'full') {
+      aiApplyNewText = suggestion.code;
+      aiApplyUnmatched = [];
+    } else {
+      const { result, unmatched } = applyEdits(current, suggestion.edits);
+      aiApplyNewText = result;
+      aiApplyUnmatched = unmatched;
+    }
+    aiApplyShowFull = false;
+    aiApplyOpen = true;
+    void buildAiApplyPreview();
+  }
+
+  // Onay öncesi: uygulanacak metnin dönüştürülmüş halini popup içinde göster.
+  async function buildAiApplyPreview() {
+    aiApplyPreviewHtml = '';
+    aiApplyPreviewError = '';
+    aiApplyPreviewLoading = true;
+    // transformXml gövdesi senkron ve ağır (600 KB'da ana thread'i bloklar).
+    // Önce modalın DOM'a işlenip BOYANMASINA izin ver; aksi halde modal
+    // görünmeden uygulama donmuş gibi olur.
+    await tick();
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null))));
+    try {
+      const xslt = aiApplyTarget === 'xslt' ? aiApplyNewText : editorState.xsltText;
+      const xml = aiApplyTarget === 'xml' ? aiApplyNewText : editorState.xmlText;
+      aiApplyPreviewHtml = await transformXml(xml, xslt);
+    } catch (err) {
+      const msg = (err as Error).message ?? String(err);
+      aiApplyPreviewError = msg;
+      aiApplyPreviewHtml = `<pre style="color:#c00;padding:1rem;font-family:monospace;white-space:pre-wrap;">Önizleme oluşturulamadı:\n\n${escapeHtml(msg)}</pre>`;
+    } finally {
+      aiApplyPreviewLoading = false;
+    }
+  }
+
+  function confirmAiApply() {
+    if (aiApplyTarget === 'xslt') {
+      editorState.xsltText = aiApplyNewText;
+      xsltEditor?.setValue(aiApplyNewText);
+    } else {
+      editorState.xmlText = aiApplyNewText;
+      xmlEditor?.setValue(aiApplyNewText);
+    }
+    aiApplyOpen = false;
+    status(`AI önerisi ${aiApplyTarget.toUpperCase()} editörüne uygulandı — kaydetmeyi unutmayın.`);
+    runTransform();
+  }
+
+  function cancelAiApply() {
+    aiApplyOpen = false;
+  }
+
   function setPreviewWidth(w: number | null) {
     updateSetting('previewWidth', w);
     status(`Önizleme genişliği: ${w ? w + 'px' : 'Tam'}`);
@@ -941,72 +1039,86 @@ window.addEventListener('message', function(e) {
     class="main-grid"
     style="grid-template-columns: {snippetsWidth}px 4px {editorsWidth}px 4px 1fr;"
   >
-    <!-- Snippet paneli -->
-    <aside class="snippets">
-      <div class="snippets-header">
-        <h3>Snippet'ler ({allSnippets.length})</h3>
-        <button class="snippet-add" onclick={() => { editingSnippet = undefined; snippetEditorOpen = true; }} title="Yeni snippet ekle">➕</button>
-        <input type="text" placeholder="Ara..." bind:value={snippetFilter} class="search" />
-        <div class="tabs">
-          {#each categories as cat}
-            <button
-              class="tab"
-              class:active={cat === activeCategory}
-              onclick={() => (activeCategory = cat)}
+    <!-- Snippet paneli + AI Asistan (sol sütun, dikey bölünmüş) -->
+    <aside class="snippets" style="grid-template-rows: 1fr 4px {aiPanelHeight}px;">
+      <div class="snippets-top">
+        <div class="snippets-header">
+          <h3>Snippet'ler ({allSnippets.length})</h3>
+          <button class="snippet-add" onclick={() => { editingSnippet = undefined; snippetEditorOpen = true; }} title="Yeni snippet ekle">➕</button>
+          <input type="text" placeholder="Ara..." bind:value={snippetFilter} class="search" />
+          <div class="tabs">
+            {#each categories as cat}
+              <button
+                class="tab"
+                class:active={cat === activeCategory}
+                onclick={() => (activeCategory = cat)}
+              >
+                {cat}
+              </button>
+            {/each}
+          </div>
+          <div class="hint">💡 Tıkla = imlece ekle · Sürükle = istediğin yere bırak</div>
+        </div>
+        <div class="snippet-list">
+          {#each visibleSnippets as snippet (snippet.key)}
+            <div
+              class="snippet-item"
+              title={snippet.description}
+              role="button"
+              tabindex="0"
+              onmousedown={(e) => onSnippetMouseDown(e, snippet)}
+              onkeydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  insertSnippet(snippet);
+                }
+              }}
             >
-              {cat}
-            </button>
+              <span class="icon">{snippet.iconText}</span>
+              <span class="name">{snippet.displayName}</span>
+              <span class="key">{snippet.key}</span>
+              {#if userSnippetKeys.has(snippet.key)}
+                <button
+                  class="snippet-edit"
+                  title="Düzenle"
+                  onmousedown={(e) => e.stopPropagation()}
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    openEditSnippet(snippet);
+                  }}
+                >
+                  ✏️
+                </button>
+                <button
+                  class="snippet-delete"
+                  title="Sil"
+                  onmousedown={(e) => e.stopPropagation()}
+                  onclick={(e) => onDeleteSnippet(snippet, e)}
+                >
+                  🗑
+                </button>
+              {/if}
+            </div>
+          {:else}
+            <p class="muted">Snippet bulunamadı.</p>
           {/each}
         </div>
-        <div class="hint">💡 Tıkla = imlece ekle · Sürükle = istediğin yere bırak</div>
       </div>
-      <div class="snippet-list">
-        {#each visibleSnippets as snippet (snippet.key)}
-          <div
-            class="snippet-item"
-            title={snippet.description}
-            role="button"
-            tabindex="0"
-            onmousedown={(e) => onSnippetMouseDown(e, snippet)}
-            onkeydown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                insertSnippet(snippet);
-              }
-            }}
-          >
-            <span class="icon">{snippet.iconText}</span>
-            <span class="name">{snippet.displayName}</span>
-            <span class="key">{snippet.key}</span>
-            {#if userSnippetKeys.has(snippet.key)}
-              <button
-                class="snippet-edit"
-                title="Düzenle"
-                onmousedown={(e) => e.stopPropagation()}
-                onclick={(e) => {
-                  e.stopPropagation();
-                  openEditSnippet(snippet);
-                }}
-              >
-                ✏️
-              </button>
-              <button
-                class="snippet-delete"
-                title="Sil"
-                onmousedown={(e) => e.stopPropagation()}
-                onclick={(e) => onDeleteSnippet(snippet, e)}
-              >
-                🗑
-              </button>
-            {/if}
-          </div>
-        {:else}
-          <p class="muted">Snippet bulunamadı.</p>
-        {/each}
+
+      <Splitter direction="horizontal" bind:position={aiPanelHeight} min={40} />
+
+      <div class="ai-dock">
+        <AIAssistant
+          xsltPath={editorState.xsltPath}
+          xmlPath={editorState.xmlPath}
+          xsltText={editorState.xsltText}
+          xmlText={editorState.xmlText}
+          onApply={requestAiApply}
+        />
       </div>
     </aside>
 
-    <Splitter direction="vertical" bind:position={snippetsWidth} min={200} max={500} />
+    <Splitter direction="vertical" bind:position={snippetsWidth} min={40} />
 
     <!-- Editör paneli -->
     <section class="editors" style="grid-template-rows: 22px {xsltHeight}px 4px 22px 1fr;">
@@ -1038,7 +1150,7 @@ window.addEventListener('message', function(e) {
         {/if}
       </div>
 
-      <Splitter direction="horizontal" bind:position={xsltHeight} min={100} max={800} />
+      <Splitter direction="horizontal" bind:position={xsltHeight} min={40} />
 
       <div class="panel-header">
         XML {editorState.xmlPath ? `— ${basename(editorState.xmlPath)}` : '(yeni)'} · {editorState.xmlText.length}
@@ -1055,7 +1167,7 @@ window.addEventListener('message', function(e) {
       </div>
     </section>
 
-    <Splitter direction="vertical" bind:position={editorsWidth} min={300} max={1400} />
+    <Splitter direction="vertical" bind:position={editorsWidth} min={40} />
 
     <!-- Preview paneli -->
     <section class="preview">
@@ -1210,6 +1322,87 @@ window.addEventListener('message', function(e) {
       <div class="exit-actions">
         <button class="exit-btn cancel" onclick={cancelStyleApply}>İptal</button>
         <button class="exit-btn save" onclick={applyCapturedCssToXslt}>Uygula</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- ─── AI önerisini uygulama onayı ───────────────────────────────── -->
+{#if aiApplyOpen}
+  <div class="exit-overlay" role="presentation">
+    <div class="style-modal" role="alertdialog" aria-label="AI önerisini uygula">
+      <h3>🤖 AI Önerisini Uygula</h3>
+      {#if aiApplySuggestion?.kind === 'edits'}
+        <p>
+          <b>{aiApplyTarget.toUpperCase()}</b> dosyasına <b>{aiApplySuggestion.edits.length}</b>
+          hedefli değişiklik uygulanacak (dosyanın geri kalanı korunur). Emin misiniz?
+        </p>
+        {#if aiApplyUnmatched.length > 0}
+          <p class="ai-partial-warning">
+            ⚠️ {aiApplyUnmatched.length} değişikliğin arananan metni dosyada
+            <b>bulunamadı</b> ve atlanacak. AI'dan bu bölümleri güncel dosyaya göre
+            tekrar üretmesini isteyebilirsiniz.
+          </p>
+        {/if}
+        {#each aiApplySuggestion.edits as ed, i}
+          <div class="ai-edit-diff">
+            <div class="ai-edit-diff-label">
+              Değişiklik {i + 1}
+              {#if aiApplyUnmatched.includes(ed)}<span class="ai-edit-skip">atlandı — eşleşmedi</span>{/if}
+            </div>
+            <pre class="ai-diff-old">{ed.search}</pre>
+            <pre class="ai-diff-new">{ed.replace}</pre>
+          </div>
+        {/each}
+      {:else}
+        <p>
+          <b>{aiApplyTarget.toUpperCase()}</b> editörünün tüm içeriği bu öneriyle
+          <b>değiştirilecek</b>. Emin misiniz?
+        </p>
+        {#if aiApplyLooksPartial}
+          <p class="ai-partial-warning">
+            ⚠️ Bu öneri dosyanın <b>tamamı</b> gibi görünmüyor (kök öğe eksik ya da
+            mevcut dosyadan çok kısa). Uygularsanız {aiApplyTarget.toUpperCase()}
+            içeriğinin <b>tümü</b> bu parçayla değişir ve dosya bozulabilir.
+          </p>
+        {/if}
+        <!-- Büyük dosyalarda 600 KB'lık metni doğrudan basmak WebView'i dondurur;
+             kod metni varsayılan gizli, istekle açılır. Sonuç sağ panelde canlı. -->
+        {#if aiApplyShowFull}
+          <pre class="style-preview">{aiApplyNewText}</pre>
+          <button class="link-btn" onclick={() => (aiApplyShowFull = false)}>▲ Kodu gizle</button>
+        {:else}
+          <p class="ai-fulltext-note">
+            Sonuç {aiApplyNewText.split('\n').length} satır / {(aiApplyNewText.length / 1024).toFixed(1)} KB.
+            <button class="link-btn" onclick={() => (aiApplyShowFull = true)}>Kod metnini göster</button>
+          </p>
+        {/if}
+      {/if}
+
+      {#if aiApplyPreviewError}
+        <p class="ai-partial-warning">
+          ⛔ Bu değişiklikler uygulanınca sonuç <b>geçerli değil</b> (dönüşüm hatası).
+          Genellikle bazı düzenlemeler eşleşmeyip atlandığında yapı yarım kalır
+          (ör. açılan etiket kapanmaz). Uygulamanız <b>önerilmez</b>; AI'dan eksik
+          düzenlemeleri güncel dosyaya göre tamamlamasını isteyin. Hata: {aiApplyPreviewError}
+        </p>
+      {/if}
+      <div class="ai-result-preview-head">
+        🔍 Sonuç önizlemesi (uygulanınca böyle görünür)
+        {#if aiApplyPreviewLoading}<span class="ai-preview-loading-tag">oluşturuluyor…</span>{/if}
+      </div>
+      <iframe
+        class="ai-result-preview"
+        title="Sonuç önizlemesi"
+        srcdoc={aiApplyPreviewHtml}
+        sandbox="allow-same-origin"
+      ></iframe>
+
+      <div class="exit-actions">
+        <button class="exit-btn cancel" onclick={cancelAiApply}>İptal</button>
+        <button class="exit-btn save" onclick={confirmAiApply} disabled={!aiApplyHasChange}>
+          Uygula
+        </button>
       </div>
     </div>
   </div>
@@ -1391,9 +1584,12 @@ window.addEventListener('message', function(e) {
   /* Ana grid */
   .main-grid { display: grid; overflow: hidden; }
 
-  /* Snippets */
-  .snippets { display: flex; flex-direction: column; background: #fafbfc; overflow: hidden; }
+  /* Snippets + AI Asistan (sol sütun, dikey bölünmüş) */
+  .snippets { display: grid; background: #fafbfc; overflow: hidden; }
   .app.dark .snippets { background: #252526; }
+  .snippets-top { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  .ai-dock { overflow: hidden; min-height: 0; border-top: 1px solid #e5e7eb; }
+  .app.dark .ai-dock { border-top-color: #3f3f46; }
   .snippets-header { padding: 0.5rem; border-bottom: 1px solid #e5e7eb; background: #fff; }
   .app.dark .snippets-header { background: #2d2d30; border-bottom-color: #3f3f46; }
   .snippets-header h3 {
@@ -1484,7 +1680,7 @@ window.addEventListener('message', function(e) {
   .hint-lg { margin-top: 1.5rem; font-size: 11px; color: #6b7280; }
 
   /* Preview */
-  .preview { display: flex; flex-direction: column; background: #f0f2f5; overflow: hidden; }
+  .preview { position: relative; display: flex; flex-direction: column; background: #f0f2f5; overflow: hidden; }
   .app.dark .preview { background: #1a1a1a; }
   .preview-frame-wrap {
     flex: 1;
@@ -1603,14 +1799,15 @@ window.addEventListener('message', function(e) {
     color: #374151;
   }
   .style-modal {
-    width: min(560px, 92vw);
-    max-height: 80vh;
+    width: min(720px, 94vw);
+    max-height: 85vh;
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
   }
   .app.dark .style-modal { background: #2d2d30; color: #e6e6e6; }
   .style-modal h3 { margin: 0 0 0.75rem; font-size: 16px; color: #0a5cff; }
@@ -1629,6 +1826,97 @@ window.addEventListener('message', function(e) {
     white-space: pre-wrap;
   }
   .app.dark .style-preview { background: #1e1e1e; border-color: #3f3f46; }
+  .ai-partial-warning {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    font-size: 12px;
+    line-height: 1.45;
+    margin: 0 0 0.9rem;
+  }
+  .app.dark .ai-partial-warning { background: #3b1111; border-color: #7f1d1d; color: #fca5a5; }
+  .ai-edit-diff {
+    border: 1px solid #d5d8dc;
+    border-radius: 6px;
+    margin-bottom: 0.6rem;
+    overflow: hidden;
+  }
+  .ai-edit-diff-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
+    background: #f5f6f8;
+    font-size: 11px;
+    font-weight: 600;
+    color: #4b5563;
+  }
+  .ai-edit-skip {
+    color: #b91c1c;
+    font-weight: 500;
+  }
+  .ai-diff-old,
+  .ai-diff-new {
+    margin: 0;
+    padding: 0.5rem;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.45;
+    max-height: 30vh;
+    overflow: auto;
+    white-space: pre-wrap;
+    border-left: 3px solid;
+  }
+  .ai-diff-old { background: #fef2f2; border-left-color: #fca5a5; }
+  .ai-diff-new { background: #f0fdf4; border-left-color: #86efac; }
+  .app.dark .ai-edit-diff { border-color: #3f3f46; }
+  .app.dark .ai-edit-diff-label { background: #27272a; color: #d4d4d8; }
+  .app.dark .ai-diff-old { background: #3b1111; }
+  .app.dark .ai-diff-new { background: #0f2a17; }
+  .exit-btn.save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .ai-result-preview-head {
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5563;
+    margin: 0.25rem 0 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .ai-preview-loading-tag {
+    font-weight: 400;
+    color: #9ca3af;
+    font-style: italic;
+  }
+  .ai-result-preview {
+    width: 100%;
+    height: 300px;
+    border: 1px solid #d5d8dc;
+    border-radius: 6px;
+    background: #fff;
+    margin-bottom: 1rem;
+  }
+  .app.dark .ai-result-preview { border-color: #3f3f46; }
+  .ai-fulltext-note {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0 0 1rem;
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    color: #0a5cff;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+    text-decoration: underline;
+  }
+  .app.dark .ai-result-preview-hint { background: #172554; border-color: #1e3a8a; color: #bfdbfe; }
   .exit-actions {
     display: flex;
     justify-content: flex-end;

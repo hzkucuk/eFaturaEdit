@@ -35,6 +35,61 @@ export const THEME_OPTIONS: { value: Theme; label: string; kind: 'light' | 'dark
   { value: 'smoothy', label: 'Smoothy', kind: 'light' },
 ];
 
+/**
+ * AI sağlayıcıları — hepsi BYOK (bring your own key): kullanıcı kendi
+ * anahtarını girer, hiçbir anahtar uygulamaya gömülü/paylaşılı değildir.
+ * openai/ollama/nvidia OpenAI-uyumlu chat completion formatını kullanır;
+ * yalnızca base URL/model farklı — Rust tarafında tek kod yolu.
+ */
+export type AiProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'nvidia';
+
+export interface AiProviderConfig {
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  /** Son "Getir" çağrısından önbelleklenen model listesi (API anahtarı girilince otomatik doldurulur). */
+  cachedModels: string[];
+}
+
+export const AI_PROVIDER_OPTIONS: { value: AiProvider; label: string; needsKey: boolean }[] = [
+  { value: 'anthropic', label: 'Claude (Anthropic)', needsKey: true },
+  { value: 'openai', label: 'ChatGPT (OpenAI)', needsKey: true },
+  { value: 'gemini', label: 'Gemini (Google)', needsKey: true },
+  { value: 'ollama', label: 'Ollama (yerel)', needsKey: false },
+  { value: 'nvidia', label: 'NVIDIA NIM', needsKey: true },
+];
+
+const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
+  anthropic: {
+    apiKey: '',
+    model: 'claude-sonnet-5',
+    baseUrl: 'https://api.anthropic.com/v1',
+    cachedModels: [],
+  },
+  openai: { apiKey: '', model: 'gpt-4o', baseUrl: 'https://api.openai.com/v1', cachedModels: [] },
+  gemini: {
+    apiKey: '',
+    // Google zaman zaman tarihli model sürümlerini yeni kullanıcılar için kapatıyor
+    // (ör. gemini-2.5-flash → 404). "-latest" takma adları Google tarafından
+    // güncel tutulan alias'lar, bu yüzden sabit tarihli isimden daha dayanıklı.
+    model: 'gemini-flash-latest',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    cachedModels: [],
+  },
+  ollama: {
+    apiKey: '',
+    model: 'llama3.1',
+    baseUrl: 'http://localhost:11434/v1',
+    cachedModels: [],
+  },
+  nvidia: {
+    apiKey: '',
+    model: 'meta/llama-3.1-70b-instruct',
+    baseUrl: 'https://integrate.api.nvidia.com/v1',
+    cachedModels: [],
+  },
+};
+
 export interface Settings {
   fontSize: number;
   tabWidth: number;
@@ -53,7 +108,10 @@ export interface Settings {
     snippetsWidth: number;
     editorsWidth: number;
     xsltHeight: number;
+    aiPanelHeight: number;
   };
+  aiProvider: AiProvider;
+  aiProviders: Record<AiProvider, AiProviderConfig>;
 }
 
 const DEFAULTS: Settings = {
@@ -74,21 +132,49 @@ const DEFAULTS: Settings = {
     snippetsWidth: 280,
     editorsWidth: 560,
     xsltHeight: 300,
+    aiPanelHeight: 320,
   },
+  aiProvider: 'anthropic',
+  aiProviders: AI_PROVIDER_DEFAULTS,
 };
 
 const STORAGE_KEY = 'efaturaEdit.settings.v3';
+
+/**
+ * Google yeni hesaplar için tarihli/eski Gemini modellerini kapattığından
+ * (ör. gemini-2.5-flash → 404 "no longer available to new users"), daha önce
+ * bu değerlerden birini kaydetmiş kullanıcıları otomatik olarak Google'ın
+ * her zaman güncel tuttuğu "-latest" takma adına taşıyoruz. Böylece kullanıcı
+ * Model kutusunu elle düzeltmek zorunda kalmıyor.
+ */
+function migrateAiProviderConfig(provider: AiProvider, cfg: AiProviderConfig): AiProviderConfig {
+  if (provider !== 'gemini') return cfg;
+  const dead = /^gemini-(1\.|1_|2\.|2_|pro$|1\.0|1\.5)/i.test(cfg.model) || cfg.model === 'gemini-2.5-flash';
+  if (dead && !/-latest$/i.test(cfg.model)) {
+    return { ...cfg, model: 'gemini-flash-latest' };
+  }
+  return cfg;
+}
 
 function loadInitial(): Settings {
   if (!browser) return DEFAULTS;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULTS;
-    const parsed = JSON.parse(raw);
+    const parsed = raw ? JSON.parse(raw) : {};
     return {
       ...DEFAULTS,
       ...parsed,
       panelSizes: { ...DEFAULTS.panelSizes, ...(parsed.panelSizes ?? {}) },
+      aiProviders: Object.fromEntries(
+        (Object.keys(AI_PROVIDER_DEFAULTS) as AiProvider[]).map((p) => [
+          p,
+          migrateAiProviderConfig(p, {
+            ...AI_PROVIDER_DEFAULTS[p],
+            ...(parsed.aiProviders?.[p] ?? {}),
+            cachedModels: [...(parsed.aiProviders?.[p]?.cachedModels ?? [])],
+          }),
+        ]),
+      ) as Record<AiProvider, AiProviderConfig>,
     };
   } catch {
     return DEFAULTS;
@@ -116,9 +202,24 @@ export function updatePanelSize<K extends keyof Settings['panelSizes']>(
   persist();
 }
 
+export function updateAiProviderConfig<K extends keyof AiProviderConfig>(
+  provider: AiProvider,
+  key: K,
+  value: AiProviderConfig[K],
+): void {
+  settings.aiProviders[provider][key] = value;
+  persist();
+}
+
 export function resetSettings(): void {
   Object.assign(settings, DEFAULTS);
   settings.panelSizes = { ...DEFAULTS.panelSizes };
+  settings.aiProviders = Object.fromEntries(
+    (Object.keys(AI_PROVIDER_DEFAULTS) as AiProvider[]).map((p) => [
+      p,
+      { ...AI_PROVIDER_DEFAULTS[p], cachedModels: [] as string[] },
+    ]),
+  ) as Record<AiProvider, AiProviderConfig>;
   persist();
 }
 

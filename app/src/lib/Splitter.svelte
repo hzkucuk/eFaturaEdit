@@ -27,7 +27,7 @@
     max?: number;
   }
 
-  let { direction, position = $bindable(), min = 100, max = 2000 }: Props = $props();
+  let { direction, position = $bindable(), min = 40, max = 100000 }: Props = $props();
 
   let dragging = $state(false);
   let startCoord = 0;

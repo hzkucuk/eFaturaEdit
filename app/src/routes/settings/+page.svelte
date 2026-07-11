@@ -1,6 +1,104 @@
 <script lang="ts">
-  import { settings, updateSetting, resetSettings, THEME_OPTIONS } from '$lib/settings.svelte';
+  import {
+    settings,
+    updateSetting,
+    updateAiProviderConfig,
+    resetSettings,
+    THEME_OPTIONS,
+    AI_PROVIDER_OPTIONS,
+    type AiProvider,
+  } from '$lib/settings.svelte';
   import { goto } from '$app/navigation';
+  import { invoke } from '@tauri-apps/api/core';
+
+  const currentAiConfig = $derived(settings.aiProviders[settings.aiProvider]);
+  const currentAiOption = $derived(
+    AI_PROVIDER_OPTIONS.find((o) => o.value === settings.aiProvider),
+  );
+
+  let modelOptions = $state<string[]>([]);
+  let modelsLoading = $state(false);
+  let modelsError = $state('');
+
+  // Google'ın ListModels uç noktası "-latest" takma adlarını (ör.
+  // gemini-flash-latest) hiç listelemiyor, ama bu takma adlar sağlayıcı
+  // tarafından her zaman güncel/geçerli modele yönlendiriliyor — bu yüzden
+  // dropdown'a elle ekliyoruz ki kullanıcı ListModels'in gösterdiği (ve bazen
+  // yeni hesaplarda 404 veren) tarihli sürümlere mahkum kalmasın.
+  const KNOWN_ALIASES: Partial<Record<AiProvider, string[]>> = {
+    gemini: ['gemini-flash-latest', 'gemini-pro-latest'],
+  };
+
+  function withKnownAliases(provider: AiProvider, models: string[]): string[] {
+    const aliases = KNOWN_ALIASES[provider] ?? [];
+    return [...aliases, ...models.filter((m) => !aliases.includes(m))];
+  }
+
+  // Sağlayıcı değişince o sağlayıcının önbelleklenmiş model listesini göster;
+  // hiç önbellek yoksa ve anahtar gerektirmiyorsa (ör. Ollama) otomatik getir.
+  $effect(() => {
+    const provider = settings.aiProvider;
+    const cached = settings.aiProviders[provider].cachedModels;
+    modelOptions = withKnownAliases(provider, cached);
+    modelsError = '';
+    if (cached.length === 0 && !currentAiOption?.needsKey) {
+      void fetchModels();
+    }
+  });
+
+  // Sağlayıcı listeleri metin-sohbeti dışı uzman modelleri de döndürüyor
+  // (görsel/ses/embedding önizlemeleri gibi) — bunlar genelde ücretsiz planda
+  // kotasız (limit: 0) olduğundan otomatik seçimde atlanmalı.
+  const NON_CHAT_HINTS = ['embedding', 'aqa', 'tts', 'image', 'imagen', 'vision', 'audio', 'live'];
+
+  function pickAutoModel(models: string[]): string {
+    const chatCandidates = models.filter(
+      (m) => !NON_CHAT_HINTS.some((hint) => m.toLowerCase().includes(hint)),
+    );
+    const pool = chatCandidates.length > 0 ? chatCandidates : models;
+    // Kararlı (preview/exp içermeyen) bir sürüm varsa onu tercih et.
+    const stable = pool.find((m) => !/preview|exp/i.test(m));
+    return stable ?? pool[0];
+  }
+
+  async function fetchModels() {
+    modelsError = '';
+    modelsLoading = true;
+    try {
+      const models = await invoke<string[]>('ai_list_models', {
+        request: {
+          provider: settings.aiProvider,
+          base_url: currentAiConfig.baseUrl,
+          api_key: currentAiConfig.apiKey,
+        },
+      });
+      modelOptions = withKnownAliases(settings.aiProvider, models);
+      updateAiProviderConfig(settings.aiProvider, 'cachedModels', models);
+      // "-latest" takma adları (ör. gemini-flash-latest) sağlayıcı tarafından
+      // her zaman güncel modele yönlendirilir ama ListModels çıktısında hiç
+      // görünmeyebilir — listede yok diye elden alınmamalı.
+      const isAlias = /-latest$/i.test(currentAiConfig.model);
+      const currentIsNonChat = NON_CHAT_HINTS.some((hint) =>
+        currentAiConfig.model.toLowerCase().includes(hint),
+      );
+      if (models.length === 0) {
+        modelsError = 'Sağlayıcı hiç model döndürmedi.';
+      } else if (!isAlias && (!models.includes(currentAiConfig.model) || currentIsNonChat)) {
+        // Kayıtlı model artık listede yok ya da sohbet için uygun değil (ör. görsel/ses önizlemesi) — uygun bir modele düş.
+        updateAiProviderConfig(settings.aiProvider, 'model', pickAutoModel(models));
+      }
+    } catch (err) {
+      modelsError = (err as Error).message ?? String(err);
+    } finally {
+      modelsLoading = false;
+    }
+  }
+
+  function onApiKeyBlur() {
+    if (currentAiConfig.apiKey.trim().length > 0) {
+      void fetchModels();
+    }
+  }
 </script>
 
 <div class="settings-page">
@@ -159,6 +257,94 @@
       {/if}
     </section>
 
+    <section class="group">
+      <h2>AI Asistan</h2>
+      <p class="hint">
+        Sohbet panelinden XSLT/XML önerileri almak için bir sağlayıcı seçip kendi
+        API anahtarınızı girin. Anahtar yalnızca bu cihazda saklanır — hiçbir
+        sunucuya gönderilmez, uygulamaya gömülü bir anahtar yoktur.
+      </p>
+
+      <div class="row">
+        <label for="ai-provider">Sağlayıcı</label>
+        <select
+          id="ai-provider"
+          value={settings.aiProvider}
+          onchange={(e) =>
+            updateSetting(
+              'aiProvider',
+              (e.currentTarget as HTMLSelectElement).value as typeof settings.aiProvider,
+            )}
+        >
+          {#each AI_PROVIDER_OPTIONS as opt}
+            <option value={opt.value}>{opt.label}</option>
+          {/each}
+        </select>
+      </div>
+
+      {#if currentAiOption?.needsKey}
+        <div class="row">
+          <label for="ai-key">API Anahtarı</label>
+          <input
+            id="ai-key"
+            type="password"
+            placeholder="API anahtarınızı yapıştırın"
+            value={currentAiConfig.apiKey}
+            oninput={(e) =>
+              updateAiProviderConfig(
+                settings.aiProvider,
+                'apiKey',
+                (e.currentTarget as HTMLInputElement).value,
+              )}
+            onblur={onApiKeyBlur}
+          />
+        </div>
+      {/if}
+
+      <div class="row">
+        <label for="ai-model">Model</label>
+        <input
+          id="ai-model"
+          type="text"
+          list="ai-model-list"
+          placeholder="ör. claude-sonnet-5"
+          value={currentAiConfig.model}
+          oninput={(e) =>
+            updateAiProviderConfig(
+              settings.aiProvider,
+              'model',
+              (e.currentTarget as HTMLInputElement).value,
+            )}
+        />
+        <button class="fetch-models" onclick={fetchModels} disabled={modelsLoading} title="Sağlayıcıdan kullanılabilir modelleri getir">
+          {modelsLoading ? '…' : '🔄 Getir'}
+        </button>
+      </div>
+      <datalist id="ai-model-list">
+        {#each modelOptions as m}
+          <option value={m}></option>
+        {/each}
+      </datalist>
+      {#if modelsError}
+        <p class="model-error">{modelsError}</p>
+      {/if}
+
+      <div class="row">
+        <label for="ai-baseurl">Base URL</label>
+        <input
+          id="ai-baseurl"
+          type="text"
+          value={currentAiConfig.baseUrl}
+          oninput={(e) =>
+            updateAiProviderConfig(
+              settings.aiProvider,
+              'baseUrl',
+              (e.currentTarget as HTMLInputElement).value,
+            )}
+        />
+      </div>
+    </section>
+
     <section class="group panel-sizes">
       <h2>Panel Boyutları</h2>
       <p class="hint">
@@ -278,6 +464,15 @@
     background: #fff;
     cursor: pointer;
   }
+  .row input[type='text'],
+  .row input[type='password'] {
+    width: 260px;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: ui-monospace, Menlo, monospace;
+  }
   .val {
     font-family: ui-monospace, Menlo, monospace;
     font-size: 12px;
@@ -290,5 +485,26 @@
     font-size: 12px;
     color: #6b7280;
     line-height: 1.4;
+  }
+  .fetch-models {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid #cbd0d6;
+    background: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .fetch-models:hover:not(:disabled) {
+    background: #eef4ff;
+  }
+  .fetch-models:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .model-error {
+    margin: -0.25rem 0 0.5rem 0;
+    font-size: 11.5px;
+    color: #b91c1c;
   }
 </style>
