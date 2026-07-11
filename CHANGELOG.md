@@ -3,6 +3,18 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.20.1] — 2026-07-11 — Intel macOS Release Derlemesi Onarıldı — .github/workflows/release.yml
+
+### Düzeltilen
+- **Intel macOS yapısı hiç üretilmiyordu.** GitHub `macos-13` runner'ını emekliye ayırdığından
+  (dokümanlardan tamamen kaldırılmış) matristeki Intel işine runner atanmıyor, iş **sonsuza dek
+  kuyrukta** bekliyordu. v2.17.0 – v2.20.0 arasındaki release'ler bu yüzden Linux, Windows ve
+  macOS arm64 varlıklarıyla yayımlandı; **Intel `.dmg` eksik kaldı**.
+- Runner `macos-13` → **`macos-15-intel`** olarak değiştirildi (GitHub'ın Intel x86_64 halefi).
+  Artık 4 platform da eksiksiz derleniyor.
+
+---
+
 ## [2.20.0] — 2026-07-11 — Görsel Düzenleyici Faz 2a: XSLT Kaynak Eşlemesi — app/src/lib/xslt-map.ts
 
 ### Eklenen

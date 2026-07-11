@@ -78,10 +78,21 @@ Her versiyon artışı sonrası uygulama otomatik derlenip **GitHub Release** ol
 2. Değişiklikleri commit + `git push origin master`.
 3. Anlamsal versiyon etiketi oluştur ve push et: `git tag -a vX.Y.Z -m "..."` → `git push origin vX.Y.Z`.
 4. `v*` etiketi push'u `.github/workflows/release.yml` (tauri-action) CI'sını tetikler;
-   macOS (universal), Windows ve Linux runner'larında derleyip paketleri (`.dmg`/`.msi`/
-   `.exe`/`.deb`/`.rpm`/`.AppImage`) tek bir public GitHub Release'e otomatik ekler.
-- Bu Mac'te 3 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** bu CI ile yapılır.
+   **4 runner** (macOS arm64, macOS Intel, Linux, Windows) derleyip paketleri
+   (`.dmg`/`.msi`/`.exe`/`.deb`/`.rpm`/`.AppImage`) tek bir public GitHub Release'e ekler.
+5. **Bitince release'i DOĞRULA:** `gh release view vX.Y.Z --json assets` — 4 platformun da
+   varlığı listede mi? Bir iş sessizce takılırsa release yine de yayımlanır ama **eksik olur**.
+- macOS **universal ikili üretilemez** (GraalVM native-image tek mimari derler) — arm64 ve Intel
+  ayrı runner'larda, ayrı `.dmg` olarak çıkar.
+- ⚠️ **Runner etiketleri emekliye ayrılır.** `macos-13` kaldırıldığında Intel işine runner
+  atanmadı ve **sonsuza dek kuyrukta** bekledi (hata vermez, sadece asılı kalır!) — v2.17.0–v2.20.0
+  release'leri bu yüzden Intel `.dmg` olmadan çıktı. Bir iş saatlerce `queued` kalıyorsa
+  ilk şüphelenilecek şey runner etiketidir; GitHub'ın güncel listesiyle karşılaştır.
+  Geçerli Intel etiketi: **`macos-15-intel`**.
+- Bu Mac'te 4 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** bu CI ile yapılır.
 - Etiket zaten varsa: `git tag -d vX.Y.Z && git push origin :vX.Y.Z` ile silip yeniden oluştur.
+  **Ancak** o etiketin release'i yayımlanmış/derleniyorsa silme — bir sonraki yamayı yeni sürüm
+  (`X.Y.Z+1`) olarak çıkar.
 
 ## Git İş Akışı & Commit Kuralları
 - **Commit mesajı formatı:** `[tip]: kısa açıklama` (örn: `fix: statik alan sırası düzeltildi`, `feat: AI destekli XSLT önerileri`)

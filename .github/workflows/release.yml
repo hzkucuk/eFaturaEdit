@@ -21,7 +21,9 @@ jobs:
         include:
           - platform: macos-14 # Apple Silicon (arm64)
             args: ''
-          - platform: macos-13 # Intel (x86_64)
+          # Intel macOS: `macos-13` emekliye ayrıldı — iş sonsuza dek kuyrukta
+          # bekliyordu (runner hiç atanmıyor). Yerini `macos-15-intel` aldı.
+          - platform: macos-15-intel # Intel (x86_64)
             args: ''
           - platform: ubuntu-22.04 # geniş glibc uyumu için 22.04
             args: ''
