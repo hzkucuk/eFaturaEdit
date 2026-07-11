@@ -44,7 +44,9 @@ jobs:
         run: npm ci
         working-directory: ./app
 
+      # Kabuk pwsh (varsayılan) — release.yml'deki tauri-action da öyle çalışıyor.
+      # Git Bash'te MSVC ortamı bozuluyor ve `link.exe` çöküyor; o zaman WiX'e
+      # hiç gelemiyoruz ve teşhis işe yaramıyor.
       - name: Tauri build (verbose — asıl WiX hatası)
-        shell: bash
-        run: npx tauri build --verbose 2>&1 | tail -150
+        run: npx tauri build --verbose
         working-directory: ./app
