@@ -31,6 +31,7 @@
   import HelpModal from '$lib/HelpModal.svelte';
   import AIAssistant from '$lib/AIAssistant.svelte';
   import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
+  import { instrumentXslt, type XsltElementRef } from '$lib/xslt-map';
   import type { Completion } from '@codemirror/autocomplete';
 
   // ─── UI state ────────────────────────────────────────────────────────
@@ -494,7 +495,21 @@
     }
     if (!silent) status('Dönüştürülüyor...');
     try {
-      const html = await transformXml(editorState.xmlText, editorState.xsltText);
+      // Görsel düzenleyici açıkken önizleme, `data-xsl-id` enjekte edilmiş
+      // GEÇİCİ bir kopyayla üretilir; böylece önizlemedeki her öğenin şablonda
+      // hangi satırdan geldiği bilinir. Bu kopya BELLEKTE kalır — kullanıcının
+      // dosyasına (editorState.xsltText) asla yazılmaz, kaydedilmez, dışa
+      // aktarılmaz. Doğrulandı: data-xsl-id'ler çıkarıldığında çıktı, temiz
+      // dönüşümle birebir aynıdır (render etkilenmez).
+      let xsltForPreview = editorState.xsltText;
+      if (wzMode) {
+        const { instrumented, refs } = instrumentXslt(editorState.xsltText);
+        xsltForPreview = instrumented;
+        wzRefs = refs;
+      } else {
+        wzRefs = null;
+      }
+      const html = await transformXml(editorState.xmlText, xsltForPreview);
       editorState.previewHtml = html;
       status(`Dönüşüm tamam (${(html.length / 1024).toFixed(1)} KB HTML)`);
     } catch (err) {
@@ -900,12 +915,17 @@ document.addEventListener('click', function(e) {
   var el = e.target;
   __wz.sel = el;
   __wzFrame(el);
+  /* Öğenin kendisinde yoksa en yakın işaretli atayı ara: bir <td> literal
+     olmasa bile onu üreten satır/blok işaretlidir. */
+  var owner = el.closest('[data-xsl-id]');
   window.parent.postMessage({
     type: 'wysiwyg-select',
     selector: __wzSelector(el),
     tag: el.tagName.toLowerCase(),
     computed: __wzComputed(el),
-    text: __wzOwnText(el)
+    text: __wzOwnText(el),
+    xslId: owner ? owner.getAttribute('data-xsl-id') : null,
+    xslExact: owner === el
   }, '*');
 }, true);
 window.addEventListener('message', function(e) {
@@ -997,11 +1017,29 @@ window.addEventListener('message', function(e) {
     computed: Record<string, string>;
     /** Öğe yalnızca düz metin içeriyorsa o metin (şablonda sabit olabilir). */
     text: string | null;
+    /** Bu öğeyi üreten XSLT literal öğesinin kimliği (Faz 2a eşleme). */
+    xslId: string | null;
+    /** Kimlik öğenin kendisine mi ait, yoksa bir atasına mı? */
+    xslExact: boolean;
   }
   let wzMode = $state(false);
   let wzSel = $state<WzSelection | null>(null);
   let wzEdits = $state<Record<string, string>>({});
   let wzText = $state(''); // düzenlenen sabit metin
+  /** Enstrümantasyondan gelen id → XSLT kaynak konumu eşlemesi. */
+  let wzRefs = $state<Map<string, XsltElementRef> | null>(null);
+
+  /** Seçili öğenin XSLT'deki kaynak konumu (yoksa null). */
+  const wzSource = $derived(
+    wzSel?.xslId && wzRefs ? (wzRefs.get(wzSel.xslId) ?? null) : null
+  );
+
+  /** Şablonda ilgili satıra atla ve editörü öne getir. */
+  function wzGoToSource() {
+    if (!wzSource) return;
+    xsltEditor?.goToLine(wzSource.line, 1);
+    status(`XSLT satır ${wzSource.line} — <${wzSource.name}>`);
+  }
 
   /** Düzenlenen özelliklerden CSS kuralı üret (boş değerler atlanır). */
   const wzRule = $derived.by(() => {
@@ -1019,16 +1057,29 @@ window.addEventListener('message', function(e) {
     previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-live', css }, '*');
   });
 
-  function toggleWzMode() {
+  async function toggleWzMode() {
     wzMode = !wzMode;
-    previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-mode', on: wzMode }, '*');
     if (!wzMode) {
       wzSel = null;
       wzEdits = {};
       previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-live', css: '' }, '*');
-      status('Görsel düzenleyici kapatıldı.');
-    } else {
-      status('Görsel düzenleyici açık — önizlemede bir öğeye tıklayın.');
+    }
+    // Önizlemeyi yeniden üret: açılırken kaynak eşlemesi (data-xsl-id) eklenir,
+    // kapanırken temiz sürüme dönülür. Yeni HTML iframe'i yeniden yükleyeceği
+    // için modu buradan DEĞİL, onPreviewLoad'dan gönderiyoruz (yarış durumu).
+    if (editorState.xsltText && editorState.xmlText) await runTransform(true);
+    else previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-mode', on: wzMode }, '*');
+    status(
+      wzMode
+        ? 'Görsel düzenleyici açık — önizlemede bir öğeye tıklayın.'
+        : 'Görsel düzenleyici kapatıldı.'
+    );
+  }
+
+  /** İframe her yeniden yüklendiğinde köprü sıfırlanır → seçim modunu geri ver. */
+  function onPreviewLoad() {
+    if (wzMode) {
+      previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-mode', on: true }, '*');
     }
   }
 
@@ -1170,10 +1221,17 @@ window.addEventListener('message', function(e) {
         tag: e.data.tag ?? '',
         computed: e.data.computed ?? {},
         text: e.data.text ?? null,
+        xslId: e.data.xslId ?? null,
+        xslExact: !!e.data.xslExact,
       };
       wzEdits = {};
       wzText = wzSel.text ?? '';
-      status(`Seçildi: ${wzSel.selector}`);
+      const src = wzSel.xslId ? wzRefs?.get(wzSel.xslId) : null;
+      status(
+        src
+          ? `Seçildi: ${wzSel.selector} → XSLT satır ${src.line}`
+          : `Seçildi: ${wzSel.selector}`
+      );
       return;
     }
     if (e.data.type === 'css-captured') {
@@ -1602,6 +1660,24 @@ window.addEventListener('message', function(e) {
               <button class="wz-apply" onclick={wzApply} disabled={!wzRule}>✓ XSLT'ye Uygula</button>
             </div>
 
+            <!-- Kaynak eşlemesi (salt-okunur): bu öğeyi hangi XSLT satırı üretti? -->
+            <div class="wz-src">
+              {#if wzSource}
+                <button
+                  class="wz-src-btn"
+                  onclick={wzGoToSource}
+                  title="XSLT editöründe bu satıra git"
+                >
+                  📍 XSLT satır {wzSource.line} · &lt;{wzSource.name}&gt;
+                  {#if !wzSel.xslExact}<span class="wz-src-approx">(en yakın üst öğe)</span>{/if}
+                </button>
+              {:else}
+                <span class="wz-src-none" title="Bu öğe xsl:element gibi dinamik üretilmiş olabilir">
+                  📍 Kaynak satır bulunamadı
+                </span>
+              {/if}
+            </div>
+
             {#if wzSel.text}
               <div class="wz-text-row">
                 <label for="wz-text">📝 Metin</label>
@@ -1688,6 +1764,7 @@ window.addEventListener('message', function(e) {
           <iframe
             bind:this={previewFrame}
             srcdoc={previewHtmlWithBridge}
+            onload={onPreviewLoad}
             title="Önizleme"
             sandbox="allow-same-origin allow-scripts allow-modals"
             style:transform="scale({settings.previewZoom})"
@@ -2207,6 +2284,44 @@ window.addEventListener('message', function(e) {
     font-weight: 600;
   }
   .wz-apply:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* Kaynak eşlemesi satırı — tıklanınca XSLT editöründe ilgili satıra atlar. */
+  .wz-src {
+    margin-bottom: 0.6rem;
+  }
+  .wz-src-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid #c7d7ee;
+    border-radius: 4px;
+    background: #eef4fc;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-family: var(--mono, ui-monospace, monospace);
+    cursor: pointer;
+  }
+  .wz-src-btn:hover {
+    background: #dbe8fa;
+    border-color: #93b4e0;
+  }
+  .wz-src-approx {
+    color: #6b7280;
+    font-style: italic;
+  }
+  .wz-src-none {
+    font-size: 11px;
+    color: #9ca3af;
+  }
+  :global(html.dark) .wz-src-btn {
+    background: #1e293b;
+    border-color: #35507a;
+    color: #93c5fd;
+  }
+  :global(html.dark) .wz-src-btn:hover { background: #26344b; }
+  :global(html.dark) .wz-src-approx { color: #9aa1ac; }
+  :global(html.dark) .wz-src-none { color: #6b7280; }
+
   .wz-text-row {
     display: flex;
     align-items: center;

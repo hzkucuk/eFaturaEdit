@@ -3,6 +3,38 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.20.0] — 2026-07-11 — Görsel Düzenleyici Faz 2a: XSLT Kaynak Eşlemesi — app/src/lib/xslt-map.ts
+
+### Eklenen
+- **Kaynak eşlemesi (salt-okunur):** Görsel düzenleyicide önizlemedeki bir öğeye tıklayınca panelde
+  **"📍 XSLT satır N · `<td>`"** rozeti çıkar; tıklandığında XSLT editörü o satıra atlar. Böylece
+  "bu hücre şablonun neresinden geliyor?" sorusu tek tıkla yanıtlanır.
+- **`instrumentXslt()`** (`app/src/lib/xslt-map.ts`): Şablonun **bellek içi geçici bir kopyasındaki** her
+  literal (öneksiz) öğeye `data-xsl-id` enjekte eder ve `id → {satır, öğe adı, ofset}` eşlemesi üretir.
+  Regex değil, küçük bir **XML tokenizer** kullanılır — 587 KB'lık şablonlarda gömülü CSS, yorumlar, CDATA ve
+  tırnak içindeki `>` karakteri naif regex'i kaçınılmaz olarak bozar.
+- Seçilen öğenin kendisi işaretli değilse **en yakın işaretli atası** kullanılır ve rozette
+  *"(en yakın üst öğe)"* olarak belirtilir.
+
+### Güvenlik / Doğruluk
+- **Kullanıcının dosyasına asla yazılmaz.** Enstrümante kopya yalnızca önizleme dönüşümünde kullanılır;
+  `editorState.xsltText` el değmeden kalır, kaydedilmez, dışa aktarılmaz.
+- **Çıktı bozulmuyor — kanıtlandı:** Gerçek 587 KB'lık `default.xslt` üzerinde enstrümante dönüşümün çıktısından
+  `data-xsl-id`'ler çıkarıldığında sonuç, temiz dönüşümle **bayt bayt aynı** (542.081 = 542.081 karakter).
+- Enstrümantasyon 587 KB'da **6 ms** sürer: satır numaraları önceden hesaplanan `lineStarts[]` üzerinde
+  ikili aramayla (O(n²) değil), enjeksiyon ise tek geçişli `join()` ile (O(n·m) değil) yapılır.
+
+### Değişen
+- Görsel düzenleyici açılıp kapandığında önizleme yeniden üretilir (işaretli ↔ temiz sürüm arası geçiş).
+  Mod, iframe her yeniden yüklendiğinde `onload`'da geri verilir — yarış durumu yok.
+- **`FEATURES.md` güncellendi:** v2.12.0'da kalmıştı; Saxon XSLT 2.0/3.0 motoru, AI asistanı, 255 snippet,
+  anahtar zinciri, görsel düzenleyici, Hakkında ekranı ve çok-platform release akışı eklendi.
+
+### Bilinen sınırlama
+- Yalnızca **literal** öğeler eşlenir; `<xsl:element name="...">` ile dinamik üretilen öğeler eşlemede görünmez.
+
+---
+
 ## [2.19.1] — 2026-07-11 — Görsel Düzenleyicide Sabit Metin Düzenleme — app/src/routes/+page.svelte
 
 ### Eklenen

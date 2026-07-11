@@ -1,45 +1,137 @@
 # Özellikler (Features)
 
-## E-Fatura Dizayn Editörü — v2.12.0
+## E-Fatura Dizayn Editörü — v2.19.1
 
-### 🖥️ Tauri Masaüstü Uygulaması — Faz 3 (v2.12.0, `app/`)
+Cross-platform (macOS / Linux / Windows) masaüstü uygulaması.
+**Tauri v2 + SvelteKit (Svelte 5) + CodeMirror 6 + Saxon-HE (GraalVM native sidecar).**
+DevExpress/WinForms bağımlılığı yoktur; MIT lisanslıdır.
 
-Cross-platform (macOS/Linux/Windows) yeni nesil masaüstü UI. DevExpress/WinForms
-bağımlılığı yok, Tauri v2 + SvelteKit + CodeMirror 6 ile geliştirilmiştir.
+---
 
-- **3 Panel Düzen:** Sol snippet paneli, orta XSLT+XML editörleri, sağ canlı önizleme —
-  hepsi mouse ile yeniden boyutlandırılabilir (`Splitter`).
-- **CodeMirror 6 Editör:** Syntax highlight (özel açık tema renklendirmesi + 10 hazır tema),
-  satır numarası, kod katlama, Türkçeleştirilmiş arama paneli (Cmd/Ctrl+F), undo/redo.
-- **Autocomplete:** 242 öneri (16 XSLT etiketi + 77 XPath + 149 snippet) — `Ctrl+Space` veya `<` ile tetiklenir.
-- **Snippet Sürükle-Bırak:** Custom mouse-tracking implementasyonu (WKWebView'de HTML5 API güvenilmez) —
-  görsel ghost gösterge, hedef editör üzerinde mavi vurgulama.
-- **Dosya İşlemleri:** Aç/Kaydet/Farklı Kaydet (native dialog), `Cmd/Ctrl+S` ile XSLT+XML birlikte kaydetme,
-  kaydetmeden önce syntax kontrolü (hata varsa imleç otomatik hatalı satıra gider), son 10 dosya listesi.
-- **Otomatik Dönüştür:** Yükleme/kaydetme sonrası ve yazarken debounce ile (varsayılan 700ms).
-- **Auto-save:** Ayarlardan açılabilir, belirli gecikmeyle sessiz kaydetme.
-- **Çıkışta Kaydetme Kontrolü:** Kaydedilmemiş değişiklik varsa çıkışı engelleyip
+### ⚡ XSLT Motoru — Saxon-HE 1.0 / 2.0 / 3.0 (v2.18.0)
+
+Tarayıcının yerleşik `XSLTProcessor`'ı yalnızca **XSLT 1.0** destekler; bu, eski
+Saxon-HE tabanlı WinForms uygulamasına göre bir gerilemeydi. Çözüm: Saxon-HE 12.5
+(MPL 2.0), **GraalVM native-image** ile ~45 MB'lık bağımsız bir çalıştırılabilire
+derlenip Tauri **sidecar**'ı olarak paketlendi — kullanıcıda JRE kurulu olması gerekmez.
+
+- **Tam XSLT 2.0/3.0:** `format-dateTime`, `upper-case`/`lower-case`, `tokenize`,
+  `replace` (regex), `for-each-group`, `xsl:function`, `sum()`, `format-number()` vb.
+- **İletişim:** stdin üzerinden uzunluk-önekli ikili protokol (`[4-bayt BE uzunluk][XSLT][4-bayt BE uzunluk][XML]`) → stdout'ta HTML.
+- **Zarif geri düşüş:** Sidecar bulunamazsa tarayıcı `XSLTProcessor`'ına (XSLT 1.0) otomatik düşer — uygulama çalışmaya devam eder.
+- **Uyumluluk:** UTF-8 BOM temizliği, `setGlobalContextItem` (XPDY0002), `<!DOCTYPE html>` normalizasyonu (Standards Mode garantisi).
+- **Hata raporlama:** Saxon hata mesajından satır/sütun ayrıştırılır, editörde imleç hatalı satıra gider.
+- Kaynak: [`sidecar/`](sidecar/) (Java + `build.sh`), [`app/src-tauri/src/xslt.rs`](app/src-tauri/src/xslt.rs), [`app/src/lib/xslt.ts`](app/src/lib/xslt.ts)
+
+### 🤖 AI Asistanı (v2.14.0 → v2.19.x)
+
+Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet asistanı.
+
+- **Uzman rolü:** XSLT/XPath/XML/HTML/CSS/JS **ve** UBL-TR e-belge (e-Fatura, e-Arşiv,
+  e-İrsaliye) alanında kıdemli uzman olarak eğitilmiş sistem promptu — `cac:`/`cbc:`/`ext:`/`ubltr:`
+  ad alanları, `ProfileID`/`InvoiceTypeCode` değerleri, kanonik XPath yolları. Kapsam kilidi:
+  prompt dışına çıkmaz, prompt-injection'a direnir.
+- **Hedefli düzenleme (SEARCH/REPLACE):** Tüm dosyayı yeniden yazmaz; yalnızca değişen blokları
+  döndürür. 3 aşamalı eşleştirme (birebir → boşluk-normalize → satır bazlı, girinti toleranslı).
+  Eşleşmeyen düzenleme **körlemesine uygulanmaz**, kullanıcıya bildirilir.
+- **Ajan döngüsü:** En fazla 3 tur — düzenlemeyi çalışma kopyasına uygular, Saxon ile doğrular,
+  hata çıkarsa hatayı modele geri besleyip kendini düzelttirir.
+- **Onay modalı:** Sol tarafta diff, sağ tarafta **canlı sonuç önizlemesi** (% olarak ölçeklenebilir).
+  "Uygula" dendiğinde dosya **otomatik kaydedilir** (AI'ın kaydedilmemiş kopya üzerinde çalışmasını önler).
+- **Ekler:** Dosya seçici + panodan yapıştırma. Görsel/PDF → çok-kipli (multimodal) gönderim;
+  metin dosyaları → önbelleklenen bağlam. Görseller `⬇ göm` ile base64 data-URI olarak editöre gömülebilir.
+- **3 sağlayıcı:** Anthropic (Claude), Google (Gemini), OpenAI-uyumlu (OpenAI, NVIDIA, yerel).
+  Model listesi API'den canlı çekilir; sohbete uygun olmayan modeller (görsel üretim vb.) elenir.
+- **Model rozeti:** Panel başlığında etkin sağlayıcı ve model adı gösterilir.
+- **Prompt caching (v2.19.0):** Sistem promptu + dosya bağlamı **kararlı önek** olarak ayrı gönderilir —
+  Anthropic'te `cache_control: ephemeral`, OpenAI'de otomatik önek önbelleği, Gemini'de örtük önbellek.
+- **Token disiplini:** Dosya yalnızca son mesaja eklenir (her turda değil), geçmiş 12 mesajla sınırlanır,
+  base64 data-URI'ler bağlamdan çıkarılır (587 KB → 79 KB, %87 tasarruf).
+
+### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
+
+Önizlemede bir öğeye tıklayıp doğrudan biçimlendirme.
+
+- **Tıkla-seç:** Fare ile üzerine gelince vurgulama, tıklayınca seçim; kararlı CSS seçici üretilir
+  (`#id` → `.class` → `:nth-of-type`).
+- **Görsel stil editörü:** Renk, arka plan, yazı boyutu/kalınlığı, hizalama, dolgu, kenarlık,
+  köşe yarıçapı, genişlik. Değişiklikler **canlı** olarak önizlemeye enjekte edilir; "Uygula" dendiğinde
+  XSLT'nin stil bloğuna **deterministik** CSS kuralı olarak yazılır (AI'sız). Kural zaten varsa güncellenir.
+- **Sabit metin düzenleme:** Öğe yalnızca düz metin içeriyorsa metni doğrudan değiştirebilirsin.
+  **Belirsizlik koruması:** metin şablonda benzersiz değilse veya XML verisinden geliyorsa
+  değişiklik **reddedilir** ve uyarı verilir — yanlış yeri değiştirme riski yok.
+- **Kaynak eşleme (Faz 2a, salt-okunur):** Önizlemedeki öğenin **XSLT'de hangi satırdan geldiğini**
+  gösterir; tıklayınca editörde o satıra atlar. Seçim modu açıkken şablonun **bellek içi geçici kopyasına**
+  `data-xsl-id` enjekte edilir — kullanıcının dosyasına asla yazılmaz. Doğrulandı: işaretler çıkarıldığında
+  çıktı, temiz dönüşümle **bayt bayt aynıdır** (render etkilenmez).
+  Kaynak: [`app/src/lib/xslt-map.ts`](app/src/lib/xslt-map.ts)
+
+### ✂️ Snippet Sistemi — 255 Snippet
+
+| Kategori | Adet | İçerik |
+| --- | --- | --- |
+| UBL-TR e-Fatura / e-Arşiv / e-İrsaliye + HTML/Sayfa Düzeni | 149 | Başlık, taraflar, kalemler, vergi, toplamlar, ödeme, referanslar, barkod/QR, üst-alt bilgi |
+| XSLT Komutları | 56 | **XSLT 1.0 / 2.0 / 3.0** ayrı alt kategoriler — tam komut seti |
+| XPath Fonksiyonları | 26 | XPath 1.0 + XPath 2.0/3.0 (dize, sayı, tarih, dizi, düzenli ifade) |
+| CSS Kuralları | 24 | Metin, Kutu & Kenarlık, Yerleşim, Tablo, Sayfa & Baskı |
+
+- **Kullanıcı snippet'leri:** Kendi snippet'lerini ekleyip kalıcı saklayabilirsin.
+- **Sürükle-bırak:** Özel fare-izleme implementasyonu (WKWebView'de HTML5 drag API güvenilmez) —
+  görsel ghost gösterge, hedef editörde mavi vurgulama.
+- **Autocomplete:** 348 öneri (16 XSLT etiketi + 77 UBL-TR XPath + 255 snippet) — `Ctrl+Space` veya `<` ile tetiklenir.
+
+### 🖥️ Editör ve Arayüz
+
+- **3 panel düzen:** Sol snippet paneli, orta XSLT+XML editörleri, sağ canlı önizleme —
+  hepsi fare ile yeniden boyutlandırılabilir (`Splitter`, sınır kısıtı yok).
+- **CodeMirror 6:** Syntax highlight, satır numarası, kod katlama, Türkçe arama paneli (Cmd/Ctrl+F), undo/redo.
+- **12 tema:** Açık/koyu varyantlar; tema **belge kökünde** (`html.dark`) uygulanır — modallar,
+  ayrı rotalar ve kapsamlı bileşenler dahil **tüm alanlara** yansır.
+- **Dosya işlemleri:** Aç / Kaydet / Farklı Kaydet (native dialog), `Cmd/Ctrl+S` ile XSLT+XML birlikte
+  kaydetme, kaydetmeden önce syntax kontrolü (hata varsa imleç hatalı satıra gider), son 10 dosya listesi.
+- **Otomatik dönüştür:** Yükleme/kaydetme sonrası ve yazarken debounce ile (varsayılan 700 ms).
+- **Auto-save:** Ayarlardan açılabilir, belirtilen gecikmeyle sessiz kaydetme.
+- **Çıkışta kaydetme kontrolü:** Kaydedilmemiş değişiklik varsa çıkışı engelleyip
   "İptal / Kaydetmeden Çık / Kaydet ve Çık" seçenekli onay penceresi gösterir.
 - **Önizleme:** Responsive boyut seçici (320/768/1200/Full), zoom (Cmd +/-/0),
-  sağ tık menüsü (Yazdır/PDF, HTML kopyala, DevTools). Yazdırma sistem tarayıcısına (Safari) devredilir —
-  Tauri WKWebView'de native print paneli güvenilir açılmıyor.
-- **Standards Mode Garantisi:** `XSLTProcessor.transformToDocument()` + `<!DOCTYPE html>`/`<meta charset>`
-  enjeksiyonu — DOCTYPE eksikliği Quirks Mode'a (farklı tablo render) yol açtığı için eklendi.
-- **Ayarlar Sayfası:** Font boyutu, sekme genişliği, kelime kaydırma, 11 tema, autosave/debounce/autocomplete anahtarları.
-- **Yardım Sistemi:** F1 kısayolu ile açılan, sidebar navigasyonlu, aranabilir 11 bölümlük tam dokümantasyon
-  (`HelpModal`) + tüm kontrollerde açıklayıcı tooltip'ler.
-- **Örnek Fatura Kataloğu:** 6 kategori × 17 GİB resmi UBL-TR senaryosu (zarf örnekleri hariç tutuldu).
-- **`eFaturaEdit.DataExport` tool'u:** Core POCO'ları TypeScript-friendly JSON'a dönüştürür
-  (`npm run data:sync` ile Core → JSON senkronizasyonu).
+  sağ tık menüsü (Yazdır/PDF, HTML kopyala, DevTools). Yazdırma sistem tarayıcısına devredilir.
+- **Ayarlar:** Font boyutu, sekme genişliği, kelime kaydırma, tema, autosave/debounce/autocomplete,
+  AI sağlayıcı yapılandırması.
+- **Yardım:** F1 ile açılan, sidebar navigasyonlu, aranabilir tam dokümantasyon + tooltip'ler.
+- **Hakkında:** Sürüm, lisans (MIT) ve üçüncü taraf lisans bilgileri (Saxon-HE MPL 2.0 dahil).
+- **Örnek fatura kataloğu:** 6 kategori × 17 GİB resmi UBL-TR senaryosu.
 
-**Bilinen sınırlamalar:** XSLT 2.0/3.0 desteği yok (native `XSLTProcessor` yalnızca 1.0),
-çoklu dosya sekmesi ve native menü çubuğu yok.
+### 🔐 Güvenlik
+
+- **API anahtarları OS anahtar zincirinde:** Rust `keyring` crate'i ile macOS Keychain /
+  Windows Credential Manager / Linux Secret Service'te **şifreli** saklanır. `localStorage`'a
+  düz metin yazılmaz; eski düz-metin anahtarlar ilk açılışta otomatik olarak anahtar zincirine taşınır.
+  Kaynak: [`app/src-tauri/src/lib.rs`](app/src-tauri/src/lib.rs) (`secret_set` / `secret_get`)
+
+### 📦 Dağıtım
+
+- **GitHub Releases:** Her sürüm 4 platform için otomatik derlenip yayımlanır —
+  macOS arm64 (`macos-14`), macOS Intel (`macos-13`), Linux (`ubuntu-22.04`), Windows.
+  Saxon sidecar her runner'da GraalVM ile o platforma özgü olarak derlenir.
+  Kaynak: [`.github/workflows/release.yml`](.github/workflows/release.yml)
+- **`eFaturaEdit.DataExport` tool'u:** Core POCO'larını TypeScript-uyumlu JSON'a dönüştürür
+  (`npm run data:sync`).
 
 ### Mimari — Faz 2: Cross-Platform Çekirdek (v2.11.0)
 
-- **`eFaturaEdit.Core` kütüphanesi:** UI-bağımsız veri katmanı. Multi-target `netstandard2.0;net10.0`, sıfır dış NuGet bağımlılığı, Windows/macOS/Linux uyumlu.
-- **İçerik:** 149 UBL-TR snippet (`Snippets/`), 17 GİB örnek XML kataloğu (`Samples/`), 16 XSLT etiket + 77 XPath autocomplete verisi (`Completion/`), `IHardwareIdProvider` soyutlaması (`Platform/`).
-- **Faz 3 (tamamlandı):** Tauri masaüstü uygulaması (`app/`) Core'u JSON export yoluyla tüketiyor.
+- **`eFaturaEdit.Core` kütüphanesi:** UI-bağımsız veri katmanı. Multi-target `netstandard2.0;net10.0`,
+  sıfır dış NuGet bağımlılığı, Windows/macOS/Linux uyumlu.
+- **İçerik:** 149 UBL-TR snippet (`Snippets/`), 17 GİB örnek XML kataloğu (`Samples/`),
+  16 XSLT etiket + 77 XPath autocomplete verisi (`Completion/`).
+- **Faz 3 (tamamlandı):** Tauri masaüstü uygulaması (`app/`) Core'u JSON export yoluyla tüketir.
+
+### Bilinen sınırlamalar
+
+- Çoklu dosya sekmesi ve native menü çubuğu yok.
+- WYSIWYG kaynak eşlemesi yalnızca **literal** öğeleri kapsar; `<xsl:element name="...">` ile
+  dinamik üretilen öğeler eşlemede görünmez.
+- macOS için evrensel (universal) ikili üretilemez — GraalVM native-image tek mimari derler;
+  bu yüzden arm64 ve Intel ayrı yayımlanır.
 
 ---
 
