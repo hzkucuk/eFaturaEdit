@@ -3,6 +3,34 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.15.0] — 2026-07-11 — Güvenlik: API Anahtarları OS Anahtar Zincirinde — app/src-tauri/src/lib.rs, app/src/lib/settings.svelte.ts
+
+### Değişen (Güvenlik)
+- **API anahtarları artık düz metin `localStorage`'da tutulmuyor** — OS anahtar zincirinde (macOS Keychain / Windows Credential Manager / Linux Secret Service) şifreli saklanıyor. Eski sürümden kalan düz-metin anahtarlar açılışta otomatik olarak zincire taşınıp `localStorage`'dan temizlenir (migrasyon).
+- Rust: `keyring` crate + `secret_set` / `secret_get` Tauri komutları (`SECRET_SERVICE = "efatura-edit"`). Linux'ta C bağımlılığı olmadan derlensin diye saf-Rust secret-service + RustCrypto backend'i.
+- `settings.svelte.ts`: `persist()` apiKey alanını strip eder; `setApiKey()` / `loadApiKeys()` eklendi; `resetSettings()` zincirdeki anahtarları da siler.
+
+### Eklenen (Dokümantasyon)
+- `.github/copilot-instructions.md`: her yeni versiyonda `v*` etiketi ile GitHub Release yayınlama akışı direktife eklendi; program-içi versiyon (`manifest.json` / DataExport `Program.cs`) 5. senkron nokta olarak belgelendi.
+
+## [2.14.0] — 2026-07-11 — AI Asistan Entegrasyonu + CSS Snippet'leri + Ek Dosya/Görsel — app/src/lib/AIAssistant.svelte, app/src-tauri/src/ai.rs
+
+### Eklenen — AI Asistan (BYOK)
+- **Sohbet paneli** (sol sütun, sürekli açık) — Claude / OpenAI / Gemini / Ollama / NVIDIA; kullanıcının kendi API anahtarı, hiçbir anahtar gömülü değil. Çıktı yalnızca XSLT/XML'e "önerilen değişiklik" olarak sunulur, onaysız uygulanmaz.
+- **Hedefli düzenleme (SEARCH/REPLACE):** tüm dosyayı ezmek yerine doğru yere uygular; birebir + boşluk-normalize + girinti-toleranslı eşleştirme. Onay modalında kırmızı/yeşil diff + popup içi canlı sonuç önizlemesi + geçersiz-sonuç uyarısı.
+- **Ajan modu:** düzenleme → dönüşüm doğrulama → kendi kendine düzeltme (max 3 tur).
+- **Oturumlar** dosya çiftine göre kalıcı, dropdown ile seçim, dosya-uyuşmazlık uyarısı, otomatik scroll.
+- **Ek dosya/görsel:** 📎 seçici + clipboard'dan görsel yapıştırma; görsel/PDF multimodal (vision/doküman), metin dosyası bağlam. Rust `ai.rs` 3 sağlayıcı formatında multimodal içerik.
+- **Token optimizasyonu:** gömülü base64 görseller bağlamdan kırpılır (~%87), dosya yalnızca son mesaja bir kez eklenir, geçmiş son 12 mesajla sınırlı.
+- **Ayarlar:** sağlayıcıdan model listesi getir + önbellek, ölü Gemini modelini otomatik geçerli alias'a taşı.
+
+### Eklenen — Diğer
+- **CSS Stilleri snippet kategorisi** (Metin / Kutu & Kenarlık / Yerleşim / Tablo / Sayfa & Baskı).
+- **`.github/workflows/release.yml`** — `v*` etiketinde macOS (universal) + Windows + Linux derleyip GitHub Release yayınlayan tauri-action CI.
+
+### Değişen
+- Splitter boyut sınırları kaldırıldı (bölmeler serbestçe boyutlandırılır).
+
 ## [2.13.0] — 2026-07-10 — Açık Kaynak Geçişi: Eski WinForms Uygulaması Kaldırıldı — eFaturaEdit/, LICENSE, .github/copilot-instructions.md
 
 ### Kaldırılan

@@ -66,8 +66,22 @@ Versiyon **4 dosyada** senkron tutulmalı:
 3. `app/src-tauri/tauri.conf.json` → `"version"`
 4. `src/eFaturaEdit.Core/eFaturaEdit.Core.csproj` → `<Version>`
 - `app/src-tauri/Cargo.lock` cargo tarafından otomatik güncellenir, elle dokunma.
+- Program içi görünen versiyon (`app/src/lib/data/manifest.json`) **elle düzenlenmez** —
+  kaynağı `src/eFaturaEdit.DataExport/Program.cs` içindeki sabit `Version:` değeridir;
+  onu güncelleyip `npm run data:sync` ile yeniden üret. (4 dosya + bu = 5 nokta senkron.)
 - `CHANGELOG.md` → `## [X.Y.Z] - YYYY-MM-DD` girdisi.
 - Versiyon değişikliğinde ilgili tüm dosyalar **birlikte** güncellenmelidir.
+
+## Release Yayınlama (her yeni versiyonda ZORUNLU — hatırlatma bekleme)
+Her versiyon artışı sonrası uygulama otomatik derlenip **GitHub Release** olarak yayınlanır:
+1. Yukarıdaki 5 versiyon noktasını güncelle + `CHANGELOG.md` girdisi ekle.
+2. Değişiklikleri commit + `git push origin master`.
+3. Anlamsal versiyon etiketi oluştur ve push et: `git tag -a vX.Y.Z -m "..."` → `git push origin vX.Y.Z`.
+4. `v*` etiketi push'u `.github/workflows/release.yml` (tauri-action) CI'sını tetikler;
+   macOS (universal), Windows ve Linux runner'larında derleyip paketleri (`.dmg`/`.msi`/
+   `.exe`/`.deb`/`.rpm`/`.AppImage`) tek bir public GitHub Release'e otomatik ekler.
+- Bu Mac'te 3 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** bu CI ile yapılır.
+- Etiket zaten varsa: `git tag -d vX.Y.Z && git push origin :vX.Y.Z` ile silip yeniden oluştur.
 
 ## Git İş Akışı & Commit Kuralları
 - **Commit mesajı formatı:** `[tip]: kısa açıklama` (örn: `fix: statik alan sırası düzeltildi`, `feat: AI destekli XSLT önerileri`)

@@ -7,7 +7,7 @@
   import { cssSnippets } from '$lib/data/css-snippets';
   import type { Snippet } from '$lib/data/types';
   import { transformXml, validateXml, XsltError } from '$lib/xslt';
-  import { settings, updatePanelSize, updateSetting, themeKind } from '$lib/settings.svelte';
+  import { settings, updatePanelSize, updateSetting, themeKind, loadApiKeys } from '$lib/settings.svelte';
   import { editorState } from '$lib/editor-state.svelte';
   import { openFile, saveFile, saveFileAs, reopenFile } from '$lib/fileio';
   import { recentFiles, pushRecent, clearRecent, basename } from '$lib/recent-files.svelte';
@@ -901,6 +901,7 @@ window.addEventListener('message', function(e) {
     setupCloseGuard();
     refreshUserSamples();
     refreshUserSnippets();
+    void loadApiKeys(); // API anahtarlarını OS anahtar zincirinden belleğe yükle
     if (showWelcome) {
       status(`e-Fatura Edit v${manifest.version} — ${snippets.length} snippet · ${xsltCompletions.length} tamamlama · hazır`);
     }

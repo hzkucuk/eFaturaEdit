@@ -2,6 +2,7 @@
  * Uygulama ayarları — Svelte 5 reactive state (rune) + localStorage persist.
  */
 import { browser } from '$app/environment';
+import { invoke } from '@tauri-apps/api/core';
 
 /**
  * Kullanılabilir tema kimlikleri.
@@ -207,8 +208,55 @@ export function updateAiProviderConfig<K extends keyof AiProviderConfig>(
   key: K,
   value: AiProviderConfig[K],
 ): void {
+  // API anahtarı düz metin localStorage'a YAZILMAZ — OS anahtar zincirinde
+  // (Keychain / Credential Manager / Secret Service) şifreli saklanır.
+  if (key === 'apiKey') {
+    void setApiKey(provider, value as string);
+    return;
+  }
   settings.aiProviders[provider][key] = value;
   persist();
+}
+
+function keychainAccount(provider: AiProvider): string {
+  return `ai.${provider}`;
+}
+
+/** API anahtarını bellekte güncelle + OS anahtar zincirine şifreli yaz. */
+export async function setApiKey(provider: AiProvider, value: string): Promise<void> {
+  settings.aiProviders[provider].apiKey = value;
+  persist(); // apiKey persist sırasında zaten strip edilir
+  if (!browser) return;
+  try {
+    await invoke('secret_set', { account: keychainAccount(provider), value });
+  } catch (e) {
+    console.error('API anahtarı anahtar zincirine yazılamadı:', e);
+  }
+}
+
+let apiKeysLoaded = false;
+/**
+ * Uygulama açılışında anahtarları OS anahtar zincirinden belleğe yükler.
+ * Eski sürümlerde düz metin localStorage'da kalmış anahtar varsa anahtar
+ * zincirine taşır (migrasyon) ve localStorage'dan temizler.
+ */
+export async function loadApiKeys(): Promise<void> {
+  if (!browser || apiKeysLoaded) return;
+  apiKeysLoaded = true;
+  for (const p of Object.keys(AI_PROVIDER_DEFAULTS) as AiProvider[]) {
+    try {
+      const stored = await invoke<string | null>('secret_get', { account: keychainAccount(p) });
+      if (stored) {
+        settings.aiProviders[p].apiKey = stored;
+      } else if (settings.aiProviders[p].apiKey) {
+        // Migrasyon: eski düz-metin anahtarı keychain'e taşı.
+        await invoke('secret_set', { account: keychainAccount(p), value: settings.aiProviders[p].apiKey });
+      }
+    } catch (e) {
+      console.error('API anahtarı anahtar zincirinden okunamadı:', e);
+    }
+  }
+  persist(); // düz-metin anahtarları localStorage'dan temizle
 }
 
 export function resetSettings(): void {
@@ -220,13 +268,30 @@ export function resetSettings(): void {
       { ...AI_PROVIDER_DEFAULTS[p], cachedModels: [] as string[] },
     ]),
   ) as Record<AiProvider, AiProviderConfig>;
+  // Anahtar zincirindeki kayıtlı API anahtarlarını da temizle.
+  if (browser) {
+    for (const p of Object.keys(AI_PROVIDER_DEFAULTS) as AiProvider[]) {
+      invoke('secret_set', { account: keychainAccount(p), value: '' }).catch(() => {});
+    }
+  }
   persist();
 }
 
 function persist(): void {
   if (!browser) return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    // API anahtarları localStorage'a düz metin YAZILMAZ — yalnızca OS anahtar
+    // zincirinde tutulur. Kaydederken apiKey alanını boşalt.
+    const sanitized = {
+      ...settings,
+      aiProviders: Object.fromEntries(
+        (Object.keys(settings.aiProviders) as AiProvider[]).map((p) => [
+          p,
+          { ...settings.aiProviders[p], apiKey: '' },
+        ]),
+      ),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
   } catch {
     // Sessiz geç
   }

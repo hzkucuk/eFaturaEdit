@@ -4,12 +4,18 @@
     updateSetting,
     updateAiProviderConfig,
     resetSettings,
+    loadApiKeys,
     THEME_OPTIONS,
     AI_PROVIDER_OPTIONS,
     type AiProvider,
   } from '$lib/settings.svelte';
   import { goto } from '$app/navigation';
   import { invoke } from '@tauri-apps/api/core';
+  import { onMount } from 'svelte';
+
+  // Ayarlara doğrudan gelinirse anahtarların zincirden yüklendiğinden emin ol
+  // (once-guard: ana sayfada zaten yüklendiyse tekrar çalışmaz).
+  onMount(() => void loadApiKeys());
 
   const currentAiConfig = $derived(settings.aiProviders[settings.aiProvider]);
   const currentAiOption = $derived(

@@ -1,6 +1,6 @@
 [package]
 name = "efatura-edit"
-version = "2.14.0"
+version = "2.15.0"
 description = "E-Fatura Dizayn Editörü — Tauri + SvelteKit + Saxon-JS"
 authors = ["Zafer Bilgisayar"]
 edition = "2021"
@@ -25,4 +25,8 @@ serde_json = "1"
 tauri-plugin-dialog = "2.7.1"
 tauri-plugin-fs = "2.5.1"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+# API anahtarlarını OS anahtar zincirinde (Keychain / Credential Manager /
+# Secret Service) şifreli sakla. Linux'ta C bağımlılığı olmadan derlensin diye
+# saf-Rust secret-service + RustCrypto backend'i seçilir.
+keyring = { version = "3", default-features = false, features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 
