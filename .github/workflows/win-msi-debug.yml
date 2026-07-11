@@ -1,0 +1,50 @@
+name: win-msi-debug
+
+# GEÇİCİ teşhis workflow'u. Amaç: Windows MSI (WiX) paketlemesinin neden
+# çöktüğünü görmek. `tauri build` normalde light.exe'nin kendi stderr'ini
+# yutuyor ("failed to run light.exe" der, sebebini söylemez); `--verbose`
+# ile asıl WiX/ICE hatası loga düşer.
+#
+# Sorun çözülünce bu dosya silinecek.
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Rust kur
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './app/src-tauri -> target'
+
+      - name: GraalVM kur
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: XSLT sidecar derle
+        shell: bash
+        run: bash build.sh
+        working-directory: ./sidecar
+
+      - name: Frontend bağımlılıkları
+        run: npm ci
+        working-directory: ./app
+
+      - name: Tauri build (verbose — asıl WiX hatası)
+        shell: bash
+        run: npx tauri build --verbose 2>&1 | tail -150
+        working-directory: ./app
