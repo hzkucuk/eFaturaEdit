@@ -107,6 +107,17 @@ Her versiyon artışı sonrası uygulama otomatik derlenip **GitHub Release** ol
   release'e `latest.json` ekler. Uygulama bu dosyayı
   `releases/latest/download/latest.json` adresinden okur → **release taslak (draft) bırakılmamalı**,
   yoksa "latest" onu göstermez ve güncelleme akışı sessizce durur.
+- ⚠️ **"Resource not accessible by integration" (403) — release oluşturulamıyor.** v2.22.1'de dört işin
+  dördü de bu hatayı verdi. **İzin sorunu DEĞİLDİ:** başarılı koşuyla karşılaştırıldığında token'a
+  aynı `Contents: write` verilmişti; kural seti / etiket koruması yoktu, depo aktifti, GitHub'da arıza
+  bildirilmemişti. Hata **yalnızca release'i OLUŞTURMA** çağrısında çıktı; release elle oluşturulunca
+  aynı token varlıkları sorunsuz yükledi. Çözüm:
+  1. `gh release create vX.Y.Z --title ... --notes "<CHANGELOG bölümü>"` ile release'i elle oluştur.
+  2. `gh run rerun <id> --failed` ile işleri tekrarla → varlıklar mevcut release'e yüklenir.
+  - **Sonra `latest.json`'u MUTLAKA doğrula:** her iş kendi platformunu ekler; bazı işler başarısız
+    kalırsa manifest **eksik platformla** yayınlanır ve o platformdaki kullanıcılar güncellemeyi hiç
+    görmez (sessiz başarısızlık!). Kontrol:
+    `curl -sL .../releases/latest/download/latest.json` → 11 platform girdisi olmalı.
 - Bu Mac'te 4 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** bu CI ile yapılır.
 - Etiket zaten varsa: `git tag -d vX.Y.Z && git push origin :vX.Y.Z` ile silip yeniden oluştur.
   **Ancak** o etiketin release'i yayımlanmış/derleniyorsa silme — bir sonraki yamayı yeni sürüm

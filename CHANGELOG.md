@@ -3,6 +3,32 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.22.2] — 2026-07-12 — AI Sohbeti Sayfa Geçişinde Kaybolmuyor
+
+### Düzeltilen
+- **AI yanıt beklerken Ayarlar'a gidip dönünce sohbet kayboluyordu.** Kök neden: sohbetin canlı
+  durumu (açık oturum + "gönderiliyor" + hata) **bileşende** tutuluyordu. Ayarlar'a geçince
+  `AIAssistant` unmount oluyor, ama uçuşta olan istek devam ediyordu; yanıt geldiğinde artık yok
+  olmuş bileşenin state'ine yazılıyordu. Geri dönüldüğünde yeni bileşen ayrı bir reaktif kopya
+  oluşturduğu için cevabı hiç görmüyor, üstelik `sending` sıfırlandığından **"Düşünüyor…" göstergesi
+  de kayboluyordu** — kullanıcıya sohbet ölmüş gibi görünüyordu.
+- Canlı durum `ai-sessions` modülüne taşındı (`aiRuntime`). Modül uygulama boyunca yaşadığından hem
+  istek hem gösterge sayfa geçişinden sağ çıkar. (Önceki oturum kalıcılığı düzeltmesi yalnızca
+  **tamamlanmış** mesajları koruyordu; "düşünürken geçiş" durumu açıkta kalmıştı.)
+- **Bitişik kusur:** yanıt beklenirken sohbet değiştirilebiliyor, yeni sohbet açılabiliyor veya sohbet
+  silinebiliyordu — gelen cevap yanlış oturuma yazılabilirdi (silmede ise oturum yok olup yerine
+  yenisi açılmayacaktı). Bu üç kontrol yanıt süresince devre dışı bırakıldı, sebebi ipucu metninde.
+
+### Belgelendirme
+- **macOS "hasar görmüş olduğu için açılamıyor" uyarısı** README'ye ve release notlarına eklendi.
+  Uygulama bozuk değildir: paketler Apple Developer ID ile imzalanmadığından, macOS tarayıcıyla
+  indirilen dosyalara taktığı *karantina* bayrağı yüzünden bu yanıltıcı mesajı gösterir. Çözüm
+  (`xattr -dr com.apple.quarantine …`) ve **nedeni** açıkça yazıldı — insanlar "hasar görmüş" deyince
+  uygulamayı silip atıyor. Windows SmartScreen uyarısı için de not düşüldü.
+- Otomatik güncellemeler bu adımı gerektirmez (karantina bayrağı yalnızca tarayıcı indirmelerine takılır).
+
+---
+
 ## [2.22.1] — 2026-07-12 — Güncelleme Penceresinde Gerçek Sürüm Notları
 
 ### Düzeltilen
