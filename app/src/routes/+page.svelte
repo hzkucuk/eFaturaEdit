@@ -1832,7 +1832,7 @@ window.addEventListener('message', function(e) {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
     padding: 1.5rem;
   }
-  .app.dark .exit-modal {
+  :global(html.dark) .exit-modal {
     background: #2d2d30;
     color: #e6e6e6;
   }
@@ -1858,9 +1858,26 @@ window.addEventListener('message', function(e) {
     flex-direction: column;
     overflow-y: auto;
   }
-  .app.dark .style-modal { background: #2d2d30; color: #e6e6e6; }
+  :global(html.dark) .style-modal { background: #2d2d30; color: #e6e6e6; }
   .style-modal h3 { margin: 0 0 0.75rem; font-size: 16px; color: #0a5cff; }
   .style-modal p { margin: 0 0 0.75rem; font-size: 13px; line-height: 1.5; color: #374151; }
+
+  /* ── Koyu tema: modallar `.app` div'inin DIŞINDA render edildiğinden
+     `.app.dark` ile yakalanamaz; kök `<html class="dark">` üzerinden. ── */
+  :global(html.dark) .style-modal p,
+  :global(html.dark) .exit-modal p { color: #c9ccd1; }
+  :global(html.dark) .exit-modal { background: #2d2d30; color: #e6e6e6; }
+  :global(html.dark) .ai-fulltext-note { color: #9ca3af; }
+  :global(html.dark) .ai-result-preview-head { color: #d4d4d8; }
+  :global(html.dark) .ai-preview-zoom-val { color: #9ca3af; }
+  :global(html.dark) .ai-preview-zoom button,
+  :global(html.dark) .exit-btn.cancel {
+    background: #3a3a3d;
+    border-color: #4b5563;
+    color: #e6e6e6;
+  }
+  :global(html.dark) .ai-preview-zoom button:hover,
+  :global(html.dark) .exit-btn.cancel:hover { background: #4b4b4f; }
   .style-preview {
     background: #f5f6f8;
     border: 1px solid #d5d8dc;
@@ -1874,7 +1891,7 @@ window.addEventListener('message', function(e) {
     margin: 0 0 1.25rem;
     white-space: pre-wrap;
   }
-  .app.dark .style-preview { background: #1e1e1e; border-color: #3f3f46; }
+  :global(html.dark) .style-preview { background: #1e1e1e; border-color: #3f3f46; }
   .ai-partial-warning {
     background: #fef2f2;
     border: 1px solid #fca5a5;
@@ -1885,7 +1902,7 @@ window.addEventListener('message', function(e) {
     line-height: 1.45;
     margin: 0 0 0.9rem;
   }
-  .app.dark .ai-partial-warning { background: #3b1111; border-color: #7f1d1d; color: #fca5a5; }
+  :global(html.dark) .ai-partial-warning { background: #3b1111; border-color: #7f1d1d; color: #fca5a5; }
   .ai-edit-diff {
     border: 1px solid #d5d8dc;
     border-radius: 6px;
@@ -1920,10 +1937,10 @@ window.addEventListener('message', function(e) {
   }
   .ai-diff-old { background: #fef2f2; border-left-color: #fca5a5; }
   .ai-diff-new { background: #f0fdf4; border-left-color: #86efac; }
-  .app.dark .ai-edit-diff { border-color: #3f3f46; }
-  .app.dark .ai-edit-diff-label { background: #27272a; color: #d4d4d8; }
-  .app.dark .ai-diff-old { background: #3b1111; }
-  .app.dark .ai-diff-new { background: #0f2a17; }
+  :global(html.dark) .ai-edit-diff { border-color: #3f3f46; }
+  :global(html.dark) .ai-edit-diff-label { background: #27272a; color: #d4d4d8; }
+  :global(html.dark) .ai-diff-old { background: #3b1111; }
+  :global(html.dark) .ai-diff-new { background: #0f2a17; }
   .exit-btn.save:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -2000,7 +2017,7 @@ window.addEventListener('message', function(e) {
     border: none;
     background: #fff;
   }
-  .app.dark .ai-preview-frame-wrap { border-color: #3f3f46; }
+  :global(html.dark) .ai-preview-frame-wrap { border-color: #3f3f46; }
   .ai-fulltext-note {
     font-size: 12px;
     color: #6b7280;
@@ -2015,7 +2032,7 @@ window.addEventListener('message', function(e) {
     padding: 0;
     text-decoration: underline;
   }
-  .app.dark .ai-result-preview-hint { background: #172554; border-color: #1e3a8a; color: #bfdbfe; }
+  :global(html.dark) .ai-result-preview-hint { background: #172554; border-color: #1e3a8a; color: #bfdbfe; }
   .exit-actions {
     display: flex;
     justify-content: flex-end;

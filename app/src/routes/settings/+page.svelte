@@ -418,8 +418,12 @@
 </div>
 
 <style>
+  /* Sabit açık renk yerine temaya duyarlı: koyu tema kök <html.dark>'tan gelir. */
   :global(body) {
     background: #f5f6f8;
+  }
+  :global(html.dark body) {
+    background: #1a1a1a;
   }
   .settings-page {
     max-width: 800px;
@@ -599,5 +603,52 @@
     margin: -0.25rem 0 0.5rem 0;
     font-size: 11.5px;
     color: #b91c1c;
+  }
+
+  /* ── Koyu tema ──────────────────────────────────────────────────────
+     Ayarlar ayrı bir route olduğundan ana sayfadaki `.app.dark` sınıfına
+     erişemez; tema kök <html class="dark"> üzerinden uygulanır (bkz.
+     +layout.svelte). */
+  :global(html.dark) .page-header,
+  :global(html.dark) .group {
+    background: #252526;
+    border-color: #3f3f46;
+  }
+  :global(html.dark) .page-header h1,
+  :global(html.dark) .row label,
+  :global(html.dark) .row .static-label,
+  :global(html.dark) .about-val {
+    color: #e6e6e6;
+  }
+  :global(html.dark) .row {
+    border-bottom-color: #3f3f46;
+  }
+  :global(html.dark) .back,
+  :global(html.dark) .row select,
+  :global(html.dark) .row input[type='text'],
+  :global(html.dark) .row input[type='password'],
+  :global(html.dark) .fetch-models {
+    background: #2d2d30;
+    border-color: #4b5563;
+    color: #e6e6e6;
+  }
+  :global(html.dark) .back:hover,
+  :global(html.dark) .fetch-models:hover:not(:disabled) {
+    background: #3a3a3d;
+  }
+  :global(html.dark) .reset {
+    background: #2d2d30;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+  }
+  :global(html.dark) .reset:hover {
+    background: #3b1111;
+  }
+  :global(html.dark) .hint,
+  :global(html.dark) .val,
+  :global(html.dark) .about-ver,
+  :global(html.dark) .about-sub,
+  :global(html.dark) .about-libs {
+    color: #9ca3af;
   }
 </style>

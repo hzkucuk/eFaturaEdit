@@ -1015,4 +1015,84 @@ Kurallar:
   .ai-send:hover:not(:disabled) {
     background: #0847c9;
   }
+
+  /* ── Koyu tema ──────────────────────────────────────────────────────
+     Tema sınıfı belge köküne (<html class="dark">) uygulanır; bu bileşen
+     kendi stil kapsamında olduğundan :global(html.dark) ile yakalanır. */
+  :global(html.dark) .ai-panel { background: #252526; }
+  :global(html.dark) .ai-header {
+    background: #252526;
+    border-bottom-color: #3f3f46;
+  }
+  :global(html.dark) .ai-session-select,
+  :global(html.dark) .ai-session-btn,
+  :global(html.dark) .ai-attach-btn,
+  :global(html.dark) .ai-input-row textarea {
+    background: #2d2d30;
+    border-color: #4b5563;
+    color: #e6e6e6;
+  }
+  :global(html.dark) .ai-session-btn:hover:not(:disabled),
+  :global(html.dark) .ai-attach-btn:hover {
+    background: #3a3a3d;
+  }
+  :global(html.dark) .ai-input-row {
+    border-top-color: #3f3f46;
+  }
+  :global(html.dark) .ai-msg {
+    background: #2d2d30;
+    color: #e6e6e6;
+  }
+  :global(html.dark) .ai-msg.user {
+    background: #1e3a5f;
+  }
+  :global(html.dark) .ai-msg-role,
+  :global(html.dark) .ai-empty,
+  :global(html.dark) .ai-thinking,
+  :global(html.dark) .ai-context-toggle,
+  :global(html.dark) .ai-mode-hint {
+    color: #9ca3af;
+  }
+  :global(html.dark) .ai-code-preview {
+    background: #1e1e1e;
+    border-color: #3f3f46;
+  }
+  :global(html.dark) .ai-code-preview summary,
+  :global(html.dark) .ai-edit-label {
+    color: #c9ccd1;
+  }
+  :global(html.dark) .ai-code-preview pre {
+    background: #1a1a1a;
+    border-top-color: #3f3f46;
+    color: #d4d4d8;
+  }
+  :global(html.dark) .ai-edit {
+    border-top-color: #3f3f46;
+  }
+  :global(html.dark) .ai-edit-search {
+    background: #3b1111 !important;
+  }
+  :global(html.dark) .ai-edit-replace {
+    background: #0f2a17 !important;
+  }
+  :global(html.dark) .ai-notice {
+    background: #3d3117;
+    border-bottom-color: #6b5320;
+    color: #fbbf24;
+  }
+  :global(html.dark) .ai-error {
+    background: #3b1111;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+  }
+  :global(html.dark) .ai-chip {
+    background: #2d2d30;
+    border-color: #4b5563;
+    color: #e6e6e6;
+  }
+  :global(html.dark) .ai-chip-embed {
+    background: #172554;
+    border-color: #1e3a8a;
+    color: #93c5fd;
+  }
 </style>
