@@ -30,13 +30,51 @@ Detaylı liste için [FEATURES.md](FEATURES.md).
 | **AI önerisini uygula (diff + önizleme)** | **Ayarlar** |
 | ![AI uygula](docs/screenshots/ai-apply.png) | ![Ayarlar](docs/screenshots/settings.png) |
 
-## Gereksinimler
+## İndir
+
+Hazır kurulum paketleri: **[Releases](https://github.com/hzkucuk/eFaturaEdit/releases/latest)**
+
+| Platform | Paket |
+| --- | --- |
+| macOS (Apple Silicon) | `..._aarch64.dmg` |
+| macOS (Intel) | `..._x64.dmg` |
+| Windows | `..._x64-setup.exe` veya `..._x64_en-US.msi` |
+| Linux | `..._amd64.AppImage` · `.deb` · `.rpm` |
+
+Kurulduktan sonra **otomatik güncelleme** devreye girer: yeni sürüm çıkınca uygulama
+açılışta haber verir, onaylarsan indirip kurar.
+
+### ⚠️ macOS: "hasar görmüş olduğu için açılamıyor" uyarısı
+
+macOS, `.dmg` içinden ilk açılışta **"e-Fatura Edit.app hasar görmüş"** diyebilir.
+**Uygulama bozuk değildir.** Sebep şu: tarayıcıyla indirilen dosyalara macOS bir
+*karantina* bayrağı takar; Gatekeeper açılışta kod imzasını denetler ve paketlerimiz
+(henüz) bir Apple Developer ID sertifikasıyla imzalanmadığı için macOS bu yanıltıcı
+mesajı gösterir.
+
+Çözüm — uygulamayı `Applications` klasörüne sürükledikten sonra Terminal'de **bir kez**:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/e-Fatura Edit.app"
+```
+
+Sonrasında normal şekilde açılır ve bir daha sormaz. (Otomatik güncellemeler bu adımı
+gerektirmez — karantina bayrağı yalnızca tarayıcıyla indirilen dosyalara takılır.)
+
+### Windows: "Bilinmeyen yayımcı" uyarısı
+
+Aynı sebeple (kod imzası yok) Windows SmartScreen bir uyarı gösterebilir:
+**Daha fazla bilgi → Yine de çalıştır**.
+
+## Geliştirme
+
+### Gereksinimler
 
 - Rust (stable), Node.js 20+, .NET 10 SDK (yalnızca veri senkronizasyon aracı için)
 
 Tam liste ve platforma özgü notlar için [INSTALL.md](INSTALL.md).
 
-## Kurulum
+### Kaynaktan çalıştırma
 
 ```bash
 cd app
