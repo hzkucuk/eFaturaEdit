@@ -21,8 +21,7 @@
     deleteSession,
     sessionLabel,
     sessions,
-    getActiveSession,
-    setActiveSession,
+    aiRuntime,
     type AiChatEntry,
     type AiSession,
   } from '$lib/ai-sessions.svelte';
@@ -58,18 +57,18 @@
   // Uygulama her açılışta yeni (boş) bir oturumla başlar; kullanıcı üstteki
   // açılır listeden önceki oturumlara geçebilir. Boş oturum, ilk mesaj
   // gönderilince o an açık dosya çiftini benimser (bkz. send()).
-  // Ayarlar'a gidip dönünce bileşen yeniden mount olur — açık sohbeti modül
-  // seviyesinden geri al ki kaybolmasın (bkz. ai-sessions: getActiveSession).
-  let active = $state<AiSession>(getActiveSession() ?? newSession(null, null));
+  //
+  // Sohbetin canlı durumu (açık oturum + `aiRuntime.sending` + `aiRuntime.error`) BİLEŞENDE DEĞİL,
+  // `aiRuntime` modülünde tutulur. Sebep: Ayarlar'a gidip dönünce bu bileşen
+  // unmount/remount oluyor; durum bileşende olsaydı o sırada uçuşta olan istek
+  // sahipsiz kalır, yanıt yok olmuş bileşene yazılır ve kullanıcı cevabı hiç
+  // göremezdi (bkz. ai-sessions.svelte.ts). Burada yalnızca modüle referans
+  // veriyoruz — kopya çıkarmıyoruz, yoksa aynı hata geri gelir.
+  if (!aiRuntime.active) aiRuntime.active = newSession(null, null);
+  const active = $derived(aiRuntime.active!);
 
-  // Açık sohbeti modülde güncel tut (sayfa geçişlerinde hayatta kalsın).
-  $effect(() => {
-    setActiveSession(active);
-  });
   let noticeDismissedFor = $state('');
   let input = $state('');
-  let sending = $state(false);
-  let error = $state('');
   let includeContext = $state(true);
   let agentMode = $state(false);
   let messagesEl = $state<HTMLDivElement>();
@@ -132,10 +131,10 @@
           { id, name: file.name || 'dosya.txt', kind: 'text', mediaType: 'text/plain', text },
         ];
       } else {
-        error = `Desteklenmeyen dosya türü: ${file.name}. Görsel, PDF veya metin (xslt/xml/css/txt) ekleyin.`;
+        aiRuntime.error = `Desteklenmeyen dosya türü: ${file.name}. Görsel, PDF veya metin (xslt/xml/css/txt) ekleyin.`;
       }
     } catch (err) {
-      error = `Dosya okunamadı: ${(err as Error).message ?? String(err)}`;
+      aiRuntime.error = `Dosya okunamadı: ${(err as Error).message ?? String(err)}`;
     }
   }
 
@@ -170,7 +169,7 @@
   // Yeni mesaj/yanıt geldikçe (veya "Düşünüyor…" belirince) sohbeti en alta kaydır.
   $effect(() => {
     void active.history.length;
-    void sending;
+    void aiRuntime.sending;
     if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
   });
 
@@ -200,20 +199,26 @@
   const showNotice = $derived(fileMismatch && noticeDismissedFor !== active.id);
 
   function startNewSession(): void {
-    active = newSession(xsltPath, xmlPath);
-    error = '';
+    // Yanıt beklenirken sohbeti değiştirmek, gelen cevabın yanlış oturuma
+    // yazılmasına yol açardı — engelle.
+    if (aiRuntime.sending) return;
+    aiRuntime.active = newSession(xsltPath, xmlPath);
+    aiRuntime.error = '';
   }
 
   function selectSession(id: string): void {
-    if (id === active.id) return;
+    if (aiRuntime.sending || id === active.id) return;
     const found = savedSessions.find((s) => s.id === id);
     if (!found) return;
-    active = { ...found, history: found.history.map((h) => ({ ...h })) };
+    aiRuntime.active = { ...found, history: found.history.map((h) => ({ ...h })) };
     noticeDismissedFor = '';
-    error = '';
+    aiRuntime.error = '';
   }
 
   function removeActiveSession(): void {
+    // Yanıt beklenirken silme: oturum gider ama startNewSession() da erken
+    // döndüğü için yerine yenisi açılmazdı — baştan engelle.
+    if (aiRuntime.sending) return;
     if (activeIsSaved) deleteSession(active.id);
     startNewSession();
   }
@@ -371,8 +376,8 @@ Kurallar:
 
   async function send() {
     const text = input.trim();
-    if ((!text && attachments.length === 0) || sending) return;
-    error = '';
+    if ((!text && attachments.length === 0) || aiRuntime.sending) return;
+    aiRuntime.error = '';
 
     // Boş oturumsa, ilk mesajla birlikte o an açık dosya çiftini benimse
     // (dosya-uyuşmazlık uyarısı ve etiket bunun üzerinden çalışır).
@@ -404,7 +409,7 @@ Kurallar:
     const entry: AiChatEntry = { role: 'user', content: storedContent };
     active.history = [...active.history, entry];
     upsertSession(active);
-    sending = true;
+    aiRuntime.sending = true;
 
     try {
       // Son N mesajla sınırla.
@@ -445,9 +450,9 @@ Kurallar:
       upsertSession(active);
       input = text;
       attachments = sentAttachments;
-      error = friendlyError((err as Error).message ?? String(err));
+      aiRuntime.error = friendlyError((err as Error).message ?? String(err));
     } finally {
-      sending = false;
+      aiRuntime.sending = false;
     }
   }
 
@@ -461,7 +466,7 @@ Kurallar:
   async function runAgent(text: string): Promise<void> {
     active.history = [...active.history, { role: 'user', content: text }];
     upsertSession(active);
-    sending = true;
+    aiRuntime.sending = true;
 
     let workXslt = xsltText;
     let workXml = xmlText;
@@ -545,9 +550,9 @@ Kurallar:
         pushNote('Uygulanacak bir değişiklik üretilmedi.');
       }
     } catch (err) {
-      error = friendlyError((err as Error).message ?? String(err));
+      aiRuntime.error = friendlyError((err as Error).message ?? String(err));
     } finally {
-      sending = false;
+      aiRuntime.sending = false;
     }
   }
 
@@ -566,11 +571,13 @@ Kurallar:
       <span class="ai-model-badge" title={modelBadgeTitle}>{activeProviderLabel} · {activeModel}</span>
     </div>
     <div class="ai-session-bar">
+      <!-- Yanıt beklenirken sohbet değiştirilemez: gelen cevap yanlış oturuma yazılırdı. -->
       <select
         class="ai-session-select"
         value={active.id}
         onchange={(e) => selectSession((e.currentTarget as HTMLSelectElement).value)}
-        title="Önceki sohbetler"
+        disabled={aiRuntime.sending}
+        title={aiRuntime.sending ? 'Yanıt beklenirken sohbet değiştirilemez' : 'Önceki sohbetler'}
       >
         {#if !activeIsSaved}
           <option value={active.id}>Yeni sohbet</option>
@@ -579,12 +586,17 @@ Kurallar:
           <option value={s.id}>{sessionLabel(s)}</option>
         {/each}
       </select>
-      <button class="ai-session-btn" onclick={startNewSession} title="Yeni sohbet">＋</button>
+      <button
+        class="ai-session-btn"
+        onclick={startNewSession}
+        disabled={aiRuntime.sending}
+        title={aiRuntime.sending ? 'Yanıt beklenirken yeni sohbet açılamaz' : 'Yeni sohbet'}
+      >＋</button>
       <button
         class="ai-session-btn"
         onclick={removeActiveSession}
-        title="Bu sohbeti sil"
-        disabled={!activeIsSaved}
+        title={aiRuntime.sending ? 'Yanıt beklenirken silinemez' : 'Bu sohbeti sil'}
+        disabled={!activeIsSaved || aiRuntime.sending}
       >🗑</button>
     </div>
   </header>
@@ -636,7 +648,7 @@ Kurallar:
         {/if}
       </div>
     {/each}
-    {#if sending}
+    {#if aiRuntime.sending}
       <div class="ai-msg">
         <div class="ai-msg-role">AI</div>
         <div class="ai-msg-content ai-thinking">Düşünüyor…</div>
@@ -644,8 +656,8 @@ Kurallar:
     {/if}
   </div>
 
-  {#if error}
-    <div class="ai-error">{error}</div>
+  {#if aiRuntime.error}
+    <div class="ai-error">{aiRuntime.error}</div>
   {/if}
 
   <div class="ai-input-row">
@@ -702,8 +714,8 @@ Kurallar:
     <div class="ai-input-actions">
       <button class="ai-attach-btn" onclick={() => fileInputEl?.click()} title="Görsel, PDF veya metin dosyası ekle">📎</button>
       <span class="ai-mode-hint">{agentMode ? `En çok ${AGENT_MAX_ITERS} tur` : ''}</span>
-      <button class="ai-send" onclick={send} disabled={sending || (!input.trim() && attachments.length === 0)}>
-        {sending ? '…' : agentMode ? '🔄 Çalıştır' : 'Gönder'}
+      <button class="ai-send" onclick={send} disabled={aiRuntime.sending || (!input.trim() && attachments.length === 0)}>
+        {aiRuntime.sending ? '…' : agentMode ? '🔄 Çalıştır' : 'Gönder'}
       </button>
     </div>
   </div>

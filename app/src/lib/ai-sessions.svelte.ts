@@ -59,22 +59,36 @@ function persist(): void {
 }
 
 /**
- * O an açık olan sohbet — modül seviyesinde tutulur.
+ * Açık sohbetin CANLI durumu — bileşende değil, modülde.
  *
- * Neden: Ayarlar sayfasına gidip geri dönüldüğünde AIAssistant bileşeni
- * yeniden mount olur; bu referans olmasaydı sohbet sıfırlanıp yeni boş
- * oturuma düşerdi. Modül, uygulama çalıştığı sürece yaşar — uygulama
- * yeniden başlatılınca sıfırlanır, yani "açılışta yeni sohbet" davranışı
- * korunur.
+ * Neden bileşende değil: Ayarlar'a gidip dönünce AIAssistant unmount/remount
+ * oluyor. Durum bileşende tutulursa **uçuşta olan istek sahipsiz kalır**:
+ * yanıt geldiğinde artık yok olmuş bileşenin state'ine yazılır, yeni bileşen
+ * ise ayrı bir reaktif kopya oluşturduğu için cevabı hiç görmez. Üstelik
+ * `sending` de sıfırlandığından "Düşünüyor…" göstergesi kaybolur — kullanıcıya
+ * sohbet ölmüş gibi görünür.
+ *
+ * Modül, uygulama çalıştığı sürece yaşar → hem istek hem gösterge sayfa
+ * geçişlerinden sağ çıkar. (Uygulama yeniden başlayınca sıfırlanır, yani
+ * "açılışta yeni sohbet" davranışı korunur.)
  */
-let activeSession: AiSession | null = null;
+export const aiRuntime = $state<{
+  active: AiSession | null;
+  /** Model şu an yanıt üretiyor mu? (sayfa geçişinde de doğru kalmalı) */
+  sending: boolean;
+  error: string;
+}>({
+  active: null,
+  sending: false,
+  error: '',
+});
 
 export function getActiveSession(): AiSession | null {
-  return activeSession;
+  return aiRuntime.active;
 }
 
 export function setActiveSession(session: AiSession | null): void {
-  activeSession = session;
+  aiRuntime.active = session;
 }
 
 /** Kayıtlı oturumlar, en son güncellenen en üstte. */
