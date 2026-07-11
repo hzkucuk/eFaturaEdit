@@ -726,6 +726,20 @@
     aiApplyOpen = false;
   }
 
+  // AI paneline eklenen/yapıştırılan bir görseli base64 data URI olarak XSLT
+  // editörüne, imleç konumuna <img> etiketiyle gömer (AI'a gerek yok — base64
+  // uygulama tarafında üretilir).
+  function embedImageInXslt(dataUrl: string, name: string) {
+    if (!xsltEditor) {
+      status('Önce XSLT editörüne tıklayıp imleci konumlandırın.', true);
+      return;
+    }
+    const alt = name.replace(/"/g, '');
+    xsltEditor.insertAtCursor(`<img src="${dataUrl}" alt="${alt}" style="width:150px; height:auto;" />`);
+    status(`Görsel "${name}" XSLT'ye base64 olarak gömüldü — boyutu style ile ayarlayabilirsiniz.`);
+    runTransform();
+  }
+
   function setPreviewWidth(w: number | null) {
     updateSetting('previewWidth', w);
     status(`Önizleme genişliği: ${w ? w + 'px' : 'Tam'}`);
@@ -1120,6 +1134,7 @@ window.addEventListener('message', function(e) {
           xsltText={editorState.xsltText}
           xmlText={editorState.xmlText}
           onApply={requestAiApply}
+          onEmbedImage={embedImageInXslt}
         />
       </div>
     </aside>

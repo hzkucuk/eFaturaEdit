@@ -1,4 +1,5 @@
 mod ai;
+mod xslt;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -57,11 +58,13 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             greet,
             open_devtools,
             secret_set,
             secret_get,
+            xslt::xslt_transform,
             ai::ai_chat,
             ai::ai_list_models
         ])

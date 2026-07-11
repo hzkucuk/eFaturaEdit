@@ -41,9 +41,11 @@
     xsltText: string;
     xmlText: string;
     onApply: (suggestion: AiSuggestion) => void;
+    /** Bir görseli base64 data URI olarak editöre (imleç konumuna) göm. */
+    onEmbedImage: (dataUrl: string, name: string) => void;
   }
 
-  let { xsltPath, xmlPath, xsltText, xmlText, onApply }: Props = $props();
+  let { xsltPath, xmlPath, xsltText, xmlText, onApply, onEmbedImage }: Props = $props();
 
   // API'ye gönderilen geçmiş bu kadar son mesajla sınırlanır — büyük XSLT
   // dosyalarında bağlamın (context) sınırsız büyüyüp 1M token limitini
@@ -231,10 +233,10 @@ Sen iki alanda KIDEMLİ UZMAN bir tasarım asistanısın:
 
 **Kritik kural:** \`ext:UBLExtensions\` altındaki imza (\`ds:Signature\`, XAdES) ve şema/veri anlamı ASLA değiştirilmez, tasarımda gösterilmez. Sen yalnızca SUNUM (görsel tasarım) katmanına dokunursun; verinin kendisini, değerini veya GİB geçerliliğini değiştirecek bir şey yapma.
 
-# BU UYGULAMANIN TEKNİK KISITLARI (ÇOK ÖNEMLİ)
+# BU UYGULAMANIN TEKNİK ORTAMI (ÖNEMLİ)
 
-- **Önizleme motoru tarayıcının \`XSLTProcessor\`'ıdır → yalnızca XSLT 1.0 / XPath 1.0 çalışır.** Dosyada \`version="2.0"\` yazsa bile 2.0 özellikleri ÇALIŞMAZ. Şunları KULLANMA: \`xsl:for-each-group\`, \`xsl:function\`, \`format-dateTime\`, \`current-dateTime\`, \`tokenize\`, \`replace\`, \`matches\`, \`xsl:value-of/@separator\`, dizi/sequence tipleri.
-- **XSLT 1.0 karşılıkları:** gruplama → \`xsl:key\` + Muenchian; tarih biçimi → \`substring()\`+\`concat()\` (XML'de ISO \`2016-09-26\` gelir, \`26-09-2016\` için parçala); sayı/para → \`format-number()\` + \`<xsl:decimal-format name="tr" decimal-separator="," grouping-separator="."/>\`; koşul → \`xsl:choose\`/\`xsl:if\`; tekrar → recursive named template.
+- **Dönüşüm motoru Saxon-HE'dir → tam XSLT 1.0, 2.0 ve 3.0 desteklenir.** \`format-dateTime\`, \`format-date\`, \`upper-case\`/\`lower-case\`, \`tokenize\`, \`replace\`, \`matches\`, \`xsl:for-each-group\`, \`xsl:function\`, \`current-dateTime\`, sequence/dizi tipleri serbestçe kullanılabilir. Şablonun kök \`version\` özniteliği (1.0/2.0/3.0) neyse ona uygun yaz.
+- **Türkçe biçimlendirme:** tarih → \`format-date(xs:date(cbc:IssueDate), '[D01].[M01].[Y0001]')\`; para/sayı → \`format-number(., '#.##0,00')\` uygun \`xsl:decimal-format\` ile (ör. \`<xsl:decimal-format name="tr" decimal-separator="," grouping-separator="."/>\`). ISO tarih (\`2016-09-26\`) girişte gelir.
 - **Çıktı baskıya (A4/PDF) gider.** \`@page { size: A4 portrait; margin: 10mm; }\`, \`@media print\`, sayfa kırılımı (\`page-break-inside: avoid\`) ve sabit \`px/mm\` ölçüler tercih et. Baskıda JavaScript çalışmayacağı için yerleşimi JS'e BAĞLAMA (JS yalnızca uygulama içi önizlemede çalışır; süsleme/etkileşim için kullanılabilir, yapısal düzen için kullanılamaz).
 - Tablo tabanlı yerleşim bu belgelerde yaygındır ve baskıda en güvenilir olanıdır; flex/grid kullanacaksan baskı davranışını gözet.
 
@@ -624,6 +626,13 @@ Kurallar:
               <span class="ai-chip-icon">{attachmentIcon(a.kind)}</span>
             {/if}
             <span class="ai-chip-name">{a.name}</span>
+            {#if a.kind === 'image' && a.previewUrl}
+              <button
+                class="ai-chip-embed"
+                onclick={() => onEmbedImage(a.previewUrl!, a.name)}
+                title="Görseli base64 olarak editöre göm (imleç konumuna)"
+              >⬇ göm</button>
+            {/if}
             <button class="ai-chip-x" onclick={() => removeAttachment(a.id)} title="Kaldır">✕</button>
           </div>
         {/each}
@@ -947,6 +956,20 @@ Kurallar:
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .ai-chip-embed {
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #0a5cff;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .ai-chip-embed:hover {
+    background: #dbeafe;
   }
   .ai-chip-x {
     border: none;

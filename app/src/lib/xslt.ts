@@ -1,7 +1,16 @@
 /**
  * XSLT dönüşüm sarmalayıcısı + XML/XSLT syntax doğrulama + hata satır ayıklama.
- * Tarayıcının yerleşik `XSLTProcessor` API'sini kullanır (XSLT 1.0).
+ *
+ * <b>Motor seçimi:</b> Öncelikli olarak Saxon-HE tabanlı yerel sidecar kullanılır
+ * (`xslt_transform` Tauri komutu) — tam XSLT 1.0/2.0/3.0 desteği. GİB ve müşteri
+ * şablonları `version="2.0"` bildirip `format-dateTime`, `upper-case`, `tokenize`,
+ * `for-each-group`, `xsl:function` gibi 2.0+ özellikleri kullanabilir; tarayıcının
+ * yerleşik `XSLTProcessor`'ı bunları SESSİZCE bozar (yalnızca XSLT 1.0 destekler).
+ *
+ * Sidecar erişilemezse (ör. Tauri dışı ortam) tarayıcı işlemcisine düşülür —
+ * bu durumda yalnızca XSLT 1.0 çalışır.
  */
+import { invoke } from '@tauri-apps/api/core';
 
 export interface XmlError {
   message: string;
@@ -31,8 +40,45 @@ export function validateXml(text: string, source: 'xml' | 'xslt'): void {
   }
 }
 
-/** XML ve XSLT metinlerini dönüştürüp HTML çıktı döndürür. */
+/** Sidecar bir kez bulunamazsa tekrar tekrar denemeyelim. */
+let saxonAvailable = true;
+
+/** Saxon hata metninden satır/sütun ayıkla ("... on line 59 column 40"). */
+function parseSaxonPosition(message: string): { line?: number; column?: number } {
+  const m = message.match(/on line (\d+)(?:\s+column (\d+))?/i);
+  if (!m) return {};
+  return { line: parseInt(m[1], 10), column: m[2] ? parseInt(m[2], 10) : undefined };
+}
+
+/**
+ * XML ve XSLT metinlerini dönüştürüp HTML çıktı döndürür.
+ *
+ * Önce Saxon-HE sidecar'ı (XSLT 1.0/2.0/3.0) denenir; sidecar yoksa tarayıcının
+ * XSLT 1.0 işlemcisine düşülür.
+ */
 export async function transformXml(xmlText: string, xsltText: string): Promise<string> {
+  if (saxonAvailable) {
+    try {
+      return await invoke<string>('xslt_transform', { xslt: xsltText, xml: xmlText });
+    } catch (err) {
+      const message = typeof err === 'string' ? err : ((err as Error)?.message ?? String(err));
+      // Motor yoksa/başlatılamazsa tarayıcı işlemcisine düş; gerçek bir XSLT
+      // hatasıysa (şablon/veri hatalı) olduğu gibi bildir.
+      if (/bulunamadı|başlatılamadı|not found|sidecar/i.test(message)) {
+        saxonAvailable = false;
+        console.warn('XSLT 2.0 motoru (Saxon sidecar) yok — tarayıcı XSLT 1.0 işlemcisine düşülüyor.', message);
+      } else {
+        const { line, column } = parseSaxonPosition(message);
+        throw new XsltError(message, line, column, 'transform');
+      }
+    }
+  }
+
+  return transformWithBrowser(xmlText, xsltText);
+}
+
+/** Tarayıcının yerleşik XSLTProcessor'ı — YALNIZCA XSLT 1.0 (yedek yol). */
+async function transformWithBrowser(xmlText: string, xsltText: string): Promise<string> {
   if (typeof XSLTProcessor === 'undefined') {
     throw new XsltError("Tarayıcı XSLTProcessor API'sini desteklemiyor.");
   }

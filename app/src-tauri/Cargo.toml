@@ -24,6 +24,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-dialog = "2.7.1"
 tauri-plugin-fs = "2.5.1"
+# XSLT 2.0/3.0 sidecar'ını (Saxon-HE native binary) çalıştırmak için.
+tauri-plugin-shell = "2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 # API anahtarlarını OS anahtar zincirinde (Keychain / Credential Manager /
 # Secret Service) şifreli sakla. Linux'ta C bağımlılığı olmadan derlensin diye

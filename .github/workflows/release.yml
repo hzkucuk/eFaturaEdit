@@ -16,16 +16,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # native-image evrensel (universal) ikili üretemediğinden macOS iki
+        # mimariye ayrılır; her runner kendi mimarisi için sidecar + app derler.
         include:
-          - platform: macos-latest # Apple Silicon + Intel (universal)
-            args: '--target universal-apple-darwin'
-            rust-targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+          - platform: macos-14 # Apple Silicon (arm64)
+            args: ''
+          - platform: macos-13 # Intel (x86_64)
+            args: ''
           - platform: ubuntu-22.04 # geniş glibc uyumu için 22.04
             args: ''
-            rust-targets: ''
           - platform: windows-latest
             args: ''
-            rust-targets: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -49,13 +50,25 @@ jobs:
 
       - name: Rust kur
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.rust-targets }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './app/src-tauri -> target'
+
+      # XSLT 2.0/3.0 sidecar'ı (Saxon-HE native binary) — Windows'ta MSVC
+      # ortamını da bu action kurar.
+      - name: GraalVM kur
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: XSLT sidecar derle (Saxon-HE native-image)
+        shell: bash
+        run: ./build.sh
+        working-directory: ./sidecar
 
       - name: Frontend bağımlılıkları
         run: npm ci
@@ -73,8 +86,10 @@ jobs:
             e-Fatura Edit ${{ github.ref_name }} — otomatik derlenmiş kurulum paketleri.
 
             - **Windows:** `.msi` / `.exe` (NSIS)
-            - **macOS:** `.dmg` (Universal — Apple Silicon + Intel)
+            - **macOS:** `.dmg` (Apple Silicon ve Intel için ayrı paketler)
             - **Linux:** `.deb` / `.rpm` / `.AppImage`
+
+            Tam XSLT 1.0/2.0/3.0 desteği (Saxon-HE motoru dahili).
 
             > Not: Paketler kod imzasızdır; ilk açılışta işletim sistemi
             > "bilinmeyen geliştirici" uyarısı gösterebilir.

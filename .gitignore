@@ -416,3 +416,6 @@ nuget.exe
 *.rar
 *.msi
 result.html
+# XSLT sidecar — platforma özgü native binary'ler CI'da derlenir, commit'lenmez.
+/app/src-tauri/binaries/
+/sidecar/out/
