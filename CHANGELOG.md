@@ -3,6 +3,13 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.19.1] — 2026-07-11 — Görsel Düzenleyicide Sabit Metin Düzenleme — app/src/routes/+page.svelte
+
+### Eklenen
+- **Sabit metin düzenleme:** Görsel düzenleyicide seçilen öğe yalnızca düz metin içeriyorsa (etiketler: `Fatura Numarası:`, `SAYIN`, `Banka`, `Hesap No`...) panelde bir **Metin** alanı çıkar; yazdıkça önizlemede canlı değişir, "Metni Uygula" ile XSLT'ye yazılır. Metin şablonda birebir geçtiğinden hedefli bul/değiştir yeterlidir.
+- **Belirsizlik koruması:** Aynı metin birden çok yerde geçiyorsa önce etiket sınırlarıyla (`>metin<`) daraltılır; yine benzersiz değilse **hiçbir şey değiştirilmez** ve kullanıcı uyarılır (yanlış yeri bozmaktansa dokunmamak). Metin XML verisinden geliyorsa (şablonda bulunamazsa) bu da açıkça bildirilir.
+- Karma içerikli öğeler (ör. logo hücresi) sabit metin sayılmaz — alan çıkmaz.
+
 ## [2.19.0] — 2026-07-11 — Görsel Düzenleyici (WYSIWYG Faz 1): Tıkla-Seç + Stil Paneli — app/src/routes/+page.svelte
 
 ### Eklenen — Görsel Düzenleyici (🎯 Seç & Düzenle)

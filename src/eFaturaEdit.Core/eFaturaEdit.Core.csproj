@@ -12,9 +12,9 @@
     <ImplicitUsings>disable</ImplicitUsings>
 
     <!-- Package metadata -->
-    <Version>2.19.0</Version>
-    <AssemblyVersion>2.19.0.0</AssemblyVersion>
-    <FileVersion>2.19.0.0</FileVersion>
+    <Version>2.19.1</Version>
+    <AssemblyVersion>2.19.1.0</AssemblyVersion>
+    <FileVersion>2.19.1.0</FileVersion>
     <Authors>Zafer Bilgisayar</Authors>
     <Company>Zafer Bilgisayar</Company>
     <Product>E-Fatura Dizayn Editörü — Core</Product>

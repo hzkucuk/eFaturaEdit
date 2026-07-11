@@ -880,17 +880,32 @@ document.addEventListener('mouseover', function(e) {
   if (e.target && e.target.getAttribute && e.target.getAttribute('data-wz')) return;
   __wzFrame(e.target);
 }, true);
+/* Öğe DÜZ METİN mi içeriyor? (tek text düğümü → şablonda sabit metin olabilir)
+   Böyle ise metni döndür; değilse null (karma içerik/alt öğe var). */
+function __wzOwnText(el) {
+  if (!el.childNodes || el.childNodes.length === 0) return null;
+  var t = '';
+  for (var i = 0; i < el.childNodes.length; i++) {
+    var n = el.childNodes[i];
+    if (n.nodeType === 3) { t += n.nodeValue; }
+    else if (n.nodeType === 1) { return null; }  /* alt öğe var → sabit metin sayma */
+  }
+  t = t.replace(/\\s+/g, ' ').trim();
+  return t.length > 0 ? t : null;
+}
 document.addEventListener('click', function(e) {
   if (!__wz.on) return;
   e.preventDefault();
   e.stopPropagation();
   var el = e.target;
+  __wz.sel = el;
   __wzFrame(el);
   window.parent.postMessage({
     type: 'wysiwyg-select',
     selector: __wzSelector(el),
     tag: el.tagName.toLowerCase(),
-    computed: __wzComputed(el)
+    computed: __wzComputed(el),
+    text: __wzOwnText(el)
   }, '*');
 }, true);
 window.addEventListener('message', function(e) {
@@ -899,6 +914,11 @@ window.addEventListener('message', function(e) {
     __wz.on = !!e.data.on;
     document.body.style.cursor = __wz.on ? 'crosshair' : '';
     if (!__wz.on && __wz.hl) __wz.hl.style.display = 'none';
+  }
+  if (e.data.type === 'wysiwyg-text') {
+    /* Seçili öğenin metnini canlı güncelle (yalnızca önizleme; XSLT'ye
+       "Uygula" denince yazılır). */
+    if (__wz.sel) { __wz.sel.textContent = e.data.text || ''; __wzFrame(__wz.sel); }
   }
   if (e.data.type === 'wysiwyg-live') {
     if (!__wz.live) {
@@ -975,10 +995,13 @@ window.addEventListener('message', function(e) {
     selector: string;
     tag: string;
     computed: Record<string, string>;
+    /** Öğe yalnızca düz metin içeriyorsa o metin (şablonda sabit olabilir). */
+    text: string | null;
   }
   let wzMode = $state(false);
   let wzSel = $state<WzSelection | null>(null);
   let wzEdits = $state<Record<string, string>>({});
+  let wzText = $state(''); // düzenlenen sabit metin
 
   /** Düzenlenen özelliklerden CSS kuralı üret (boş değerler atlanır). */
   const wzRule = $derived.by(() => {
@@ -1011,6 +1034,75 @@ window.addEventListener('message', function(e) {
 
   function wzSet(prop: string, value: string) {
     wzEdits = { ...wzEdits, [prop]: value };
+  }
+
+  /** Metin kutusu değişince önizlemedeki öğeyi canlı güncelle. */
+  function wzSetText(value: string) {
+    wzText = value;
+    previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-text', text: value }, '*');
+  }
+
+  function countOccurrences(haystack: string, needle: string): number {
+    if (!needle) return 0;
+    let n = 0;
+    let i = haystack.indexOf(needle);
+    while (i !== -1) {
+      n++;
+      i = haystack.indexOf(needle, i + needle.length);
+    }
+    return n;
+  }
+
+  /**
+   * Sabit metni XSLT'ye yaz.
+   *
+   * Metin şablonda birebir geçtiğinden hedefli bul/değiştir yeterli. ANCAK aynı
+   * metin ("Toplam" gibi) birden çok yerde geçebilir — o zaman hangisinin
+   * değişeceği belirsizdir. Bu yüzden önce etiket sınırlarıyla (`>metin<`)
+   * daraltılır; yine benzersiz değilse İŞLEM YAPILMAZ ve kullanıcı uyarılır
+   * (yanlış yeri değiştirmektense hiç değiştirmemek doğrudur).
+   */
+  function wzApplyText() {
+    if (!wzSel?.text) return;
+    const oldText = wzSel.text;
+    const newText = wzText;
+    if (!newText || newText === oldText) return;
+
+    const xslt = editorState.xsltText;
+
+    // 1) Etiket sınırlarıyla çapalı ara — en güvenli.
+    const anchored = `>${oldText}<`;
+    if (countOccurrences(xslt, anchored) === 1) {
+      requestAiApply({
+        kind: 'edits',
+        target: 'xslt',
+        edits: [{ search: anchored, replace: `>${newText}<` }],
+      });
+      return;
+    }
+
+    // 2) Düz metin olarak benzersiz mi?
+    const plain = countOccurrences(xslt, oldText);
+    if (plain === 1) {
+      requestAiApply({
+        kind: 'edits',
+        target: 'xslt',
+        edits: [{ search: oldText, replace: newText }],
+      });
+      return;
+    }
+
+    if (plain === 0) {
+      status(
+        `"${oldText}" şablonda birebir bulunamadı — bu metin büyük olasılıkla XML verisinden geliyor ve şablondan düzenlenemez.`,
+        true,
+      );
+      return;
+    }
+    status(
+      `"${oldText}" şablonda ${plain} yerde geçiyor — hangisinin değişeceği belirsiz. XSLT editöründen elle düzenleyin.`,
+      true,
+    );
   }
 
   /** `getComputedStyle` rgb()/rgba() döndürür; <input type="color"> hex ister. */
@@ -1077,8 +1169,10 @@ window.addEventListener('message', function(e) {
         selector: e.data.selector ?? '',
         tag: e.data.tag ?? '',
         computed: e.data.computed ?? {},
+        text: e.data.text ?? null,
       };
       wzEdits = {};
+      wzText = wzSel.text ?? '';
       status(`Seçildi: ${wzSel.selector}`);
       return;
     }
@@ -1507,6 +1601,23 @@ window.addEventListener('message', function(e) {
               <button class="wz-reset" onclick={wzReset} title="Değişiklikleri sıfırla">↺</button>
               <button class="wz-apply" onclick={wzApply} disabled={!wzRule}>✓ XSLT'ye Uygula</button>
             </div>
+
+            {#if wzSel.text}
+              <div class="wz-text-row">
+                <label for="wz-text">📝 Metin</label>
+                <input
+                  id="wz-text"
+                  type="text"
+                  value={wzText}
+                  oninput={(e) => wzSetText((e.currentTarget as HTMLInputElement).value)}
+                />
+                <button
+                  class="wz-apply"
+                  onclick={wzApplyText}
+                  disabled={!wzText || wzText === wzSel.text}
+                >✓ Metni Uygula</button>
+              </div>
+            {/if}
 
             <div class="wz-grid">
               <label>Yazı rengi
@@ -2096,6 +2207,35 @@ window.addEventListener('message', function(e) {
     font-weight: 600;
   }
   .wz-apply:disabled { opacity: 0.5; cursor: not-allowed; }
+  .wz-text-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px dashed #d5d8dc;
+  }
+  .wz-text-row label {
+    font-size: 11px;
+    color: #4b5563;
+    white-space: nowrap;
+  }
+  .wz-text-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.25rem 0.4rem;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    font-size: 12px;
+    background: #fff;
+  }
+  :global(html.dark) .wz-text-row { border-bottom-color: #3f3f46; }
+  :global(html.dark) .wz-text-row label { color: #c9ccd1; }
+  :global(html.dark) .wz-text-row input {
+    background: #2d2d30;
+    border-color: #4b5563;
+    color: #e6e6e6;
+  }
   .wz-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
