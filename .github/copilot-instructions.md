@@ -89,6 +89,14 @@ Her versiyon artışı sonrası uygulama otomatik derlenip **GitHub Release** ol
   release'leri bu yüzden Intel `.dmg` olmadan çıktı. Bir iş saatlerce `queued` kalıyorsa
   ilk şüphelenilecek şey runner etiketidir; GitHub'ın güncel listesiyle karşılaştır.
   Geçerli Intel etiketi: **`macos-15-intel`**.
+- ⚠️ **MSI'da Türkçe karakter tuzağı (CP1252).** WiX, MSI dizelerini **code page 1252** (Latin-1) ile
+  yazar ve Türkçe'nin **`ş Ş ı İ ğ Ğ`** harfleri bu kod sayfasında **yoktur**. `tauri.conf.json`'daki
+  `productName` veya `bundle.fileAssociations[].description` bu harfleri içerirse `light.exe`
+  **LGHT0311** ile çöker, Windows paketi hiç üretilmez (v2.21.0'da oldu). `candle` geçip `light`
+  çökerse ilk şüpheli budur — ayrıca Tauri, `light.exe`'nin hatasını yutar; sebebi görmek için
+  `tauri build --verbose` gerekir. Release CI'da artık **saniyesinde yakalayan bir CP1252 kontrolü**
+  var. `ç ö ü â é` CP1252'de VARDIR, sorun değildir; `name` alanı yalnızca macOS `Info.plist`'ine
+  gider (UTF-8) ve Türkçe kalabilir.
 - Bu Mac'te 4 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** bu CI ile yapılır.
 - Etiket zaten varsa: `git tag -d vX.Y.Z && git push origin :vX.Y.Z` ile silip yeniden oluştur.
   **Ancak** o etiketin release'i yayımlanmış/derleniyorsa silme — bir sonraki yamayı yeni sürüm

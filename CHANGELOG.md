@@ -3,6 +3,26 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.21.1] — 2026-07-12 — Windows MSI Paketlemesi Onarıldı (CP1252 / Türkçe karakter)
+
+### Düzeltilen
+- **v2.21.0'ın Windows paketi hiç üretilmedi.** Yeni eklenen dosya ilişkilendirmesinin açıklamaları
+  Türkçe `ş` / `İ` / `ı` harfleri içeriyordu; WiX ise MSI dizelerini **code page 1252** (Latin-1) ile
+  yazar ve bu harfler o kod sayfasında **yoktur**. Sonuç: `light.exe` **LGHT0311** ile çöktü,
+  `.msi` ve `.exe` release'e hiç eklenemedi (macOS ve Linux paketleri etkilenmedi).
+- Açıklamalar CP1252 güvenli Türkçe ifadelere çevrildi ("e-Fatura XSLT dizayn belgesi",
+  "UBL-TR e-belge XML verisi"). `name` alanı yalnızca macOS `Info.plist`'ine gittiğinden
+  (UTF-8) Türkçe kaldı.
+- Teşhis notu: Tauri, `light.exe`'nin kendi hata çıktısını yutuyor ("failed to run light.exe" deyip
+  susuyor); asıl WiX hatasını görmek için `tauri build --verbose` gerekiyor.
+
+### Eklenen
+- **Release CI'da CP1252 ön kontrolü:** `productName` ve dosya ilişkilendirme açıklamaları derleme
+  başlamadan doğrulanıyor. Aynı hata bir daha 20 dakikalık derlemenin sonunda kriptik bir WiX
+  koduyla değil, saniyesinde anlaşılır bir mesajla yakalanır.
+
+---
+
 ## [2.21.0] — 2026-07-12 — Sürükle-Bırak, "Birlikte Aç" ve Varsayılan Veri Eşlemesi
 
 ### Eklenen
