@@ -1,0 +1,83 @@
+name: release
+
+# Sürüm etiketi (ör. v2.14.0) push edilince 3 platformda derleyip GitHub
+# Release olarak yayınlar. macOS'tan Windows/Linux cross-compile mümkün
+# olmadığından her platform kendi runner'ında derlenir.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest # Apple Silicon + Intel (universal)
+            args: '--target universal-apple-darwin'
+            rust-targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+          - platform: ubuntu-22.04 # geniş glibc uyumu için 22.04
+            args: ''
+            rust-targets: ''
+          - platform: windows-latest
+            args: ''
+            rust-targets: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux bağımlılıkları
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libgtk-3-dev
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Rust kur
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './app/src-tauri -> target'
+
+      - name: Frontend bağımlılıkları
+        run: npm ci
+        working-directory: ./app
+
+      - name: Derle & Release yayınla
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: ./app
+          tagName: ${{ github.ref_name }}
+          releaseName: 'e-Fatura Edit ${{ github.ref_name }}'
+          releaseBody: |
+            e-Fatura Edit ${{ github.ref_name }} — otomatik derlenmiş kurulum paketleri.
+
+            - **Windows:** `.msi` / `.exe` (NSIS)
+            - **macOS:** `.dmg` (Universal — Apple Silicon + Intel)
+            - **Linux:** `.deb` / `.rpm` / `.AppImage`
+
+            > Not: Paketler kod imzasızdır; ilk açılışta işletim sistemi
+            > "bilinmeyen geliştirici" uyarısı gösterebilir.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
