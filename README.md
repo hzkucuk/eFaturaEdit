@@ -16,7 +16,19 @@ görmenizi sağlar.
 - **Kapsamlı yardım sistemi** (F1) — aranabilir, sidebar navigasyonlu dokümantasyon.
 - **Cross-platform:** macOS, Windows, Linux — tek kod tabanı (Tauri v2 + SvelteKit).
 
+- **🤖 AI Asistan (BYOK)** — Claude / ChatGPT / Gemini / Ollama / NVIDIA ile XSLT/XML tasarımına yardım. Hedefli bul/değiştir düzenlemeleri, kendi kendine düzelten ajan modu, onay öncesi canlı önizleme; görsel/PDF/dosya ekleme (vision). Anahtarlar **OS anahtar zincirinde şifreli** saklanır, hiçbir anahtar gömülü/paylaşılı değildir.
+- **CSS Stilleri snippet kategorisi** — hazır metin/kutu/yerleşim/tablo/sayfa CSS kuralları.
+
 Detaylı liste için [FEATURES.md](FEATURES.md).
+
+## Ekran Görüntüleri
+
+<!-- Görseller docs/screenshots/ altına eklenince görünür. -->
+| Ana pencere | AI Asistan |
+| :---: | :---: |
+| ![Ana pencere](docs/screenshots/main.png) | ![AI Asistan](docs/screenshots/ai-assistant.png) |
+| **AI önerisini uygula (diff + önizleme)** | **Ayarlar** |
+| ![AI uygula](docs/screenshots/ai-apply.png) | ![Ayarlar](docs/screenshots/settings.png) |
 
 ## Gereksinimler
 
