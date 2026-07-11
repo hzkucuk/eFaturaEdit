@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
-  import { settings } from '$lib/settings.svelte';
+  import { settings, AI_PROVIDER_OPTIONS } from '$lib/settings.svelte';
   import {
     listSessions,
     newSession,
@@ -178,6 +178,15 @@
     if (!path) return '(kaydedilmemiş dosya)';
     return path.split(/[\\/]/).pop() ?? path;
   }
+
+  // Hangi sağlayıcı/model kullanılıyor — panel başlığında rozet olarak gösterilir.
+  const activeProviderLabel = $derived(
+    AI_PROVIDER_OPTIONS.find((o) => o.value === settings.aiProvider)?.label ?? settings.aiProvider,
+  );
+  const activeModel = $derived(settings.aiProviders[settings.aiProvider].model || '(model seçilmedi)');
+  const modelBadgeTitle = $derived(
+    `Kullanılan model — Ayarlar → AI Asistan bölümünden değiştirebilirsiniz.\nSağlayıcı: ${activeProviderLabel}\nModel: ${activeModel}`,
+  );
 
   const history = $derived(active.history);
   // sessions'a dokunarak reaktif kalmasını sağla (localStorage değil, rune).
@@ -531,7 +540,10 @@ Kurallar:
 
 <div class="ai-panel">
   <header class="ai-header">
-    <h2>🤖 AI Asistan</h2>
+    <div class="ai-title-row">
+      <h2>🤖 AI Asistan</h2>
+      <span class="ai-model-badge" title={modelBadgeTitle}>{activeProviderLabel} · {activeModel}</span>
+    </div>
     <div class="ai-session-bar">
       <select
         class="ai-session-select"
@@ -699,6 +711,28 @@ Kurallar:
     color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+  .ai-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .ai-model-badge {
+    margin-left: auto;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    font-family: ui-monospace, Menlo, monospace;
+    color: #0a5cff;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+    cursor: help;
   }
   .ai-session-bar {
     display: flex;
@@ -1090,7 +1124,8 @@ Kurallar:
     border-color: #4b5563;
     color: #e6e6e6;
   }
-  :global(html.dark) .ai-chip-embed {
+  :global(html.dark) .ai-chip-embed,
+  :global(html.dark) .ai-model-badge {
     background: #172554;
     border-color: #1e3a8a;
     color: #93c5fd;

@@ -717,8 +717,17 @@
     }
   }
 
-  function confirmAiApply() {
-    if (aiApplyTarget === 'xslt') {
+  /**
+   * AI önerisini editöre yaz ve DİSKE DE KAYDET.
+   *
+   * Otomatik kayıt olmadan dosya bayat kalıyordu: editör güncel ama diskteki
+   * içerik eski oluyor, sonraki tur/dış araçlar eski dosyayla çalışıyordu.
+   * `saveOne()` önce XML/XSLT syntax doğrulaması yapar — bozuk çıktı diske
+   * yazılmaz, kullanıcı uyarılır.
+   */
+  async function confirmAiApply() {
+    const target = aiApplyTarget;
+    if (target === 'xslt') {
       editorState.xsltText = aiApplyNewText;
       xsltEditor?.setValue(aiApplyNewText);
     } else {
@@ -726,8 +735,22 @@
       xmlEditor?.setValue(aiApplyNewText);
     }
     aiApplyOpen = false;
-    status(`AI önerisi ${aiApplyTarget.toUpperCase()} editörüne uygulandı — kaydetmeyi unutmayın.`);
     runTransform();
+
+    const path = target === 'xslt' ? editorState.xsltPath : editorState.xmlPath;
+    if (!path) {
+      status(
+        `AI önerisi ${target.toUpperCase()} editörüne uygulandı — dosya henüz diskte yok, "Farklı" ile kaydedin.`,
+      );
+      return;
+    }
+    const saved = await saveOne(target, true);
+    status(
+      saved
+        ? `AI önerisi uygulandı ve ${target.toUpperCase()} kaydedildi: ${path}`
+        : `AI önerisi uygulandı ama ${target.toUpperCase()} KAYDEDİLEMEDİ (syntax hatası) — düzeltip elle kaydedin.`,
+      !saved,
+    );
   }
 
   function cancelAiApply() {
