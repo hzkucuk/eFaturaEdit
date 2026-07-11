@@ -334,8 +334,19 @@ Kurallar:
     attachments?: ApiAttachment[];
   }
 
-  /** Ortak model çağrısı — sağlayıcı config + anahtar kontrolü tek yerde. */
-  async function callAi(messages: ApiMessage[]): Promise<string> {
+  /**
+   * Ortak model çağrısı.
+   *
+   * `cachedContext` (dosya bağlamı) sohbet mesajlarına DEĞİL, ayrı bir alanda
+   * gönderilir; Rust tarafı bunu promptun KARARLI ÖNEKİNE (system bölümü) koyar
+   * ve Anthropic'te `cache_control` ile işaretler. Böylece prompt caching tutar:
+   * dosya değişmediği sürece aynı bağlam tekrar tekrar ücretlendirilmez
+   * (Anthropic'te cache okuma ≈ girdi fiyatının %10'u).
+   *
+   * ÖNEMLİ: Bağlamı son kullanıcı mesajına eklemek öneki her turda değiştirir ve
+   * cache'i tamamen devre dışı bırakır — bu yüzden ayrı tutulur.
+   */
+  async function callAi(messages: ApiMessage[], cachedContext = ''): Promise<string> {
     const cfg = settings.aiProviders[settings.aiProvider];
     if (settings.aiProvider !== 'ollama' && !cfg.apiKey.trim()) {
       throw new Error('Önce Ayarlar → AI Asistan bölümünden API anahtarınızı girin.');
@@ -347,6 +358,7 @@ Kurallar:
         api_key: cfg.apiKey,
         model: cfg.model,
         system_prompt: SYSTEM_PROMPT,
+        cached_context: cachedContext,
         messages,
       },
     });
@@ -395,32 +407,36 @@ Kurallar:
     sending = true;
 
     try {
-      // Son N mesajla sınırla ve dosya bağlamını + ekleri YALNIZCA son mesaja ekle.
+      // Son N mesajla sınırla.
       const recent = active.history.slice(-MAX_HISTORY_MESSAGES);
       const messages: ApiMessage[] = recent.map((h) => ({ role: h.role, content: h.content }));
       const li = messages.length - 1;
 
-      // Metin dosyalarının içeriğini son mesaja bağlam olarak ekle.
-      let apiContent = text;
+      // Dosya bağlamı AYRI gönderilir (kararlı önek → prompt caching).
+      // Sohbet mesajına eklenirse önek her turda değişir ve cache tutmaz.
+      const cachedContext = includeContext ? contextBlockFor(xsltText, xmlText) : '';
+
+      // Eklenen METİN dosyaları da tura özgüdür (her turda değişmez) — bunlar da
+      // önbelleklenebilir bağlama girer, mesaja değil.
+      let extraContext = '';
       for (const a of sentAttachments) {
         if (a.kind === 'text' && a.text) {
-          apiContent += `\n\nEklenen dosya "${a.name}":\n\`\`\`\n${a.text}\n\`\`\``;
+          extraContext += `\n\nEklenen dosya "${a.name}":\n\`\`\`\n${a.text}\n\`\`\``;
         }
       }
-      if (includeContext) apiContent += contextBlockFor(xsltText, xmlText);
 
-      // Görsel/PDF eklerini multimodal olarak son mesaja iliştir.
+      // Görsel/PDF ekleri multimodal olarak son mesaja iliştirilir (cache'lenmez).
       const mediaAttachments: ApiAttachment[] = sentAttachments
         .filter((a) => a.kind === 'image' || a.kind === 'document')
         .map((a) => ({ kind: a.kind, media_type: a.mediaType, data: a.data ?? '' }));
 
       messages[li] = {
         role: 'user',
-        content: apiContent,
+        content: text,
         ...(mediaAttachments.length ? { attachments: mediaAttachments } : {}),
       };
 
-      const reply = await callAi(messages);
+      const reply = await callAi(messages, cachedContext + extraContext);
       active.history = [...active.history, { role: 'assistant', content: reply }];
       upsertSession(active);
     } catch (err) {
@@ -455,14 +471,19 @@ Kurallar:
 
     try {
       for (let iter = 1; iter <= AGENT_MAX_ITERS; iter++) {
+        // Dosya bağlamı mesajdan ayrı (kararlı önek) gönderilir → ajan turları
+        // arasında dosya değişmediği sürece prompt caching tutar. Değişince
+        // (düzenleme uygulanınca) cache doğal olarak yenilenir.
         const taskMsg =
           `Görev: ${text}\n\n` +
           (feedback ? `Önceki turun sonucu: ${feedback}\n\n` : '') +
-          `Aşağıdaki GÜNCEL dosya içeriğine göre gereken bul/değiştir düzenlemelerini ver. ` +
-          `Görev tamamlandıysa ve başka değişiklik gerekmiyorsa yalnızca "TAMAM" yaz.` +
-          contextBlockFor(workXslt, workXml);
+          `Sana verilen GÜNCEL dosya içeriğine göre gereken bul/değiştir düzenlemelerini ver. ` +
+          `Görev tamamlandıysa ve başka değişiklik gerekmiyorsa yalnızca "TAMAM" yaz.`;
 
-        const reply = await callAi([{ role: 'user', content: taskMsg }]);
+        const reply = await callAi(
+          [{ role: 'user', content: taskMsg }],
+          contextBlockFor(workXslt, workXml),
+        );
         const suggestion = extractSuggestion(reply);
         const prose = suggestionProse(reply);
 

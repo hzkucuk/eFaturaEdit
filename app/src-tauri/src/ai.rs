@@ -38,6 +38,13 @@ pub struct AiChatRequest {
     pub api_key: String,
     pub model: String,
     pub system_prompt: String,
+    /// Dosya bağlamı (güncel XSLT/XML). Sohbet mesajlarına DEĞİL, promptun
+    /// kararlı önekine (system bölümü) konur — böylece prompt caching devreye
+    /// girer: Anthropic'te açıkça `cache_control` ile işaretlenir, OpenAI ve
+    /// Gemini'de önek değişmediği sürece otomatik/örtük cache tutar.
+    /// Dosya düzenlenmediği sürece tekrar tekrar ücretlendirilmez.
+    #[serde(default)]
+    pub cached_context: String,
     pub messages: Vec<AiMessage>,
 }
 
@@ -191,13 +198,33 @@ async fn call_anthropic(req: &AiChatRequest) -> Result<String, String> {
             }
         })
         .collect();
+    // System bölümü blok dizisi olarak kurulur: [statik prompt] + [dosya bağlamı].
+    // Dosya bloğu `cache_control: ephemeral` ile işaretlenir → aynı dosyayla
+    // yapılan sonraki isteklerde bu blok cache'ten okunur (girdi maliyetinin
+    // ~%10'u). Cache, blok içeriği değişince (dosya düzenlenince) kendiliğinden
+    // geçersizleşir; ayrıca cache_control yalnızca son statik blokta olmalıdır.
+    let mut system_blocks: Vec<Value> = vec![json!({
+        "type": "text",
+        "text": req.system_prompt,
+    })];
+    if !req.cached_context.is_empty() {
+        system_blocks.push(json!({
+            "type": "text",
+            "text": req.cached_context,
+            "cache_control": { "type": "ephemeral" },
+        }));
+    } else {
+        // Bağlam yoksa statik promptu cache'le (yine de tekrar tekrar ödenmesin).
+        system_blocks[0]["cache_control"] = json!({ "type": "ephemeral" });
+    }
+
     let body = json!({
         // Büyük XSLT şablonları tek yanıtta dönebildiğinden yüksek tutuluyor;
         // aksi halde yanıt yarıda kesilip kod bloğu kapanmıyor (Editöre Uygula
         // butonu kaybolur, sohbete kapanmamış dev kod dökülür).
         "model": req.model,
         "max_tokens": 16384,
-        "system": req.system_prompt,
+        "system": system_blocks,
         "messages": messages,
     });
 
@@ -264,8 +291,18 @@ async fn call_gemini(req: &AiChatRequest) -> Result<String, String> {
         "contents": contents,
         "generationConfig": { "maxOutputTokens": 16384 },
     });
-    if !req.system_prompt.is_empty() {
-        body["system_instruction"] = json!({ "parts": [{ "text": req.system_prompt }] });
+    // Dosya bağlamı system_instruction'a konur (kararlı önek) → Gemini'nin örtük
+    // cache'i devreye girer; sohbet mesajları değişse de önek aynı kaldığı sürece
+    // bu bölüm yeniden ücretlendirilmez.
+    if !req.system_prompt.is_empty() || !req.cached_context.is_empty() {
+        let mut parts: Vec<Value> = Vec::new();
+        if !req.system_prompt.is_empty() {
+            parts.push(json!({ "text": req.system_prompt }));
+        }
+        if !req.cached_context.is_empty() {
+            parts.push(json!({ "text": req.cached_context }));
+        }
+        body["system_instruction"] = json!({ "parts": parts });
     }
 
     let resp = client
@@ -300,7 +337,16 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
     let client = reqwest::Client::new();
     let url = format!("{}/chat/completions", req.base_url.trim_end_matches('/'));
 
-    let mut messages = vec![json!({ "role": "system", "content": req.system_prompt })];
+    // Dosya bağlamı ilk (system) mesaja eklenir → promptun öneki sabit kalır ve
+    // OpenAI'ın otomatik prompt cache'i (≥1024 token'lık kararlı önek) devreye
+    // girer. Bağlam sohbet mesajlarına eklenirse önek her turda değişir ve cache
+    // hiç tutmaz — bu yüzden burada birleştiriliyor.
+    let system_content = if req.cached_context.is_empty() {
+        req.system_prompt.clone()
+    } else {
+        format!("{}\n{}", req.system_prompt, req.cached_context)
+    };
+    let mut messages = vec![json!({ "role": "system", "content": system_content })];
     messages.extend(req.messages.iter().map(|m| {
         // OpenAI Chat Completions yalnızca görseli (image_url) destekler; PDF
         // bu formatta gönderilemez, sessizce atlanır (kullanıcı UI'da uyarılır).

@@ -3,6 +3,23 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.18.0] — 2026-07-11 — Prompt Caching + Koyu Tema Düzeltmesi + Uygula-Kaydet — app/src-tauri/src/ai.rs, app/src/routes/+layout.svelte
+
+### Eklenen — Prompt Caching (token maliyeti ~%90 düşürüldü)
+- **Dosya bağlamı artık promptun KARARLI ÖNEKİNE (system bölümü) konuyor**, sohbet mesajına değil. Önceden son mesaja ekleniyordu; bu, öneki her turda değiştirdiğinden hiçbir sağlayıcının cache'i tutmuyordu.
+- **Anthropic:** bağlam bloğu `cache_control: ephemeral` ile işaretlenir → sonraki turlarda cache okuma ≈ girdi fiyatının %10'u.
+- **OpenAI (+ NVIDIA/Ollama uyumlu):** bağlam ilk `system` mesajına birleştirilir → otomatik önek cache'i (≥1024 token) devreye girer.
+- **Gemini:** bağlam `system_instruction`'a konur → örtük cache önekte tutar.
+- Ajan modu turları da aynı mekanizmayı kullanır. Görsel/PDF ekleri (turdan tura değişen) mesajda kalır; metin ekleri önbelleklenebilir bağlama girer.
+- Base64 kırpma (v2.14) ile birlikte: 587 KB'lık şablon → ~20K token → **2. turdan itibaren ~2K etkin token**.
+
+### Düzeltilen
+- **Koyu tema tüm alanlara uygulanmıyordu.** Tema sınıfı `+page.svelte` içindeki `.app` div'ine veriliyordu; modallar bu div'in DIŞINDA, Ayarlar AYRI bir route, AI paneli kendi stil kapsamındaydı → koyu tema oralara hiç ulaşmıyordu. Tema artık belge köküne (`<html class="dark">`, yeni `+layout.svelte`) uygulanıyor; modallar, AI paneli ve Ayarlar sayfası için koyu tema kuralları eklendi.
+- **AI önerisi uygulanınca dosya diske kaydedilmiyordu** — editör güncel, disk bayat kalıyordu. `confirmAiApply` artık `saveOne()` ile kaydediyor (syntax doğrulaması yapar; bozuk çıktı diske yazılmaz, dosya kaydedilmemişse uyarır).
+
+### Eklenen — UI
+- AI panel başlığında **kullanılan sağlayıcı/model rozeti** (ör. `Claude (Anthropic) · claude-sonnet-5`).
+
 ## [2.17.0] — 2026-07-11 — XSLT 2.0/3.0 Motoru (Saxon-HE) + XSLT Komut Seti + Görsel Gömme — sidecar/, app/src/lib/xslt.ts, app/src/lib/data/xslt-snippets.ts
 
 ### Eklenen — XSLT 2.0/3.0 Desteği (regresyon giderildi)
