@@ -12,6 +12,10 @@
   import { goto } from '$app/navigation';
   import { invoke } from '@tauri-apps/api/core';
   import { onMount } from 'svelte';
+  import { manifest } from '$lib/data';
+  import { openUrl } from '@tauri-apps/plugin-opener';
+
+  const REPO_URL = 'https://github.com/hzkucuk/eFaturaEdit';
 
   // Ayarlara doğrudan gelinirse anahtarların zincirden yüklendiğinden emin ol
   // (once-guard: ana sayfada zaten yüklendiyse tekrar çalışmaz).
@@ -370,6 +374,46 @@
         <span class="val">{settings.panelSizes.xsltHeight}px</span>
       </div>
     </section>
+
+    <section class="group about">
+      <h2>Hakkında</h2>
+      <div class="about-head">
+        <div>
+          <div class="about-name">e-Fatura Dizayn Editörü</div>
+          <div class="about-ver">Sürüm {manifest.version}</div>
+        </div>
+      </div>
+      <p class="hint">
+        Türkiye e-Fatura / e-Arşiv / e-İrsaliye (UBL-TR) belgeleri için XSLT
+        tasarım düzenleyicisi. Tam XSLT 1.0/2.0/3.0 (Saxon-HE), canlı önizleme,
+        BYOK AI asistan ve hazır snippet kütüphanesi.
+      </p>
+
+      <div class="row">
+        <span class="static-label">Lisans</span>
+        <span class="about-val">MIT</span>
+      </div>
+      <div class="row">
+        <span class="static-label">Telif</span>
+        <span class="about-val">© 2018–2026 Zafer Bilgisayar</span>
+      </div>
+      <div class="row">
+        <span class="static-label">Kaynak kodu</span>
+        <button class="link-btn" onclick={() => openUrl(REPO_URL)}>github.com/hzkucuk/eFaturaEdit</button>
+      </div>
+
+      <h3 class="about-sub">Kullanılan açık kaynak bileşenler</h3>
+      <ul class="about-libs">
+        <li><b>Saxon-HE</b> — XSLT 2.0/3.0 motoru · Mozilla Public License 2.0 · © Saxonica</li>
+        <li><b>Tauri</b> · <b>SvelteKit</b> / <b>Svelte</b> · <b>CodeMirror 6</b> · <b>Vite</b> — MIT/Apache-2.0</li>
+        <li><b>reqwest</b>, <b>keyring</b> (Rust) — API çağrıları ve OS anahtar zinciri</li>
+      </ul>
+      <p class="hint">
+        API anahtarları yalnızca bu cihazda, OS anahtar zincirinde şifreli
+        saklanır. AI özellikleri BYOK'tur (kendi anahtarınız); uygulamaya gömülü
+        hiçbir anahtar yoktur.
+      </p>
+    </section>
   </div>
 </div>
 
@@ -491,6 +535,49 @@
     font-size: 12px;
     color: #6b7280;
     line-height: 1.4;
+  }
+  .about-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .about-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0a5cff;
+  }
+  .about-ver {
+    font-size: 12px;
+    color: #6b7280;
+    font-family: ui-monospace, Menlo, monospace;
+  }
+  .about-val {
+    font-size: 13px;
+    color: #1a1a1a;
+  }
+  .about-sub {
+    margin: 1rem 0 0.4rem;
+    font-size: 12px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .about-libs {
+    margin: 0 0 0.75rem;
+    padding-left: 1.1rem;
+    font-size: 12px;
+    color: #4b5563;
+    line-height: 1.6;
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    color: #0a5cff;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    text-decoration: underline;
   }
   .fetch-models {
     padding: 0.3rem 0.6rem;

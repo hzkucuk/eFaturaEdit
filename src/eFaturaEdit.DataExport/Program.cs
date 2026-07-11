@@ -113,7 +113,7 @@ internal static class Program
     private static void ExportManifest(string outputDir)
     {
         var manifest = new ManifestJson(
-            Version: "2.16.0",
+            Version: "2.17.0",
             GeneratedAt: DateTime.UtcNow.ToString("O"),
             Source: "eFaturaEdit.Core",
             Files: new[] { "snippets.json", "samples.json", "completion.json" });

@@ -3,6 +3,28 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.17.0] — 2026-07-11 — XSLT 2.0/3.0 Motoru (Saxon-HE) + XSLT Komut Seti + Görsel Gömme — sidecar/, app/src/lib/xslt.ts, app/src/lib/data/xslt-snippets.ts
+
+### Eklenen — XSLT 2.0/3.0 Desteği (regresyon giderildi)
+- **Saxon-HE (MPL 2.0) native sidecar** ile tam **XSLT 1.0/2.0/3.0** desteği. Tarayıcının `XSLTProcessor`'ı yalnızca 1.0 destekliyordu (eski WinForms Saxon-HE'ye göre gerilemeydi); `format-dateTime`, `format-date`, `upper-case`, `tokenize`, `replace`, `matches`, `xsl:for-each-group`, `xsl:function`, `xsl:iterate` vb. artık çalışıyor.
+- `sidecar/`: Java transformer (stdin uzunluk-önekli XSLT+XML → stdout HTML, BOM/DOCTYPE normalize) + GraalVM `native-image` derleyici (`build.sh`, Windows dahil taşınabilir). Saxon-HE jar'ları + reflection config commit'li; ~40 MB native binary CI'da 3 platformda derlenir (gitignore).
+- Rust: `tauri-plugin-shell` + `xslt_transform` komutu (externalBin sidecar). Frontend `xslt.ts` sidecar-öncelikli; sidecar yoksa tarayıcı 1.0 işlemcisine düşer.
+- Performans: ~57 ms (587 KB GİB şablonu + fatura XML).
+
+### Eklenen — Snippet Kütüphanesi Genişletildi
+- **"XSLT Komutları" kategorisi** üç alt sürümle dolduruldu: **XSLT 1.0** (29 öğe: stylesheet, template, apply/call-templates, choose, key, decimal-format, attribute-set...), **XSLT 2.0** (15: function, for-each-group, analyze-string, format-date/dateTime, tokenize, replace...), **XSLT 3.0** (11: mode, iterate, try/catch, merge, map, where-populated, assert, package...).
+- **"XPath Fonksiyonları" kategorisi** (yeni): XPath 1.0 (sum, count, format-number, substring, concat, translate, normalize-space, contains, position...) ve XPath 2.0/3.0 (format-date, string-join, tokenize, replace, distinct-values, upper-case, if/then/else...) — fatura şablonlarına özel örneklerle.
+
+### Eklenen — Hakkında / Lisans
+- Ayarlar sayfasına **Hakkında** bölümü: sürüm, MIT lisansı, telif, kaynak kodu bağlantısı ve kullanılan açık kaynak bileşenlerin (Saxon-HE MPL 2.0, Tauri, Svelte, CodeMirror...) atıfları.
+
+### Eklenen — Görsel Gömme
+- AI paneline yapıştırılan/eklenen görselde **"⬇ göm"** butonu — base64 data URI olarak XSLT editörüne imleç konumuna `<img>` gömer (AI'a gerek yok).
+
+### Değişen
+- AI sistem promptundaki "yalnızca XSLT 1.0" kısıtı kaldırıldı; 2.0/3.0 özellikleri ve Türkçe `format-date`/`format-number` rehberi eklendi.
+- Release CI: macOS iki mimariye ayrıldı (native-image universal üretemez) → Apple Silicon + Intel ayrı `.dmg`.
+
 ## [2.16.0] — 2026-07-11 — AI Uzmanlaştırma + Oturum Kalıcılığı + Onay Modalı Yeniden Düzenlendi — app/src/lib/AIAssistant.svelte, app/src/routes/+page.svelte
 
 ### Değişen — AI Asistan

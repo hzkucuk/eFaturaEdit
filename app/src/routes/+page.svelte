@@ -5,6 +5,8 @@
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { snippets, samples, completion, manifest, groupSnippetsByCategory } from '$lib/data';
   import { cssSnippets } from '$lib/data/css-snippets';
+  import { xsltSnippets } from '$lib/data/xslt-snippets';
+  import { xpathSnippets } from '$lib/data/xpath-snippets';
   import type { Snippet } from '$lib/data/types';
   import { transformXml, validateXml, XsltError } from '$lib/xslt';
   import { settings, updatePanelSize, updateSetting, themeKind, loadApiKeys } from '$lib/settings.svelte';
@@ -104,7 +106,13 @@
   $effect(() => updatePanelSize('aiPanelHeight', aiPanelHeight));
 
   // ─── Snippet grupları ───────────────────────────────────────────────
-  const allSnippets = $derived([...snippets, ...cssSnippets, ...userSnippets]);
+  const allSnippets = $derived([
+    ...snippets,
+    ...xsltSnippets,
+    ...xpathSnippets,
+    ...cssSnippets,
+    ...userSnippets,
+  ]);
   const groupedSnippets = $derived(groupSnippetsByCategory(allSnippets));
   const categories = $derived(Array.from(groupedSnippets.keys()));
   const visibleSnippets = $derived.by<Snippet[]>(() => {
