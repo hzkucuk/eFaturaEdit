@@ -65,7 +65,7 @@ jobs:
           $enc = [System.Text.Encoding]::UTF8
           $xsltB = $enc.GetBytes($xslt)
           $xmlB  = $enc.GetBytes($xml)
-          function BE([int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); return $b }
+          function BE([int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); return [byte[]]$b }
 
           $payload = New-Object System.Collections.Generic.List[byte]
           $payload.AddRange((BE $xsltB.Length)); $payload.AddRange($xsltB)
@@ -108,7 +108,7 @@ jobs:
           $xmlB  = [System.IO.File]::ReadAllBytes($xmlPath)
           Write-Host "XSLT: $([math]::Round($xsltB.Length/1KB,1)) KB · XML: $([math]::Round($xmlB.Length/1KB,1)) KB"
 
-          function BE([int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); return $b }
+          function BE([int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); return [byte[]]$b }
           $payload = New-Object System.Collections.Generic.List[byte]
           $payload.AddRange((BE $xsltB.Length)); $payload.AddRange($xsltB)
           $payload.AddRange((BE $xmlB.Length));  $payload.AddRange($xmlB)
