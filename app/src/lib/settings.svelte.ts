@@ -39,10 +39,10 @@ export const THEME_OPTIONS: { value: Theme; label: string; kind: 'light' | 'dark
 /**
  * AI sağlayıcıları — hepsi BYOK (bring your own key): kullanıcı kendi
  * anahtarını girer, hiçbir anahtar uygulamaya gömülü/paylaşılı değildir.
- * openai/ollama/nvidia OpenAI-uyumlu chat completion formatını kullanır;
- * yalnızca base URL/model farklı — Rust tarafında tek kod yolu.
+ * openai/ollama/nvidia/deepseek OpenAI-uyumlu chat completion formatını
+ * kullanır; yalnızca base URL/model farklı — Rust tarafında tek kod yolu.
  */
-export type AiProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'nvidia';
+export type AiProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'nvidia' | 'deepseek';
 
 export interface AiProviderConfig {
   apiKey: string;
@@ -50,15 +50,61 @@ export interface AiProviderConfig {
   baseUrl: string;
   /** Son "Getir" çağrısından önbelleklenen model listesi (API anahtarı girilince otomatik doldurulur). */
   cachedModels: string[];
+  /** Derin düşünme (extended thinking / reasoning). Yalnızca destekleyen sağlayıcı+modelde gönderilir. */
+  thinking: boolean;
+  /** Yaratıcılık; `null` = sağlayıcı varsayılanı (istekte hiç gönderilmez). */
+  temperature: number | null;
+}
+
+/**
+ * Dinamik AI parametreleri — hangi kontrolün hangi sağlayıcı+model için
+ * gösterileceğini tanımlar. UI (Ayarlar + AI paneli) bu kayıtlardan üretilir;
+ * yeni bir parametre (ör. web araması) eklemek = buraya bir kayıt eklemek.
+ */
+export interface AiParamDescriptor {
+  key: 'thinking' | 'temperature';
+  appliesTo: (provider: AiProvider, model: string) => boolean;
+}
+
+export const AI_PARAM_DESCRIPTORS: AiParamDescriptor[] = [
+  {
+    key: 'thinking',
+    appliesTo: (provider, model) => {
+      switch (provider) {
+        // Extended thinking claude-3-7'den itibaren; bilinen eskileri ele,
+        // gerisini (gelecek modeller dahil) destekliyor say.
+        case 'anthropic':
+          return !/claude-(1|2|3-[05])/i.test(model);
+        // Chat Completions'ta reasoning_effort yalnızca reasoning modellerinde.
+        case 'openai':
+          return /^(o[134]|gpt-5)/i.test(model);
+        // thinkingConfig Gemini 2.5+ ve "-latest" takma adlarında geçerli.
+        case 'gemini':
+          return /2\.5|latest/i.test(model);
+        // DeepSeek'te düşünme ayrı modeldir (deepseek-reasoner) — anahtar yok.
+        default:
+          return false;
+      }
+    },
+  },
+  { key: 'temperature', appliesTo: () => true },
+];
+
+/** Temperature üst sınırı sağlayıcıya göre değişir (Anthropic 0–1, diğerleri 0–2). */
+export function temperatureMax(provider: AiProvider): number {
+  return provider === 'anthropic' ? 1 : 2;
 }
 
 export const AI_PROVIDER_OPTIONS: { value: AiProvider; label: string; needsKey: boolean }[] = [
   { value: 'anthropic', label: 'Claude (Anthropic)', needsKey: true },
   { value: 'openai', label: 'ChatGPT (OpenAI)', needsKey: true },
   { value: 'gemini', label: 'Gemini (Google)', needsKey: true },
+  { value: 'deepseek', label: 'DeepSeek', needsKey: true },
   { value: 'ollama', label: 'Ollama (yerel)', needsKey: false },
   { value: 'nvidia', label: 'NVIDIA NIM', needsKey: true },
 ];
+
+const PARAM_DEFAULTS = { thinking: false, temperature: null as number | null };
 
 const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
   anthropic: {
@@ -66,8 +112,15 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
     model: 'claude-sonnet-5',
     baseUrl: 'https://api.anthropic.com/v1',
     cachedModels: [],
+    ...PARAM_DEFAULTS,
   },
-  openai: { apiKey: '', model: 'gpt-4o', baseUrl: 'https://api.openai.com/v1', cachedModels: [] },
+  openai: {
+    apiKey: '',
+    model: 'gpt-4o',
+    baseUrl: 'https://api.openai.com/v1',
+    cachedModels: [],
+    ...PARAM_DEFAULTS,
+  },
   gemini: {
     apiKey: '',
     // Google zaman zaman tarihli model sürümlerini yeni kullanıcılar için kapatıyor
@@ -76,18 +129,29 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
     model: 'gemini-flash-latest',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     cachedModels: [],
+    ...PARAM_DEFAULTS,
+  },
+  deepseek: {
+    apiKey: '',
+    // Derin düşünme için ayrı model: deepseek-reasoner (model listesinde çıkar).
+    model: 'deepseek-chat',
+    baseUrl: 'https://api.deepseek.com/v1',
+    cachedModels: [],
+    ...PARAM_DEFAULTS,
   },
   ollama: {
     apiKey: '',
     model: 'llama3.1',
     baseUrl: 'http://localhost:11434/v1',
     cachedModels: [],
+    ...PARAM_DEFAULTS,
   },
   nvidia: {
     apiKey: '',
     model: 'meta/llama-3.1-70b-instruct',
     baseUrl: 'https://integrate.api.nvidia.com/v1',
     cachedModels: [],
+    ...PARAM_DEFAULTS,
   },
 };
 

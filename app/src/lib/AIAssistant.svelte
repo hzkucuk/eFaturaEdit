@@ -13,7 +13,7 @@
 -->
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
-  import { settings, AI_PROVIDER_OPTIONS } from '$lib/settings.svelte';
+  import { settings, AI_PROVIDER_OPTIONS, AI_PARAM_DESCRIPTORS, updateAiProviderConfig } from '$lib/settings.svelte';
   import {
     listSessions,
     newSession,
@@ -188,6 +188,16 @@
     f(m.ai.modelBadgeTitle, { provider: activeProviderLabel, model: activeModel }),
   );
 
+  // Derin düşünme hızlı düğmesi — yalnızca seçili sağlayıcı+model destekliyorsa
+  // gösterilir (tam kontroller Ayarlar → AI'da).
+  const thinkingApplies = $derived(
+    AI_PARAM_DESCRIPTORS.find((d) => d.key === 'thinking')?.appliesTo(
+      settings.aiProvider,
+      settings.aiProviders[settings.aiProvider].model,
+    ) ?? false,
+  );
+  const thinkingOn = $derived(settings.aiProviders[settings.aiProvider].thinking);
+
   const history = $derived(active.history);
   // sessions'a dokunarak reaktif kalmasını sağla (localStorage değil, rune).
   const savedSessions = $derived((sessions.length, listSessions()));
@@ -357,6 +367,10 @@ Kurallar:
     if (settings.aiProvider !== 'ollama' && !cfg.apiKey.trim()) {
       throw new Error(m.ai.needApiKey);
     }
+    // Parametreler yalnızca sağlayıcı+model desteği varsa gönderilir; aksi
+    // halde varsayılana düşer (thinking=false / temperature=None).
+    const applies = (key: 'thinking' | 'temperature') =>
+      AI_PARAM_DESCRIPTORS.find((d) => d.key === key)?.appliesTo(settings.aiProvider, cfg.model) ?? false;
     return await invoke<string>('ai_chat', {
       request: {
         provider: settings.aiProvider,
@@ -365,6 +379,8 @@ Kurallar:
         model: cfg.model,
         system_prompt: SYSTEM_PROMPT,
         cached_context: cachedContext,
+        thinking: applies('thinking') && cfg.thinking,
+        temperature: applies('temperature') ? cfg.temperature : null,
         messages,
       },
     });
@@ -599,6 +615,14 @@ Kurallar:
         title={aiRuntime.sending ? m.ai.busyNoDelete : m.ai.deleteChat}
         disabled={!activeIsSaved || aiRuntime.sending}
       >🗑</button>
+      {#if thinkingApplies}
+        <button
+          class="ai-session-btn ai-thinking-btn"
+          class:on={thinkingOn}
+          onclick={() => updateAiProviderConfig(settings.aiProvider, 'thinking', !thinkingOn)}
+          title={thinkingOn ? m.ai.thinkingOnTip : m.ai.thinkingOffTip}
+        >🧠</button>
+      {/if}
     </div>
   </header>
 
@@ -797,6 +821,19 @@ Kurallar:
   .ai-session-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+  /* Kapalıyken soluk, açıkken vurgulu — durum tek bakışta anlaşılsın. */
+  .ai-thinking-btn {
+    opacity: 0.45;
+  }
+  .ai-thinking-btn.on {
+    opacity: 1;
+    border-color: #6366f1;
+    background: #eef2ff;
+  }
+  :global(html.dark) .ai-thinking-btn.on {
+    border-color: #818cf8;
+    background: #312e81;
   }
   .ai-notice {
     display: flex;

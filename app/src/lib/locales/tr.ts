@@ -196,6 +196,11 @@ export const tr = {
     languageHint: 'Arayüz dili. Değişiklik anında uygulanır.',
     editTranslations: 'Çevirileri düzenle',
 
+    aiThinking: 'Derin düşünme',
+    aiThinkingHint: 'Model yanıtlamadan önce adım adım akıl yürütür — daha isabetli, ancak daha yavaş ve pahalı.',
+    aiTemperature: 'Yaratıcılık',
+    aiTempDefault: 'Sağlayıcı varsayılanı',
+
     about: 'Hakkında',
     appName: 'e-Fatura Dizayn Editörü',
     version: 'Sürüm {v}',
@@ -376,6 +381,8 @@ export const tr = {
     busyNoNew: 'Yanıt beklenirken yeni sohbet açılamaz',
     busyNoDelete: 'Yanıt beklenirken silinemez',
     deleteChat: 'Bu sohbeti sil',
+    thinkingOnTip: 'Derin düşünme AÇIK — kapatmak için tıklayın',
+    thinkingOffTip: 'Derin düşünme KAPALI — açmak için tıklayın',
     fileNotice: 'Bu sohbet "{file}" için başlatıldı; şu an açık dosya farklı. Yeni dosya için "＋ Yeni sohbet" açabilirsiniz.',
     empty: 'XSLT/XML hakkında bir şey sorun — örn. "bu tabloya toplam satırı ekle" veya "bu XPath ifadesindeki hatayı bul".',
     thinking: 'Düşünüyor…',

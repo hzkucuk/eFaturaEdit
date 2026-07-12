@@ -1,4 +1,4 @@
-//! AI sağlayıcı köprüsü — Claude, ChatGPT, Gemini, Ollama, NVIDIA NIM.
+//! AI sağlayıcı köprüsü — Claude, ChatGPT, Gemini, DeepSeek, Ollama, NVIDIA NIM.
 //!
 //! Kapsam kilidi burada uygulanır: bu modül yalnızca bir metin yanıtı
 //! döndürür, hiçbir dosya sistemi/ayar erişimi yoktur. Çağıran taraf
@@ -45,6 +45,13 @@ pub struct AiChatRequest {
     /// Dosya düzenlenmediği sürece tekrar tekrar ücretlendirilmez.
     #[serde(default)]
     pub cached_context: String,
+    /// Derin düşünme (extended thinking / reasoning). Frontend yalnızca
+    /// destekleyen sağlayıcı+model için true gönderir (AI_PARAM_DESCRIPTORS).
+    #[serde(default)]
+    pub thinking: bool,
+    /// Yaratıcılık; `None` = sağlayıcı varsayılanı (istekte hiç gönderilmez).
+    #[serde(default)]
+    pub temperature: Option<f64>,
     pub messages: Vec<AiMessage>,
 }
 
@@ -53,7 +60,7 @@ pub async fn ai_chat(request: AiChatRequest) -> Result<String, String> {
     match request.provider.as_str() {
         "anthropic" => call_anthropic(&request).await,
         "gemini" => call_gemini(&request).await,
-        _ => call_openai_compatible(&request).await, // openai, ollama, nvidia
+        _ => call_openai_compatible(&request).await, // openai, ollama, nvidia, deepseek
     }
 }
 
@@ -69,7 +76,7 @@ pub async fn ai_list_models(request: AiListModelsRequest) -> Result<Vec<String>,
     match request.provider.as_str() {
         "anthropic" => list_anthropic_models(&request).await,
         "gemini" => list_gemini_models(&request).await,
-        _ => list_openai_compatible_models(&request).await, // openai, ollama, nvidia
+        _ => list_openai_compatible_models(&request).await, // openai, ollama, nvidia, deepseek
     }
 }
 
@@ -218,7 +225,7 @@ async fn call_anthropic(req: &AiChatRequest) -> Result<String, String> {
         system_blocks[0]["cache_control"] = json!({ "type": "ephemeral" });
     }
 
-    let body = json!({
+    let mut body = json!({
         // Büyük XSLT şablonları tek yanıtta dönebildiğinden yüksek tutuluyor;
         // aksi halde yanıt yarıda kesilip kod bloğu kapanmıyor (Editöre Uygula
         // butonu kaybolur, sohbete kapanmamış dev kod dökülür).
@@ -227,6 +234,13 @@ async fn call_anthropic(req: &AiChatRequest) -> Result<String, String> {
         "system": system_blocks,
         "messages": messages,
     });
+    if req.thinking {
+        // Bütçe max_tokens'tan küçük olmalı; thinking açıkken Anthropic
+        // temperature kabul etmez (1 olmak zorunda) — bu yüzden gönderilmez.
+        body["thinking"] = json!({ "type": "enabled", "budget_tokens": 8192 });
+    } else if let Some(t) = req.temperature {
+        body["temperature"] = json!(t);
+    }
 
     let resp = client
         .post(&url)
@@ -291,6 +305,15 @@ async fn call_gemini(req: &AiChatRequest) -> Result<String, String> {
         "contents": contents,
         "generationConfig": { "maxOutputTokens": 16384 },
     });
+    if let Some(t) = req.temperature {
+        body["generationConfig"]["temperature"] = json!(t);
+    }
+    if req.thinking {
+        // -1 = dinamik bütçe (model kendisi belirler). Kapalıyken hiç
+        // gönderilmez → modelin varsayılan davranışı korunur (2.5 Pro'da
+        // düşünme kapatılamadığından açıkça 0 göndermek hata üretirdi).
+        body["generationConfig"]["thinkingConfig"] = json!({ "thinkingBudget": -1 });
+    }
     // Dosya bağlamı system_instruction'a konur (kararlı önek) → Gemini'nin örtük
     // cache'i devreye girer; sohbet mesajları değişse de önek aynı kaldığı sürece
     // bu bölüm yeniden ücretlendirilmez.
@@ -365,7 +388,26 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
             json!({ "role": m.role, "content": parts })
         }
     }));
-    let body = json!({ "model": req.model, "messages": messages, "max_tokens": 16384 });
+    // DeepSeek chat completions max_tokens için 8192 üst sınırı koyar;
+    // 16384 göndermek 400 invalid_request_error döndürür.
+    let max_tokens = if req.provider == "deepseek" { 8192 } else { 16384 };
+    let mut body = json!({ "model": req.model, "messages": messages });
+    // OpenAI reasoning modelleri (o-serisi, gpt-5) `max_tokens`'ı reddeder;
+    // halefi `max_completion_tokens` tüm güncel OpenAI modellerinde geçerli.
+    // Ollama/NVIDIA/DeepSeek ise yalnızca `max_tokens` tanır.
+    if req.provider == "openai" {
+        body["max_completion_tokens"] = json!(max_tokens);
+    } else {
+        body["max_tokens"] = json!(max_tokens);
+    }
+    if let Some(t) = req.temperature {
+        body["temperature"] = json!(t);
+    }
+    if req.thinking && req.provider == "openai" {
+        // Yalnızca reasoning modelleri (o-serisi, gpt-5) kabul eder; frontend
+        // bu kapıyı zaten uygular (AI_PARAM_DESCRIPTORS).
+        body["reasoning_effort"] = json!("high");
+    }
 
     let mut builder = client.post(&url).json(&body);
     if !req.api_key.is_empty() {

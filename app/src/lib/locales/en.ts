@@ -195,6 +195,11 @@ export const en: Messages = {
     languageHint: 'Interface language. Applied immediately.',
     editTranslations: 'Edit translations',
 
+    aiThinking: 'Deep thinking',
+    aiThinkingHint: 'The model reasons step by step before answering — more accurate, but slower and pricier.',
+    aiTemperature: 'Creativity',
+    aiTempDefault: 'Provider default',
+
     about: 'About',
     appName: 'e-Invoice Design Editor',
     version: 'Version {v}',
@@ -375,6 +380,8 @@ export const en: Messages = {
     busyNoNew: 'You cannot open a new chat while waiting for a reply',
     busyNoDelete: 'Cannot delete while waiting for a reply',
     deleteChat: 'Delete this chat',
+    thinkingOnTip: 'Deep thinking ON — click to turn off',
+    thinkingOffTip: 'Deep thinking OFF — click to turn on',
     fileNotice: 'This chat was started for "{file}"; a different file is open now. Open "＋ New chat" for the new file.',
     empty: 'Ask something about the XSLT/XML — e.g. "add a totals row to this table" or "find the error in this XPath".',
     thinking: 'Thinking…',

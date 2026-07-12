@@ -7,6 +7,8 @@
     loadApiKeys,
     THEME_OPTIONS,
     AI_PROVIDER_OPTIONS,
+    AI_PARAM_DESCRIPTORS,
+    temperatureMax,
     type AiProvider,
   } from '$lib/settings.svelte';
   import { goto } from '$app/navigation';
@@ -31,6 +33,15 @@
     AI_PROVIDER_OPTIONS.find((o) => o.value === settings.aiProvider),
   );
 
+  // Dinamik parametreler: seçili sağlayıcı+modele göre hangi kontrollerin
+  // görüneceğini descriptor kayıtları belirler (yeni parametre = yeni kayıt).
+  const paramApplies = $derived(
+    Object.fromEntries(
+      AI_PARAM_DESCRIPTORS.map((d) => [d.key, d.appliesTo(settings.aiProvider, currentAiConfig.model)]),
+    ) as Record<'thinking' | 'temperature', boolean>,
+  );
+  const tempMax = $derived(temperatureMax(settings.aiProvider));
+
   let modelOptions = $state<string[]>([]);
   let modelsLoading = $state(false);
   let modelsError = $state('');
@@ -42,6 +53,8 @@
   // yeni hesaplarda 404 veren) tarihli sürümlere mahkum kalmasın.
   const KNOWN_ALIASES: Partial<Record<AiProvider, string[]>> = {
     gemini: ['gemini-flash-latest', 'gemini-pro-latest'],
+    // deepseek-reasoner = derin düşünme modu (ayrı parametre değil, ayrı model).
+    deepseek: ['deepseek-chat', 'deepseek-reasoner'],
   };
 
   function withKnownAliases(provider: AiProvider, models: string[]): string[] {
@@ -394,6 +407,61 @@
         <p class="model-error">{modelsError}</p>
       {/if}
 
+      {#if paramApplies.thinking}
+        <div class="row">
+          <label for="ai-thinking">{m.settings.aiThinking}</label>
+          <input
+            id="ai-thinking"
+            type="checkbox"
+            checked={currentAiConfig.thinking}
+            onchange={(e) =>
+              updateAiProviderConfig(
+                settings.aiProvider,
+                'thinking',
+                (e.currentTarget as HTMLInputElement).checked,
+              )}
+          />
+          <span class="hint">{m.settings.aiThinkingHint}</span>
+        </div>
+      {/if}
+
+      {#if paramApplies.temperature}
+        <div class="row">
+          <label for="ai-temp">{m.settings.aiTemperature}</label>
+          <input
+            id="ai-temp"
+            type="range"
+            min="0"
+            max={tempMax}
+            step="0.1"
+            disabled={currentAiConfig.temperature === null}
+            value={currentAiConfig.temperature ?? tempMax / 2}
+            oninput={(e) =>
+              updateAiProviderConfig(
+                settings.aiProvider,
+                'temperature',
+                Number((e.currentTarget as HTMLInputElement).value),
+              )}
+          />
+          <span class="temp-value">
+            {currentAiConfig.temperature === null ? '—' : currentAiConfig.temperature.toFixed(1)}
+          </span>
+          <label class="temp-default">
+            <input
+              type="checkbox"
+              checked={currentAiConfig.temperature === null}
+              onchange={(e) =>
+                updateAiProviderConfig(
+                  settings.aiProvider,
+                  'temperature',
+                  (e.currentTarget as HTMLInputElement).checked ? null : tempMax / 2,
+                )}
+            />
+            {m.settings.aiTempDefault}
+          </label>
+        </div>
+      {/if}
+
       <div class="row">
         <label for="ai-baseurl">Base URL</label>
         <input
@@ -694,6 +762,19 @@
     font-size: 12px;
     color: #6b7280;
     line-height: 1.4;
+  }
+  .temp-value {
+    min-width: 2.2em;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .temp-default {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
   }
   .about-head {
     display: flex;

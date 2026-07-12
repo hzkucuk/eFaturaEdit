@@ -195,6 +195,11 @@ export const pl: Messages = {
     languageHint: 'Język interfejsu. Zmiana działa natychmiast.',
     editTranslations: 'Edytuj tłumaczenia',
 
+    aiThinking: 'Głębokie myślenie',
+    aiThinkingHint: 'Model rozumuje krok po kroku przed odpowiedzią — dokładniej, ale wolniej i drożej.',
+    aiTemperature: 'Kreatywność',
+    aiTempDefault: 'Domyślne ustawienie dostawcy',
+
     about: 'O programie',
     appName: 'Edytor projektów e-faktur',
     version: 'Wersja {v}',
@@ -375,6 +380,8 @@ export const pl: Messages = {
     busyNoNew: 'Nie można otworzyć nowego czatu podczas oczekiwania na odpowiedź',
     busyNoDelete: 'Nie można usunąć podczas oczekiwania na odpowiedź',
     deleteChat: 'Usuń ten czat',
+    thinkingOnTip: 'Głębokie myślenie WŁĄCZONE — kliknij, aby wyłączyć',
+    thinkingOffTip: 'Głębokie myślenie WYŁĄCZONE — kliknij, aby włączyć',
     fileNotice: 'Ten czat rozpoczęto dla „{file}"; teraz otwarty jest inny plik. Otwórz „＋ Nowy czat" dla nowego pliku.',
     empty: 'Zapytaj o coś związanego z XSLT/XML — np. „dodaj wiersz sumy do tej tabeli" albo „znajdź błąd w tym XPath".',
     thinking: 'Myśli…',

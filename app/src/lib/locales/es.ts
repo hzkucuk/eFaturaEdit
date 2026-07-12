@@ -196,6 +196,11 @@ export const es: Messages = {
     languageHint: 'Idioma de la interfaz. Se aplica al instante.',
     editTranslations: 'Editar traducciones',
 
+    aiThinking: 'Pensamiento profundo',
+    aiThinkingHint: 'El modelo razona paso a paso antes de responder: más preciso, pero más lento y costoso.',
+    aiTemperature: 'Creatividad',
+    aiTempDefault: 'Valor por defecto del proveedor',
+
     about: 'Acerca de',
     appName: 'Editor de diseño de facturas electrónicas',
     version: 'Versión {v}',
@@ -376,6 +381,8 @@ export const es: Messages = {
     busyNoNew: 'No puedes abrir un chat nuevo mientras esperas una respuesta',
     busyNoDelete: 'No se puede eliminar mientras esperas una respuesta',
     deleteChat: 'Eliminar este chat',
+    thinkingOnTip: 'Pensamiento profundo ACTIVADO — haga clic para desactivar',
+    thinkingOffTip: 'Pensamiento profundo DESACTIVADO — haga clic para activar',
     fileNotice: 'Este chat se inició para "{file}"; ahora hay otro archivo abierto. Abre "＋ Nuevo chat" para el archivo nuevo.',
     empty: 'Pregunta algo sobre el XSLT/XML — p. ej. "añade una fila de totales a esta tabla" o "encuentra el error en este XPath".',
     thinking: 'Pensando…',
