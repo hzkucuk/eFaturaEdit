@@ -1,0 +1,96 @@
+name: win-sidecar-debug
+
+# GEÇİCİ teşhis. Windows'ta Saxon sidecar'ı çalışmıyor: uygulama ona veri
+# yazarken "Boru sonlandı (os error 109)" alıyor — yani süreç anında ölüyor.
+# Dosya paketin içinde VAR (46 MB, CI'da derleniyor), demek ki BAŞLAYAMIYOR.
+#
+# Bu iş iki şeyi ölçer:
+#   1. exe hangi DLL'lere bağımlı (eksik VC++ runtime hipotezi)
+#   2. exe gerçekten çalışıp XSLT dönüştürüyor mu (uçtan uca duman testi)
+#
+# Sorun çözülünce bu dosya silinecek.
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust kur
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: GraalVM kur
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: XSLT sidecar derle
+        shell: bash
+        run: bash build.sh
+        working-directory: ./sidecar
+
+      - name: 1) exe'nin DLL bağımlılıkları
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem app/src-tauri/binaries/xslt-transform-*.exe | Select-Object -First 1
+          Write-Host "exe: $($exe.FullName)  ($([math]::Round($exe.Length/1MB,1)) MB)"
+          $dumpbin = Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter dumpbin.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($dumpbin) {
+            Write-Host "=== BAĞIMLI DLL'LER ==="
+            & $dumpbin.FullName /dependents $exe.FullName | Select-String -Pattern "\.dll"
+          } else {
+            Write-Host "dumpbin bulunamadı"
+          }
+
+      - name: 2) sidecar duman testi (gerçekten dönüştürüyor mu?)
+        shell: pwsh
+        run: |
+          $exe = (Get-ChildItem app/src-tauri/binaries/xslt-transform-*.exe | Select-Object -First 1).FullName
+
+          # Protokol: [4 bayt BE uzunluk][XSLT][4 bayt BE uzunluk][XML]
+          $xslt = @'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+            <xsl:template match="/">
+              <html><body><p>UPPER: <xsl:value-of select="upper-case(/root/name)"/></p></body></html>
+            </xsl:template>
+          </xsl:stylesheet>
+          '@
+          $xml = '<?xml version="1.0" encoding="UTF-8"?><root><name>merhaba</name></root>'
+
+          $enc = [System.Text.Encoding]::UTF8
+          $xsltB = $enc.GetBytes($xslt)
+          $xmlB  = $enc.GetBytes($xml)
+          function BE([int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); return $b }
+
+          $payload = New-Object System.Collections.Generic.List[byte]
+          $payload.AddRange((BE $xsltB.Length)); $payload.AddRange($xsltB)
+          $payload.AddRange((BE $xmlB.Length));  $payload.AddRange($xmlB)
+
+          $psi = New-Object System.Diagnostics.ProcessStartInfo
+          $psi.FileName = $exe
+          $psi.RedirectStandardInput = $true
+          $psi.RedirectStandardOutput = $true
+          $psi.RedirectStandardError = $true
+          $psi.UseShellExecute = $false
+
+          $p = [System.Diagnostics.Process]::Start($psi)
+          $stdin = $p.StandardInput.BaseStream
+          $stdin.Write($payload.ToArray(), 0, $payload.Count)
+          $stdin.Close()
+
+          $out = $p.StandardOutput.ReadToEnd()
+          $err = $p.StandardError.ReadToEnd()
+          $p.WaitForExit()
+
+          Write-Host "çıkış kodu: $($p.ExitCode)"
+          Write-Host "=== STDOUT ==="; Write-Host $out
+          Write-Host "=== STDERR ==="; Write-Host $err
+
+          if ($p.ExitCode -ne 0) { throw "sidecar çıkış kodu $($p.ExitCode)" }
+          if ($out -notmatch 'MERHABA') { throw "XSLT 2.0 (upper-case) çalışmadı — çıktı: $out" }
+          Write-Host "✅ sidecar Windows'ta ÇALIŞIYOR ve XSLT 2.0 yapıyor"
