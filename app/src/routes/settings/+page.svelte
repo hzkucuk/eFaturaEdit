@@ -463,7 +463,15 @@
 
       <div class="row">
         <span class="static-label">Lisans</span>
-        <span class="about-val">MIT</span>
+        <span class="upd-cell">
+          <span class="about-val">MIT</span>
+          <span class="fb-dot">·</span>
+          <button
+            class="link-btn"
+            onclick={() => openUrl(`${REPO_URL}/blob/master/LICENSE.tr.md`)}
+            title="MIT lisansının Türkçe açıklaması (bilgilendirme amaçlı)"
+          >Türkçe açıklaması</button>
+        </span>
       </div>
       <div class="row">
         <span class="static-label">Telif</span>

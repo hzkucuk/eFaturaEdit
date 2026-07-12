@@ -100,4 +100,7 @@ Bu proje MIT lisansı ile açık kaynaktır. Hata bildirimi, öneri ve pull requ
 
 ## Lisans
 
-[MIT](LICENSE) © 2026 Hüseyin Küçük
+[MIT](LICENSE) © 2026 Hüseyin Küçük — ticari kullanım dahil serbesttir; tek şart telif bildirimini korumak.
+
+Türkçe açıklaması: **[LICENSE.tr.md](LICENSE.tr.md)** (bilgilendirme amaçlıdır; bağlayıcı olan
+İngilizce [`LICENSE`](LICENSE) dosyasıdır).
