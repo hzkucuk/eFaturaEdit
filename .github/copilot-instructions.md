@@ -52,6 +52,78 @@ Konu XSLT/XML/UBL-TR e-fatura tasarımı veya Rust/Tauri/Svelte olabilir — han
 - Exception yutma; handle et veya `throw` ile ilet.
 - **Repo public** — commit etmeden önce her zaman gerçek bir sır (API anahtarı, şifre, sertifika private key) olup olmadığını kontrol et; test/placeholder değeri değilse commit etme, sor.
 
+## ⛔ ACI DERSLER — bir daha uğraşma (hepsi bu projede GERÇEKTEN başımıza geldi)
+
+Bu bölüm süs değil. Aşağıdaki her madde saatler kaybettirdi. Yeni bir hatayla karşılaşınca
+**önce buraya bak** — muhtemelen aynı sınıftan.
+
+### 1. Sessiz başarısızlıklar — "hata vermiyor" ≠ "çalışıyor"
+Bu projedeki en pahalı hataların ortak özelliği: **hiç hata vermiyorlardı, sadece iş görmüyorlardı.**
+- `macos-13` emekli olunca Intel işi **sonsuza dek kuyrukta bekledi** → release yayınlandı ama Intel
+  `.dmg` yoktu. Dört sürüm boyunca fark edilmedi.
+- Windows MSI, açıklamadaki Türkçe `ş` yüzünden çöktü → release çıktı ama **Windows paketi yoktu**.
+- Bir CI işi düşerse `latest.json` **eksik platformla** yayınlanır → o platformdaki kullanıcılar
+  güncellemeyi **hiç görmez**, hata da almaz.
+- AI yanıtı, bileşen unmount olunca **buharlaşıyordu** — ekranda hiçbir hata yoktu.
+
+**Kural:** Bir işin bittiğini varsayma, **çıktısını doğrula.** Release sonrası varlıkları ve
+`latest.json`'daki 11 platformu SAY. "Başarılı" gözüken bir koşu eksik ürün çıkarmış olabilir.
+
+### 2. Semptomu değil sebebi göster — hata yutma
+Windows'ta `xslt.rs`, stdin yazması başarısız olunca **hemen dönüyor**, sidecar'ın `stderr`'ini ve
+**çıkış kodunu okumuyordu**. Sonuç: kullanıcıya "Boru sonlandı (os error 109)" diyorduk — gerçek
+sebeple (CPU komut seti) hiç ilgisi olmayan bir mesaj. Saatler buna gitti.
+
+**Kural:** Bir dış süreç ölürse **her zaman** exit code + stderr topla ve raporla. Yazma hatasında
+bile önce süreci drain et. Çıkış kodu tanının yarısıdır:
+`-1073741515` (0xC0000135) → eksik DLL · `-1073741795` (0xC000001D) → geçersiz komut (CPU/emülasyon)
+· `-1073741819` (0xC0000005) → erişim ihlali.
+
+### 3. Sessiz geri düşüş (fallback) YASAK
+Saxon yoksa tarayıcının XSLT **1.0** işlemcisine düşüyoruz. 1.0 işlemcisi `format-dateTime`,
+`tokenize`, `for-each-group` gibi 2.0 komutlarını **hata vermeden yok sayar** → kullanıcı şablonunun
+çalıştığını sanır, **fatura sessizce yanlış basılır.** Bu, hata vermekten beterdir.
+
+**Kural:** Düşüşü her zaman **görünür** kıl (kalıcı uyarı bandı + günlük). Ve "motor çalışmıyor" ile
+"şablon hatalı" durumlarını **ayır** (`XSLT_ENGINE_UNAVAILABLE`) — şablon hatasında geri düşmek,
+kullanıcının hatasını gizlemek olur. Ayrımı **metin eşleştirmeyle yapma**; ilk sürümde öyleydi ve
+Windows'un hata metni hiçbir kalıba uymadığı için uygulama tamamen çuvalladı.
+
+### 4. Kendi test/teşhis aracına da güvenme
+Windows teşhis betiğim **iki kez kendi hatamdan** çöktü (PowerShell dizi döndürünce "açar" ve
+`Object[]` yapar). İlkinde bunu "sidecar bozuk" diye okusaydım tamamen yanlış yola sapardım.
+Küçük yükle (300 bayt) yazdığım duman testi de yanıltıcıydı — gerçek dosya **600 KB**.
+
+**Kural:** Bir test "başarısız" derse önce **testin kendisini** doğrula. Ve testi **gerçek boyut ve
+gerçek koşullarla** kur — küçük örnekle geçen test, hiçbir şey kanıtlamaz.
+
+### 5. Türkçe karakterler CI'ı iki kez kırdı
+- GraalVM: Türkçe locale'de `"DARWIN".toLowerCase()` → `darwın` (noktasız ı) → `jni_md.h` bulunamadı.
+- WiX/MSI: `ş İ ı ğ` **code page 1252'de yok** → `light.exe` LGHT0311 → Windows paketi hiç üretilmedi.
+
+**Kural:** Derleme zincirine giden her dizede Türkçe karakterlere dikkat. Locale'i açıkça sabitle
+(`-J-Duser.language=en`). `ç ö ü` sorun değil; `ş Ş ı İ ğ Ğ` tehlikeli.
+
+### 6. Mimari/CPU varsayımları
+GraalVM native-image x64'te varsayılan olarak **AVX2** gibi modern komutları hedefler. Böyle bir ikili
+Windows-on-ARM emülasyonunda ve eski CPU'larda **ilk komutta ölür**. Semptom tamamen alakasız görünür.
+
+**Kural:** Kullanıcı "çalışmıyor" derse **mimarisini sor** (`uname -m`, VM mi?). Günlükteki oturum
+künyesi zaten yazıyor — **önce oraya bak.** Sidecar x64 hedeflerde `-march=compatibility` ile
+derlenir; kaldırma.
+
+### 7. Svelte'in `<script>` ön-tarama tuzağı
+Kod **yorumunun içine** bile bitişik bir `script`/`style` etiketi yazma — Svelte'in blok-sınırı ön
+taraması yanlış pozitif verip bileşenin script bloğunu erken kapatır. `SCRIPT_TAG`/`STYLE_TAG`
+değişkeniyle interpolasyon kullan. (Bu direktifte yazılı olmasına rağmen iki kez düştüm.)
+
+### 8. Hata ayıklama disiplini
+- **Önce günlüğü iste.** (Ayarlar → Hakkında → "Günlük klasörünü aç".) Oturum künyesinde sürüm + OS +
+  **mimari** var.
+- **Tahminle üst üste tag atma.** Sebebi bilmeden yayınlanan her sürüm, hem zaman hem de sürüm numarası
+  israfıdır. Önce `workflow_dispatch` ile bir teşhis koşusu yaz, ölç, sonra düzelt.
+- Tauri, `light.exe` gibi alt araçların stderr'ini **yutar** → `tauri build --verbose` gerekir.
+
 ## Otodökümantasyon (otomatik — hatırlatma bekleme)
 Her değişiklik sonrası:
 - **CHANGELOG.md:** `## [X.Y.Z] — YYYY-MM-DD — [Özet] — [Etkilenen dosya/klasör]` (bkz. mevcut girdiler için stil).
