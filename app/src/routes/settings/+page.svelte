@@ -19,6 +19,7 @@
   import UpdateModal from '$lib/UpdateModal.svelte';
 
   const REPO_URL = 'https://github.com/hzkucuk/eFaturaEdit';
+  const CONTACT_EMAIL = 'hzkucuk@gmail.com';
 
   // Ayarlara doğrudan gelinirse anahtarların zincirden yüklendiğinden emin ol
   // (once-guard: ana sayfada zaten yüklendiyse tekrar çalışmaz).
@@ -442,6 +443,14 @@
         <span class="static-label">Kaynak kodu</span>
         <button class="link-btn" onclick={() => openUrl(REPO_URL)}>github.com/hzkucuk/eFaturaEdit</button>
       </div>
+      <div class="row">
+        <span class="static-label">İletişim</span>
+        <span class="upd-cell">
+          <button class="link-btn" onclick={() => openUrl(`mailto:${CONTACT_EMAIL}`)}>{CONTACT_EMAIL}</button>
+          <span class="fb-dot">·</span>
+          <button class="link-btn" onclick={() => openUrl(`${REPO_URL}/issues`)}>Sorun bildir (GitHub Issues)</button>
+        </span>
+      </div>
 
       <h3 class="about-sub">Kullanılan açık kaynak bileşenler</h3>
       <ul class="about-libs">
@@ -462,6 +471,10 @@
 <UpdateModal />
 
 <style>
+  .fb-dot {
+    color: #9ca3af;
+  }
+
   .log-hint {
     font-size: 11px;
     color: #6b7280;

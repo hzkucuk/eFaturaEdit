@@ -548,17 +548,36 @@
   }
 
   // ─── Actions: save ──────────────────────────────────────────────────
+  /**
+   * Bir dosyanın kaydedilmesi gerekiyor mu?
+   *
+   * "Değişti mi" yetmez: örnek yükleyip yalnızca XSLT'yi düzenlersen XML
+   * `dirty` olmaz ve **diske hiç yazılmazdı** — elinde diskte eşi olmayan bir
+   * şablon kalırdı. XSLT+XML tek bir çalışma birimidir; diskte karşılığı
+   * olmayan bir eş de kaydedilmelidir.
+   */
+  function needsSave(kind: 'xslt' | 'xml', silent: boolean): boolean {
+    const text = kind === 'xslt' ? editorState.xsltText : editorState.xmlText;
+    const path = kind === 'xslt' ? editorState.xsltPath : editorState.xmlPath;
+    const dirty = kind === 'xslt' ? editorState.xsltDirty : editorState.xmlDirty;
+    if (!text.trim()) return false;
+    // Diskte hiç yoksa kaydedilmeli — ama otomatik (sessiz) kayıt kullanıcının
+    // önüne dialog açamaz; onu elle kaydetmeye bırak.
+    if (!path) return !silent;
+    return dirty;
+  }
+
+  /** Kaydedilecek bir şey var mı? (değişmiş VEYA diskte hiç olmayan dosya) */
+  const canSave = $derived(needsSave('xslt', false) || needsSave('xml', false));
+
+  /** XSLT ve XML'i BİRLİKTE kaydet (Cmd+S, Kaydet düğmesi, otomatik kayıt). */
   async function saveAll(silent = false): Promise<boolean> {
     let anySaved = false;
     let anyError = false;
 
-    if (editorState.xsltDirty) {
-      const ok = await saveOne('xslt', silent);
-      anySaved ||= ok;
-      anyError ||= !ok;
-    }
-    if (editorState.xmlDirty) {
-      const ok = await saveOne('xml', silent);
+    for (const kind of ['xslt', 'xml'] as const) {
+      if (!needsSave(kind, silent)) continue;
+      const ok = await saveOne(kind, silent);
       anySaved ||= ok;
       anyError ||= !ok;
     }
@@ -600,7 +619,11 @@
         pushRecent(currentPath, kind);
         if (!silent) status(`${kind.toUpperCase()} kaydedildi: ${currentPath}`);
       } else {
-        const path = await saveFileAs(text, kind, kind === 'xslt' ? 'yeni.xslt' : 'yeni.xml');
+        const path = await saveFileAs(
+          text,
+          kind,
+          saveTargetFor(kind, kind === 'xslt' ? 'yeni.xslt' : 'yeni.xml'),
+        );
         if (!path) return false;
         if (kind === 'xslt') {
           editorState.xsltPath = path;
@@ -619,13 +642,68 @@
     }
   }
 
-  async function saveXsltAs() {
-    const path = await saveFileAs(editorState.xsltText, 'xslt', 'yeni.xslt');
-    if (!path) return;
-    editorState.xsltPath = path;
+  /** Yolun klasör kısmı ("/a/b/c.xslt" → "/a/b"). */
+  function dirname(path: string): string {
+    const i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    return i > 0 ? path.slice(0, i) : '';
+  }
+
+  /**
+   * Kaydetme penceresinin açılacağı yol.
+   *
+   * Yalnızca dosya adı verilirse (eski davranış) işletim sistemi EN SON
+   * KULLANILAN klasörü açar — bu, alakasız bir yere (".../muhasebe/06/") düşmeye
+   * yol açıyordu. Doğrusu: üzerinde çalışılan dosyanın yanı. O da yoksa
+   * diğer dosyanın (XSLT↔XML çifti) klasörü; hiçbiri yoksa OS'a bırak.
+   */
+  function saveTargetFor(kind: 'xslt' | 'xml', fileName: string): string {
+    const own = kind === 'xslt' ? editorState.xsltPath : editorState.xmlPath;
+    const other = kind === 'xslt' ? editorState.xmlPath : editorState.xsltPath;
+    const base = own ? dirname(own) : other ? dirname(other) : '';
+    return base ? `${base}/${fileName}` : fileName;
+  }
+
+  /**
+   * "Farklı Kaydet" — çifti birlikte kaydeder: önce XSLT, sonra XML.
+   *
+   * Eskiden yalnızca XSLT'yi kaydediyordu; XML kullanıcının seçtiği yeni klasöre
+   * gitmediği için ortaya **eşleşmeyen bir çift** çıkıyordu. XML penceresi,
+   * XSLT'nin kaydedildiği klasörde açılır ve varsa mevcut adı önerir.
+   */
+  async function saveAsPair() {
+    const xsltPath = await saveFileAs(
+      editorState.xsltText,
+      'xslt',
+      saveTargetFor('xslt', basename(editorState.xsltPath ?? 'yeni.xslt')),
+    );
+    if (!xsltPath) return; // kullanıcı vazgeçti → XML'e hiç dokunma
+    editorState.xsltPath = xsltPath;
     editorState.xsltDirty = false;
-    pushRecent(path, 'xslt');
-    status(`XSLT farklı kaydedildi: ${path}`);
+    pushRecent(xsltPath, 'xslt');
+
+    const saved = [`XSLT: ${xsltPath}`];
+
+    if (editorState.xmlText.trim()) {
+      const suggested = basename(editorState.xmlPath ?? 'yeni.xml');
+      const xmlPath = await saveFileAs(
+        editorState.xmlText,
+        'xml',
+        `${dirname(xsltPath)}/${suggested}`,
+      );
+      if (xmlPath) {
+        editorState.xmlPath = xmlPath;
+        editorState.xmlDirty = false;
+        pushRecent(xmlPath, 'xml');
+        saved.push(`XML: ${xmlPath}`);
+      } else {
+        // XSLT yazıldı ama kullanıcı XML'i atladı — sessiz geçme, söyle.
+        status(`XSLT kaydedildi: ${xsltPath} — ⚠️ XML kaydedilmedi`, true);
+        if (settings.autoTransformOnSave) await runTransform();
+        return;
+      }
+    }
+
+    status(`Farklı kaydedildi — ${saved.join(' · ')}`);
     if (settings.autoTransformOnSave) await runTransform();
   }
 
@@ -651,7 +729,10 @@
       } else {
         wzRefs = null;
       }
+      const t0 = performance.now();
       const html = await transformXml(editorState.xmlText, xsltForPreview);
+      lastTransformMs = Math.round(performance.now() - t0);
+      lastHtmlBytes = html.length;
       editorState.previewHtml = html;
 
       // Saxon çalışmıyorsa tarayıcının XSLT 1.0 işlemcisine düşülmüştür. Bunu
@@ -976,6 +1057,12 @@ document.addEventListener('contextmenu', function(e) {
   e.preventDefault();
   window.parent.postMessage({ type: 'preview-contextmenu', x: e.clientX, y: e.clientY }, '*');
 });
+/* Iframe içindeki tıklamalar ana pencereye ULAŞMAZ; bu yüzden sağ tık menüsü
+   önizlemeye tıklayarak kapanmıyordu (menü window'a gelen click ile kapanıyor).
+   Kapatmayı ana pencereye biz haber veriyoruz. */
+document.addEventListener('mousedown', function() {
+  window.parent.postMessage({ type: 'preview-dismiss' }, '*');
+}, true);
 window.addEventListener('message', function(e) {
   if (!e.data || e.data.type !== 'capture-css') return;
   var parts = [];
@@ -1127,6 +1214,35 @@ window.addEventListener('message', function(e) {
   }
 
   // ─── Util ───────────────────────────────────────────────────────────
+  // ─── Alt bilgi çubuğu (footer) ──────────────────────────────────────
+  /** Son dönüşümün süresi (ms) ve üretilen HTML boyutu — footer'da gösterilir. */
+  let lastTransformMs = $state(0);
+  let lastHtmlBytes = $state(0);
+
+  const fmtBytes = (n: number) =>
+    n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${(n / 1024).toFixed(1)} KB`;
+
+  /** Hangi XSLT motoru gerçekten kullanılıyor? Footer'ın en kritik bilgisi. */
+  const engineLabel = $derived(engineStatus.saxon ? 'Saxon · XSLT 1.0/2.0/3.0' : 'Tarayıcı · yalnızca XSLT 1.0');
+
+  /** Footer saati — saniyeli, her saniye ilerler. */
+  let now = $state(new Date());
+  $effect(() => {
+    const id = setInterval(() => (now = new Date()), 1000);
+    return () => clearInterval(id);
+  });
+
+  const clockText = $derived(
+    now.toLocaleString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }),
+  );
+
   function status(msg: string, isError = false) {
     statusMsg = msg;
     statusIsError = isError;
@@ -1398,6 +1514,13 @@ window.addEventListener('message', function(e) {
       cssCaptureResolve = null;
       return;
     }
+    // Önizlemenin içine tıklandı → açık sağ tık menüsünü kapat. (Iframe'deki
+    // tıklamalar ana pencereye ulaşmadığı için menü kendiliğinden kapanmıyordu.)
+    if (e.data.type === 'preview-dismiss') {
+      previewMenu = null;
+      return;
+    }
+
     if (e.data.type !== 'preview-contextmenu') return;
     const rect = previewFrame?.getBoundingClientRect();
     if (!rect) return;
@@ -1497,7 +1620,7 @@ window.addEventListener('message', function(e) {
     // (internet yoksa veya dev modundaysak kullanıcıya hata gösterilmez).
     setTimeout(() => void checkForUpdate(), 3000);
     if (showWelcome) {
-      status(`e-Fatura Edit v${manifest.version} — ${snippets.length} snippet · ${xsltCompletions.length} tamamlama · hazır`);
+      status(`e-Fatura Edit v${manifest.version} — ${allSnippets.length} snippet · ${xsltCompletions.length} tamamlama · hazır`);
     }
   });
 
@@ -1616,8 +1739,8 @@ window.addEventListener('message', function(e) {
         <button
           onclick={() => saveAll()}
           class:dirty={editorState.xsltDirty || editorState.xmlDirty}
-          disabled={!editorState.xsltDirty && !editorState.xmlDirty}
-          title="Kaydet (Cmd/Ctrl+S)"
+          disabled={!canSave}
+          title="XSLT ve XML'i birlikte kaydet (Cmd/Ctrl+S)"
         >
           {#if editorState.xsltDirty || editorState.xmlDirty}
             💾* ({[editorState.xsltDirty && 'XSLT', editorState.xmlDirty && 'XML'].filter(Boolean).join('+')})
@@ -1626,7 +1749,7 @@ window.addEventListener('message', function(e) {
           {/if}
         </button>
 
-        <button onclick={saveXsltAs} title="XSLT'yi farklı adla kaydet">💾 Farklı</button>
+        <button onclick={saveAsPair} title="XSLT ve XML'i farklı adla/klasöre kaydet">💾 Farklı</button>
       </div>
 
       <div class="btn-group" title="İşlemler">
@@ -1778,9 +1901,17 @@ window.addEventListener('message', function(e) {
 
     <!-- Editör paneli -->
     <section class="editors" style="grid-template-rows: 22px {xsltHeight}px 4px 22px 1fr;">
+      <!-- Tam yol gösterilir: aynı adlı şablonlar farklı klasörlerde durabilir,
+           sadece dosya adı hangi dosyayla çalıştığını söylemeye yetmez. -->
       <div class="panel-header">
-        XSLT {editorState.xsltPath ? `— ${basename(editorState.xsltPath)}` : '(yeni)'} · {editorState.xsltText.length}
-        {#if editorState.xsltDirty}<span class="dirty-mark">●</span>{/if}
+        <span class="ph-kind">XSLT</span>
+        {#if editorState.xsltPath}
+          <span class="ph-path" title={editorState.xsltPath}>{editorState.xsltPath}</span>
+        {:else}
+          <span class="ph-new">(kaydedilmemiş)</span>
+        {/if}
+        <span class="ph-meta">{editorState.xsltText.length.toLocaleString('tr-TR')} karakter</span>
+        {#if editorState.xsltDirty}<span class="dirty-mark" title="Kaydedilmemiş değişiklik">●</span>{/if}
       </div>
       <div class="editor-slot" data-editor-kind="xslt">
         {#if showWelcome}
@@ -1793,7 +1924,7 @@ window.addEventListener('message', function(e) {
               <button class="w-btn" onclick={openXml} title="Bilgisayarından bir .xml dosyası aç">📄 XML Dosyası Aç</button>
             </div>
             <p class="hint-lg">
-              🎨 {snippets.length} snippet · 🔎 Ctrl+Space autocomplete · 💾 Cmd+S kaydet
+              🎨 {allSnippets.length} snippet · 🔎 Ctrl+Space autocomplete · 💾 Cmd+S kaydet
             </p>
           </div>
         {:else}
@@ -1809,8 +1940,14 @@ window.addEventListener('message', function(e) {
       <Splitter direction="horizontal" bind:position={xsltHeight} min={40} />
 
       <div class="panel-header">
-        XML {editorState.xmlPath ? `— ${basename(editorState.xmlPath)}` : '(yeni)'} · {editorState.xmlText.length}
-        {#if editorState.xmlDirty}<span class="dirty-mark">●</span>{/if}
+        <span class="ph-kind">XML</span>
+        {#if editorState.xmlPath}
+          <span class="ph-path" title={editorState.xmlPath}>{editorState.xmlPath}</span>
+        {:else}
+          <span class="ph-new">(kaydedilmemiş)</span>
+        {/if}
+        <span class="ph-meta">{editorState.xmlText.length.toLocaleString('tr-TR')} karakter</span>
+        {#if editorState.xmlDirty}<span class="dirty-mark" title="Kaydedilmemiş değişiklik">●</span>{/if}
       </div>
       <div class="editor-slot" data-editor-kind="xml">
         {#if showWelcome}
@@ -2010,6 +2147,74 @@ window.addEventListener('message', function(e) {
       </div>
     </section>
   </div>
+
+  <!-- ─── Alt bilgi çubuğu ───────────────────────────────────────────
+       Bir bakışta "neyle çalışıyorum ve ne durumdayım" sorusuna cevap.
+       En kritik alan MOTOR: Saxon mu, yoksa yalnızca XSLT 1.0 yapan yedek
+       tarayıcı motoru mu? Bu ayrım sessiz kalırsa 2.0 komutları hata vermeden
+       yok sayılır ve fatura yanlış basılır (bkz. engineStatus).  -->
+  <footer class="footbar">
+    <!-- Dosyalar -->
+    <span class="fb-item" title={editorState.xsltPath ?? 'Kaydedilmemiş XSLT'}>
+      <b>XSLT</b>
+      {editorState.xsltPath ? basename(editorState.xsltPath) : '(yeni)'}
+      <span class="fb-dim">{fmtBytes(editorState.xsltText.length)}</span>
+      {#if editorState.xsltDirty}<span class="fb-dirty" title="Kaydedilmemiş değişiklik">●</span>{/if}
+    </span>
+
+    <span class="fb-sep"></span>
+
+    <span class="fb-item" title={editorState.xmlPath ?? 'Kaydedilmemiş XML'}>
+      <b>XML</b>
+      {editorState.xmlPath ? basename(editorState.xmlPath) : '(yeni)'}
+      <span class="fb-dim">{fmtBytes(editorState.xmlText.length)}</span>
+      {#if editorState.xmlDirty}<span class="fb-dirty" title="Kaydedilmemiş değişiklik">●</span>{/if}
+    </span>
+
+    <span class="fb-sep"></span>
+
+    <!-- Son dönüşüm -->
+    {#if lastHtmlBytes > 0}
+      <span class="fb-item" title="Son dönüşümün çıktısı ve süresi">
+        ⚡ {fmtBytes(lastHtmlBytes)} · {lastTransformMs} ms
+      </span>
+      <span class="fb-sep"></span>
+    {/if}
+
+    <!-- Boşluk -->
+    <span class="fb-spacer"></span>
+
+    <!-- AI modeli -->
+    <span class="fb-item fb-dim" title="Ayarlar → AI Asistan'dan değiştirilebilir">
+      🤖 {settings.aiProviders[settings.aiProvider].model || '(model seçilmedi)'}
+    </span>
+
+    <span class="fb-sep"></span>
+
+    <!-- XSLT motoru — footer'ın en önemli alanı -->
+    <button
+      class="fb-engine"
+      class:degraded={!engineStatus.saxon}
+      onclick={() => { if (!engineStatus.saxon) engineWarning = engineStatus.reason; }}
+      title={engineStatus.saxon
+        ? 'Saxon-HE motoru: tam XSLT 1.0/2.0/3.0 desteği'
+        : `Saxon çalışmıyor — önizleme tarayıcının XSLT 1.0 işlemcisiyle üretiliyor. 2.0+ komutları SESSİZCE yok sayılır. Ayrıntı için tıkla.\n\n${engineStatus.reason}`}
+    >
+      {engineStatus.saxon ? '✅' : '⚠️'} {engineLabel}
+    </button>
+
+    <span class="fb-sep"></span>
+
+    <span class="fb-item fb-dim" title="Yüklü snippet sayısı">✂️ {allSnippets.length}</span>
+
+    <span class="fb-sep"></span>
+
+    <span class="fb-item fb-dim">v{manifest.version}</span>
+
+    <span class="fb-sep"></span>
+
+    <span class="fb-item fb-clock" title="Tarih ve saat">🕐 {clockText}</span>
+  </footer>
 </div>
 
 <!-- ─── Custom drag ghost ─────────────────────────────────────────── -->
@@ -2214,8 +2419,86 @@ window.addEventListener('message', function(e) {
   :global(*) { box-sizing: border-box; }
   :global(body) { margin: 0; }
 
-  .app { display: grid; grid-template-rows: auto 1fr; height: 100vh; background: #f5f6f8; }
+  /* Satırlar: toolbar · içerik · alt bilgi çubuğu */
+  .app { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; background: #f5f6f8; }
   .app.dark { color: #e6e6e6; background: #1e1e1e; }
+
+  /* ─── Alt bilgi çubuğu ─── */
+  .footbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-top: 1px solid #d9dce1;
+    background: #eef0f3;
+    font-size: 11px;
+    color: #4b5563;
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+  .fb-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .fb-item b {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 10px;
+    letter-spacing: 0.03em;
+  }
+  .fb-dim { color: #9099a5; }
+  .fb-dirty { color: #f59e0b; }
+  .fb-sep {
+    width: 1px;
+    height: 12px;
+    background: #d0d4da;
+    flex: none;
+  }
+  .fb-spacer { flex: 1 1 auto; }
+  .fb-clock {
+    font-variant-numeric: tabular-nums; /* rakam genişliği sabit → saat titremesin */
+    color: #6b7280;
+  }
+  :global(html.dark) .fb-clock { color: #9aa1ac; }
+
+  /* Motor rozeti — bozulduğunda gözden kaçmamalı. */
+  .fb-engine {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.4rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: #15803d;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: default;
+  }
+  .fb-engine.degraded {
+    background: #fef3c7;
+    border-color: #fcd34d;
+    color: #92400e;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .fb-engine.degraded:hover { background: #fde68a; }
+
+  :global(html.dark) .footbar {
+    background: #26272b;
+    border-top-color: #3f3f46;
+    color: #c9ccd1;
+  }
+  :global(html.dark) .fb-item b { color: #9aa1ac; }
+  :global(html.dark) .fb-dim { color: #7d848e; }
+  :global(html.dark) .fb-sep { background: #3f3f46; }
+  :global(html.dark) .fb-engine { color: #4ade80; }
+  :global(html.dark) .fb-engine.degraded {
+    background: #422006;
+    border-color: #713f12;
+    color: #fde68a;
+  }
 
   /* Toolbar */
   .toolbar {
@@ -2786,10 +3069,48 @@ window.addEventListener('message', function(e) {
   .panel-header {
     padding: 0.3rem 0.6rem; font-size: 11px; color: #6b7280;
     background: #f0f2f5; border-bottom: 1px solid #e5e7eb;
-    text-transform: uppercase; letter-spacing: 0.5px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    letter-spacing: 0.5px;
+    white-space: nowrap; overflow: hidden;
     display: flex; align-items: center; gap: 0.5rem;
   }
+  .ph-kind {
+    flex: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #4b5563;
+  }
+  /* Tam yol. Uzunsa SOLDAN kısalsın — dosya adı her zaman görünür kalmalı;
+     sağdan kısaltmak tam da en gerekli kısmı (dosya adını) yutardı. */
+  .ph-path {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;        /* kısaltma baştan olsun */
+    text-align: left;
+    unicode-bidi: plaintext; /* yolun karakter sırası bozulmasın */
+    font-family: var(--mono, ui-monospace, monospace);
+    letter-spacing: 0;
+    color: #374151;
+  }
+  .ph-new {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-style: italic;
+    color: #9ca3af;
+    letter-spacing: 0;
+  }
+  .ph-meta {
+    flex: none;
+    color: #9ca3af;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .app.dark .ph-kind { color: #c9ccd1; }
+  .app.dark .ph-path { color: #d4d4d8; }
+  .app.dark .ph-new,
+  .app.dark .ph-meta { color: #7d848e; }
   .app.dark .panel-header {
     background: #2d2d30; color: #a0a0a0; border-bottom-color: #3f3f46;
   }

@@ -122,6 +122,46 @@ pub fn run() {
             ai::ai_list_models
         ])
         .setup(|app| {
+            // macOS'ta uygulama menüsündeki "e-Fatura Edit → Hakkında" paneli.
+            // Tauri'nin varsayılan menüsü bu paneli BOŞ bırakır (yalnızca sürüm
+            // görünür); künyeyi burada dolduruyoruz.
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::menu::AboutMetadata;
+                let metadata = AboutMetadata {
+                    name: Some("e-Fatura Edit".into()),
+                    version: Some(app.package_info().version.to_string()),
+                    short_version: Some(app.package_info().version.to_string()),
+                    authors: Some(vec!["Zafer Bilgisayar".into()]),
+                    comments: Some(
+                        "Türkiye e-Fatura / e-Arşiv / e-İrsaliye (UBL-TR) belgeleri için \
+                         XSLT dizayn editörü. Tam XSLT 1.0/2.0/3.0 desteği (Saxon-HE), \
+                         canlı önizleme, AI asistan ve UBL-TR snippet kütüphanesi."
+                            .into(),
+                    ),
+                    copyright: Some("© 2018–2026 Zafer Bilgisayar — MIT Lisansı".into()),
+                    license: Some("MIT".into()),
+                    website: Some("https://github.com/hzkucuk/eFaturaEdit".into()),
+                    website_label: Some("Kaynak kodu (GitHub)".into()),
+                    credits: Some("hzkucuk@gmail.com".into()),
+                    icon: app.default_window_icon().cloned(),
+                    ..Default::default()
+                };
+                let menu = tauri::menu::Menu::default(app.handle())?;
+                // Varsayılan menüdeki "About" öğesi künyesizdir; künyeli olanla
+                // değiştirmek için menüyü baştan kurmak yerine, uygulama alt
+                // menüsünün ilk öğesini değiştiriyoruz.
+                if let Some(tauri::menu::MenuItemKind::Submenu(app_menu)) =
+                    menu.items()?.first().map(|i| i.to_owned())
+                {
+                    let about =
+                        tauri::menu::PredefinedMenuItem::about(app.handle(), None, Some(metadata))?;
+                    app_menu.remove_at(0)?;
+                    app_menu.prepend(&about)?;
+                }
+                app.set_menu(menu)?;
+            }
+
             // Her oturumun başına künye yaz: sorun bildiren kullanıcıdan günlüğü
             // istediğimizde sürüm/platform tahmin etmek zorunda kalmayalım.
             log::info!(

@@ -3,6 +3,42 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.24.0] — 2026-07-12 — Alt Bilgi Çubuğu + Kaydetme Onarımları
+
+### Düzeltilen
+- **"Farklı Kaydet" yalnızca XSLT'yi kaydediyordu.** XML için farklı-kaydet hiç yoktu; şablonu yeni bir
+  klasöre kaydettiğinde XML orada olmuyor ve elinde **eşleşmeyen bir çift** kalıyordu. Artık ikisi de
+  kaydedilir — XML penceresi XSLT'nin klasöründe açılır ve mevcut adı önerir. XML atlanırsa
+  **sessiz geçilmez**, uyarılır.
+- **Kaydet / Cmd+S yalnızca *değişmiş* dosyaları kaydediyordu.** Örnek yükleyip sadece XSLT'yi
+  düzenlersen XML "değişmedi" sayılıp **diske hiç yazılmıyordu** → diskte eşi olmayan bir şablon.
+  Artık ölçüt "değişmiş **veya** diskte hiç yok". XSLT+XML tek bir çalışma birimidir.
+  (Otomatik/sessiz kayıt kullanıcının önüne dialog açmaz; o dosya elle kaydetmeye bırakılır.)
+- **Kaydetme penceresi alakasız bir klasörde açılıyordu.** `saveFileAs`'e yalnızca dosya adı
+  veriliyor, klasör verilmiyordu; işletim sistemi de **en son kullanılan klasörü** hatırlıyordu.
+  Artık üzerinde çalışılan dosyanın yanında (o yoksa çiftinin klasöründe) açılır.
+- **Önizlemede sağ tık menüsü kapanmıyordu.** Menü ana pencereye gelen tıklamayla kapanıyor, ama
+  önizleme bir **iframe** ve içindeki tıklamalar ana pencereye ulaşmıyor — yani menüyü kapatmak için
+  en doğal yere (önizlemenin üstüne) tıklıyordun ve hiçbir şey olmuyordu. Artık iframe içindeki köprü
+  tıklamayı ana pencereye bildiriyor.
+- **Snippet sayısı tutarsızdı.** Kenar çubuğu 255 derken durum çubuğu ve karşılama ekranı **149**
+  diyordu: oralarda yalnızca temel UBL-TR seti sayılıyor, sonradan eklenen **XSLT komutları (56),
+  XPath fonksiyonları (26) ve CSS kuralları (24)** hiç görünmüyordu. Dördü de tek kaynağa bağlandı.
+
+### Eklenen
+- **Alt bilgi çubuğu (footer):** dosya adları + boyut + kaydedilmemiş değişiklik göstergesi,
+  son dönüşümün çıktısı ve **süresi**, AI modeli, snippet sayısı, sürüm ve **saniyeli tarih-saat**.
+  - **Motor rozeti** (en kritik alan): `✅ Saxon · XSLT 1.0/2.0/3.0` veya `⚠️ Tarayıcı · yalnızca XSLT 1.0`.
+    Yedek motora düşmek sessiz kalırsa 2.0 komutları hata vermeden yok sayılır ve fatura yanlış basılır —
+    artık hangi motorla çalıştığın her an ekranda.
+- **Editör başlıklarında tam dosya yolu** (uzunsa soldan kısalır ki dosya adı hep görünsün) +
+  binlik ayraçlı karakter sayısı.
+- **Hakkında → İletişim:** e-posta ve GitHub Issues bağlantısı.
+- **macOS yerel "Hakkında" paneli dolduruldu** (sürüm, açıklama, telif, lisans, web sitesi, iletişim).
+  Menü hiç kurulmadığı için Tauri varsayılanı kullanılıyordu ve panel künyesizdi.
+
+---
+
 ## [2.23.0] — 2026-07-12 — Günlükleme Sistemi + Windows ARM64 XSLT Motoru
 
 ### Düzeltilen
