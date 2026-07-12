@@ -1,6 +1,6 @@
 # Özellikler (Features)
 
-## E-Fatura Dizayn Editörü — v2.19.1
+## E-Fatura Dizayn Editörü — v2.26.0
 
 Cross-platform (macOS / Linux / Windows) masaüstü uygulaması.
 **Tauri v2 + SvelteKit (Svelte 5) + CodeMirror 6 + Saxon-HE (GraalVM native sidecar).**
@@ -108,6 +108,20 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
 - **Yardım:** F1 ile açılan, sidebar navigasyonlu, aranabilir tam dokümantasyon + tooltip'ler.
 - **Hakkında:** Sürüm, lisans (MIT) ve üçüncü taraf lisans bilgileri (Saxon-HE MPL 2.0 dahil).
 - **Örnek fatura kataloğu:** 6 kategori × 17 GİB resmi UBL-TR senaryosu.
+
+### 🌍 Çoklu Dil (i18n) — 5 Dil + Çeviri Düzenleyici (v2.26.0)
+
+- **5 arayüz dili:** Türkçe (referans), İngilizce, İspanyolca, Rusça, Lehçe.
+  Ayarlar → Dil'den seçilir; tüm arayüz anında değişir. 332 metin × 5 dil betikle
+  doğrulanır (eksik anahtar / bozuk yer tutucu = 0).
+- **Çeviri düzenleyici** (`/translations`): her metin uygulama içinden düzenlenebilir
+  (Türkçe dahil), yer tutucu bozulursa satır kırmızı işaretlenir. JSON dışa/içe aktarma
+  ve UI'dan yeni dil ekleme/silme. Kullanıcı çevirileri yerleşiklerle **birleştirilmez**,
+  ayrı saklanır.
+- Açılışta `validateLocales()` bütünlük denetimi yapar; sorunlar günlüğe yazılır.
+- **Bilinen sınırlamalar:** AI uzman promptu kasten Türkçe (UBL-TR alan bilgisi);
+  CodeMirror arama paneli dili editör açılışında seçilir; Yardım içeriği şimdilik Türkçe.
+- Kaynak: [`app/src/lib/locales/`](app/src/lib/locales/), [`app/src/routes/translations/`](app/src/routes/translations/)
 
 ### 🔐 Güvenlik
 

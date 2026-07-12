@@ -3,6 +3,29 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.26.0] — 2026-07-12 — Çoklu Dil (i18n): 5 Dil + Çeviri Düzenleyici
+
+### Eklenen
+- **5 arayüz dili:** Türkçe, İngilizce, İspanyolca, Rusça, Lehçe. Ayarlar → Dil'den seçilir;
+  tüm arayüz (ana ekran, editör, AI asistanı, ayarlar, yardım kromu) anında değişir.
+  332 metin × 5 dil betikle doğrulandı — eksik 0, yer tutucu hatası 0.
+- **Çeviri düzenleyici ekranı** (`/translations`): her arayüz metni uygulama içinden düzenlenebilir
+  (referans dil Türkçe dahil). Yer tutucu (`{0}` vb.) bozulursa satır kırmızı işaretlenir ve uyarı
+  verilir. JSON dışa/içe aktarma ve UI'dan yeni dil ekleme/silme desteklenir.
+  Ayarlar → Dil → "✏️ Çevirileri düzenle" ile açılır.
+- Açılışta `validateLocales()` çeviri bütünlüğünü denetler; sorunlar konsola ve günlüğe yazılır.
+
+### Değiştirilen
+- Yerleşik Türkçe: `common.saveAs` "Farklı" → "Farklı Kaydet".
+
+### Bilinen sınırlamalar
+- AI asistanının modele giden uzman promptu **kasten Türkçe** (UBL-TR alan bilgisi Türkçe).
+- CodeEditor arama paneli dili editör açılışında seçilir; tr dışındaki dillerde CodeMirror'ın
+  İngilizce varsayılanları kullanılır.
+- Yardım (HelpModal) içeriği şimdilik yalnızca Türkçe; pencere kromu çevrildi.
+
+---
+
 ## [2.25.1] — 2026-07-12 — Linux ARM64 Paketlemesi Onarıldı
 
 ### Düzeltilen

@@ -211,6 +211,14 @@ dosya sistemine, ayarlara veya başka bir işleve doğrudan erişemez.
 - `master` → kararlı. Build çıktıları (`target/`, `build/`, `node_modules/`) commit'lenmez.
 - **Lisans: MIT** (kök `LICENSE` tüm depoyu kapsar; dosya başlığı gerekmez).
 
+## Oturum Hijyeni
+- **Her ~10 prompt'ta bir:** oturumda öğrenilen kalıcı dersleri/direktif değişikliklerini
+  **önce CLAUDE.md'ye işle**, sonra kullanıcıya **yeni oturum açmasını** (yeni session / `/clear`)
+  hatırlat. Amaç: şişmiş bağlamla çalışmamak ve dersleri oturumla birlikte kaybetmemek.
+- Not: Claude oturumu kendisi kapatıp açamaz ve prompt sayacını oturumlar arasında otomatik
+  tutamaz — sayaç dolduğunda hatırlatmak ve CLAUDE.md'yi güncellemek Claude'un görevi,
+  yeni oturumu açmak kullanıcının.
+
 ## Dokümantasyon (otomatik — hatırlatma bekleme)
 - **CHANGELOG.md** — her değişiklikte.
 - **FEATURES.md** — yeni yetenek veya mantık değişikliğinde.
