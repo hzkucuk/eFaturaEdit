@@ -4,7 +4,8 @@ namespace eFaturaEdit
 {
     /// <summary>
     /// E-Fatura XSLT şablonlarına eklenebilecek tüm snippet tanımları.
-    /// Kategoriler: HTML Öğeleri, XSLT Komutları, Sayfa Düzeni, UBL-TR e-Fatura, UBL-TR e-Arşiv.
+    /// Kategoriler: HTML Öğeleri, XSLT Komutları, Sayfa Düzeni, UBL-TR e-Fatura, UBL-TR e-Arşiv,
+    /// UBL-TR e-İrsaliye, UBL 2.1 (Uluslararası).
     /// </summary>
     public static class XsltSnippets
     {
@@ -2592,6 +2593,851 @@ namespace eFaturaEdit
       </td>
     </tr>
   </table>
+</xsl:if>"),
+
+            // ╔═══════════════════════════════════════════════════════════════╗
+            // ║  UBL 2.1 (ULUSLARARASI)                                       ║
+            // ║  Kök eleman: /n1:Invoice (OASIS UBL 2.1 Invoice-2)            ║
+            // ║  Kılavuz: EN 16931 / Peppol BIS Billing 3.0                   ║
+            // ║  Çıktı etiketleri İngilizce (uluslararası fatura tasarımı)    ║
+            // ╚═══════════════════════════════════════════════════════════════╝
+
+            // ═══════════════════════════════════════════════════════════════
+            // UBL 2.1 — Başlık
+            // ═══════════════════════════════════════════════════════════════
+
+            ["UBL21_HEADER"] = new SnippetInfo(
+                key: "UBL21_HEADER",
+                displayName: "Fatura Başlık Tablosu (Int.)",
+                iconText: "🌍",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Başlık",
+                description: "Uluslararası UBL 2.1 fatura başlık bilgilerini İngilizce etiketlerle tablo halinde gösterir: Fatura No, Düzenleme Tarihi, Vade Tarihi, Tip Kodu, Para Birimi, Alıcı Referansı. EN 16931 / Peppol BIS 3.0 zorunlu alanlarını kapsar.\nXPath: /n1:Invoice/cbc:*",
+                xsltCode:
+@"<!-- UBL 2.1 Invoice Header -->
+<table style=""width:100%; border-collapse:collapse;"">
+  <tr>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; width:30%;"">Invoice No:</td>
+    <td style=""border:1px solid #999; padding:4px;""><xsl:value-of select=""/n1:Invoice/cbc:ID"" /></td>
+  </tr>
+  <tr>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold;"">Issue Date:</td>
+    <td style=""border:1px solid #999; padding:4px;""><xsl:value-of select=""/n1:Invoice/cbc:IssueDate"" /></td>
+  </tr>
+  <tr>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold;"">Due Date:</td>
+    <td style=""border:1px solid #999; padding:4px;""><xsl:value-of select=""/n1:Invoice/cbc:DueDate"" /></td>
+  </tr>
+  <tr>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold;"">Invoice Type Code:</td>
+    <td style=""border:1px solid #999; padding:4px;""><xsl:value-of select=""/n1:Invoice/cbc:InvoiceTypeCode"" /></td>
+  </tr>
+  <tr>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold;"">Currency:</td>
+    <td style=""border:1px solid #999; padding:4px;""><xsl:value-of select=""/n1:Invoice/cbc:DocumentCurrencyCode"" /></td>
+  </tr>
+  <xsl:if test=""/n1:Invoice/cbc:BuyerReference"">
+    <tr>
+      <td style=""border:1px solid #999; padding:4px; font-weight:bold;"">Buyer Reference:</td>
+      <td style=""border:1px solid #999; padding:4px;""><xsl:value-of select=""/n1:Invoice/cbc:BuyerReference"" /></td>
+    </tr>
+  </xsl:if>
+</table>"),
+
+            ["UBL21_PROFILE"] = new SnippetInfo(
+                key: "UBL21_PROFILE",
+                displayName: "Peppol Profil Kimlikleri",
+                iconText: "🧩",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Başlık",
+                description: "Faturanın hangi spesifikasyon ve iş sürecine göre düzenlendiğini gösterir. Peppol BIS 3.0 faturalarında CustomizationID ve ProfileID zorunludur.\nXPath: /n1:Invoice/cbc:CustomizationID, /n1:Invoice/cbc:ProfileID",
+                xsltCode:
+@"<!-- Specification / Business Process (Peppol) -->
+<div style=""font-size:9px; color:#666;"">
+  <div><span style=""font-weight:bold;"">Specification: </span><xsl:value-of select=""/n1:Invoice/cbc:CustomizationID"" /></div>
+  <div><span style=""font-weight:bold;"">Business Process: </span><xsl:value-of select=""/n1:Invoice/cbc:ProfileID"" /></div>
+</div>"),
+
+            ["UBL21_DUEDATE"] = new SnippetInfo(
+                key: "UBL21_DUEDATE",
+                displayName: "Vade Tarihi (DueDate)",
+                iconText: "⏰",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Başlık",
+                description: "Ödemenin vade tarihini gösterir. UBL-TR'den farklı olarak uluslararası UBL 2.1'de vade tarihi belge kökünde cbc:DueDate alanındadır.\nXPath: /n1:Invoice/cbc:DueDate",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cbc:DueDate"">
+  <span style=""font-weight:bold;"">Due Date: </span>
+  <xsl:value-of select=""/n1:Invoice/cbc:DueDate"" />
+</xsl:if>"),
+
+            ["UBL21_BUYERREF"] = new SnippetInfo(
+                key: "UBL21_BUYERREF",
+                displayName: "Alıcı Referansı",
+                iconText: "🔖",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Başlık",
+                description: "Alıcının faturayı yönlendirmek için verdiği referansı gösterir (ör. Norveç/Danimarka kamu alımlarında zorunlu). Peppol BIS 3.0'da BuyerReference veya OrderReference'tan en az biri bulunmalıdır.\nXPath: /n1:Invoice/cbc:BuyerReference",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cbc:BuyerReference"">
+  <span style=""font-weight:bold;"">Buyer Reference: </span>
+  <xsl:value-of select=""/n1:Invoice/cbc:BuyerReference"" />
+</xsl:if>"),
+
+            ["UBL21_INVOICEPERIOD"] = new SnippetInfo(
+                key: "UBL21_INVOICEPERIOD",
+                displayName: "Fatura Dönemi",
+                iconText: "📆",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Başlık",
+                description: "Faturanın kapsadığı dönemi (abonelik, kira, periyodik hizmet) başlangıç–bitiş tarihi olarak gösterir.\nXPath: /n1:Invoice/cac:InvoicePeriod (cbc:StartDate, cbc:EndDate)",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:InvoicePeriod"">
+  <span style=""font-weight:bold;"">Invoicing Period: </span>
+  <xsl:value-of select=""/n1:Invoice/cac:InvoicePeriod/cbc:StartDate"" />
+  <xsl:text> — </xsl:text>
+  <xsl:value-of select=""/n1:Invoice/cac:InvoicePeriod/cbc:EndDate"" />
+</xsl:if>"),
+
+            ["UBL21_CURRENCIES"] = new SnippetInfo(
+                key: "UBL21_CURRENCIES",
+                displayName: "Belge / Vergi Para Birimi",
+                iconText: "💱",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Başlık",
+                description: "Belge para birimini ve (farklıysa) verginin muhasebeleştirileceği ikinci para birimini gösterir. Çok para birimli faturalarda TaxCurrencyCode kullanılır.\nXPath: /n1:Invoice/cbc:DocumentCurrencyCode, /n1:Invoice/cbc:TaxCurrencyCode",
+                xsltCode:
+@"<span style=""font-weight:bold;"">Currency: </span>
+<xsl:value-of select=""/n1:Invoice/cbc:DocumentCurrencyCode"" />
+<xsl:if test=""/n1:Invoice/cbc:TaxCurrencyCode"">
+  <xsl:text> (VAT accounting currency: </xsl:text>
+  <xsl:value-of select=""/n1:Invoice/cbc:TaxCurrencyCode"" />
+  <xsl:text>)</xsl:text>
+</xsl:if>"),
+
+            ["UBL21_NOTE"] = new SnippetInfo(
+                key: "UBL21_NOTE",
+                displayName: "Fatura Notları (Int.)",
+                iconText: "📝",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Başlık",
+                description: "Faturadaki serbest metin notlarını döngüyle listeler.\nXPath: /n1:Invoice/cbc:Note",
+                xsltCode:
+@"<xsl:for-each select=""/n1:Invoice/cbc:Note"">
+  <div style=""font-style:italic; padding:2px;""><xsl:value-of select=""."" /></div>
+</xsl:for-each>"),
+
+            // ═══════════════════════════════════════════════════════════════
+            // UBL 2.1 — Taraflar
+            // ═══════════════════════════════════════════════════════════════
+
+            ["UBL21_SUPPLIER"] = new SnippetInfo(
+                key: "UBL21_SUPPLIER",
+                displayName: "Satıcı Bloğu (Int.)",
+                iconText: "🏢",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Satıcı (Seller) bilgilerini uluslararası biçimde gösterir: ünvan, adres (ülke koduyla), VAT numarası ve elektronik adres (EndpointID).\nXPath: /n1:Invoice/cac:AccountingSupplierParty/cac:Party",
+                xsltCode:
+@"<!-- Seller -->
+<xsl:for-each select=""/n1:Invoice/cac:AccountingSupplierParty/cac:Party"">
+  <div style=""border:1px solid #ccc; padding:8px;"">
+    <div style=""font-weight:bold; font-size:12px;""><xsl:value-of select=""cac:PartyLegalEntity/cbc:RegistrationName"" /></div>
+    <div>
+      <xsl:value-of select=""cac:PostalAddress/cbc:StreetName"" />
+      <xsl:if test=""cac:PostalAddress/cbc:AdditionalStreetName"">, <xsl:value-of select=""cac:PostalAddress/cbc:AdditionalStreetName"" /></xsl:if>
+    </div>
+    <div>
+      <xsl:value-of select=""cac:PostalAddress/cbc:PostalZone"" />
+      <xsl:text> </xsl:text><xsl:value-of select=""cac:PostalAddress/cbc:CityName"" />
+      <xsl:if test=""cac:PostalAddress/cbc:CountrySubentity"">, <xsl:value-of select=""cac:PostalAddress/cbc:CountrySubentity"" /></xsl:if>
+      <xsl:text> — </xsl:text><xsl:value-of select=""cac:PostalAddress/cac:Country/cbc:IdentificationCode"" />
+    </div>
+    <xsl:if test=""cac:PartyTaxScheme/cbc:CompanyID"">
+      <div><span style=""font-weight:bold;"">VAT: </span><xsl:value-of select=""cac:PartyTaxScheme/cbc:CompanyID"" /></div>
+    </xsl:if>
+    <xsl:if test=""cbc:EndpointID"">
+      <div><span style=""font-weight:bold;"">Electronic Address: </span><xsl:value-of select=""cbc:EndpointID"" /> (<xsl:value-of select=""cbc:EndpointID/@schemeID"" />)</div>
+    </xsl:if>
+  </div>
+</xsl:for-each>"),
+
+            ["UBL21_CUSTOMER"] = new SnippetInfo(
+                key: "UBL21_CUSTOMER",
+                displayName: "Alıcı Bloğu (Int.)",
+                iconText: "🏬",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Alıcı (Buyer) bilgilerini uluslararası biçimde gösterir: ünvan, adres (ülke koduyla), VAT numarası ve elektronik adres (EndpointID).\nXPath: /n1:Invoice/cac:AccountingCustomerParty/cac:Party",
+                xsltCode:
+@"<!-- Buyer -->
+<xsl:for-each select=""/n1:Invoice/cac:AccountingCustomerParty/cac:Party"">
+  <div style=""border:1px solid #ccc; padding:8px;"">
+    <div style=""font-weight:bold; font-size:12px;""><xsl:value-of select=""cac:PartyLegalEntity/cbc:RegistrationName"" /></div>
+    <div>
+      <xsl:value-of select=""cac:PostalAddress/cbc:StreetName"" />
+      <xsl:if test=""cac:PostalAddress/cbc:AdditionalStreetName"">, <xsl:value-of select=""cac:PostalAddress/cbc:AdditionalStreetName"" /></xsl:if>
+    </div>
+    <div>
+      <xsl:value-of select=""cac:PostalAddress/cbc:PostalZone"" />
+      <xsl:text> </xsl:text><xsl:value-of select=""cac:PostalAddress/cbc:CityName"" />
+      <xsl:if test=""cac:PostalAddress/cbc:CountrySubentity"">, <xsl:value-of select=""cac:PostalAddress/cbc:CountrySubentity"" /></xsl:if>
+      <xsl:text> — </xsl:text><xsl:value-of select=""cac:PostalAddress/cac:Country/cbc:IdentificationCode"" />
+    </div>
+    <xsl:if test=""cac:PartyTaxScheme/cbc:CompanyID"">
+      <div><span style=""font-weight:bold;"">VAT: </span><xsl:value-of select=""cac:PartyTaxScheme/cbc:CompanyID"" /></div>
+    </xsl:if>
+    <xsl:if test=""cbc:EndpointID"">
+      <div><span style=""font-weight:bold;"">Electronic Address: </span><xsl:value-of select=""cbc:EndpointID"" /> (<xsl:value-of select=""cbc:EndpointID/@schemeID"" />)</div>
+    </xsl:if>
+  </div>
+</xsl:for-each>"),
+
+            ["UBL21_ENDPOINT"] = new SnippetInfo(
+                key: "UBL21_ENDPOINT",
+                displayName: "Elektronik Adres (Endpoint)",
+                iconText: "📡",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Tarafın Peppol ağındaki elektronik adresini schemeID ile gösterir (ör. 0088=GLN, 0192=NO Org.No, 9930=DE VAT). Peppol BIS 3.0'da hem satıcı hem alıcı için zorunludur.\nXPath: cac:Party/cbc:EndpointID ve @schemeID",
+                xsltCode:
+@"<xsl:if test=""cbc:EndpointID"">
+  <span style=""font-weight:bold;"">Electronic Address: </span>
+  <xsl:value-of select=""cbc:EndpointID/@schemeID"" />:<xsl:value-of select=""cbc:EndpointID"" />
+</xsl:if>"),
+
+            ["UBL21_VATID"] = new SnippetInfo(
+                key: "UBL21_VATID",
+                displayName: "VAT Numarası",
+                iconText: "🧾",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Tarafın KDV (VAT) kimlik numarasını gösterir. AB içinde ülke kodu önekiyle yazılır (ör. DE123456789). TaxScheme/ID değeri 'VAT' olan kayıt esas alınır.\nXPath: cac:Party/cac:PartyTaxScheme[cac:TaxScheme/cbc:ID='VAT']/cbc:CompanyID",
+                xsltCode:
+@"<xsl:if test=""cac:PartyTaxScheme[cac:TaxScheme/cbc:ID='VAT']"">
+  <span style=""font-weight:bold;"">VAT No: </span>
+  <xsl:value-of select=""cac:PartyTaxScheme[cac:TaxScheme/cbc:ID='VAT']/cbc:CompanyID"" />
+</xsl:if>"),
+
+            ["UBL21_LEGALENTITY"] = new SnippetInfo(
+                key: "UBL21_LEGALENTITY",
+                displayName: "Tüzel Kişilik Bilgileri",
+                iconText: "⚖️",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Tarafın resmi tescil bilgilerini gösterir: tescilli ünvan, sicil numarası (CompanyID) ve şirket türü/sermaye bilgisi (CompanyLegalForm — bazı ülkelerde faturada zorunlu).\nXPath: cac:Party/cac:PartyLegalEntity",
+                xsltCode:
+@"<xsl:for-each select=""cac:PartyLegalEntity"">
+  <div><span style=""font-weight:bold;"">Registered Name: </span><xsl:value-of select=""cbc:RegistrationName"" /></div>
+  <xsl:if test=""cbc:CompanyID"">
+    <div><span style=""font-weight:bold;"">Company Reg. No: </span><xsl:value-of select=""cbc:CompanyID"" /></div>
+  </xsl:if>
+  <xsl:if test=""cbc:CompanyLegalForm"">
+    <div><span style=""font-weight:bold;"">Legal Form: </span><xsl:value-of select=""cbc:CompanyLegalForm"" /></div>
+  </xsl:if>
+</xsl:for-each>"),
+
+            ["UBL21_ADDRESS"] = new SnippetInfo(
+                key: "UBL21_ADDRESS",
+                displayName: "Uluslararası Adres",
+                iconText: "📍",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Uluslararası adres biçimi: sokak, ek sokak, şehir, posta kodu, eyalet/bölge (CountrySubentity) ve ISO 3166-1 ülke kodu. UBL-TR'deki ilçe (CitySubdivisionName) yerine eyalet alanı öne çıkar.\nXPath: cac:PostalAddress",
+                xsltCode:
+@"<xsl:for-each select=""cac:PostalAddress"">
+  <div>
+    <xsl:value-of select=""cbc:StreetName"" />
+    <xsl:if test=""cbc:AdditionalStreetName"">, <xsl:value-of select=""cbc:AdditionalStreetName"" /></xsl:if>
+  </div>
+  <div>
+    <xsl:value-of select=""cbc:PostalZone"" />
+    <xsl:text> </xsl:text><xsl:value-of select=""cbc:CityName"" />
+    <xsl:if test=""cbc:CountrySubentity"">, <xsl:value-of select=""cbc:CountrySubentity"" /></xsl:if>
+  </div>
+  <div><xsl:value-of select=""cac:Country/cbc:IdentificationCode"" /></div>
+</xsl:for-each>"),
+
+            ["UBL21_CONTACT"] = new SnippetInfo(
+                key: "UBL21_CONTACT",
+                displayName: "İletişim (Int.)",
+                iconText: "☎️",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Tarafın iletişim bilgilerini İngilizce etiketlerle gösterir: yetkili adı, telefon ve e-posta.\nXPath: cac:Party/cac:Contact (cbc:Name, cbc:Telephone, cbc:ElectronicMail)",
+                xsltCode:
+@"<xsl:if test=""cac:Contact"">
+  <xsl:if test=""cac:Contact/cbc:Name""><div><span style=""font-weight:bold;"">Contact: </span><xsl:value-of select=""cac:Contact/cbc:Name"" /></div></xsl:if>
+  <xsl:if test=""cac:Contact/cbc:Telephone""><div><span style=""font-weight:bold;"">Phone: </span><xsl:value-of select=""cac:Contact/cbc:Telephone"" /></div></xsl:if>
+  <xsl:if test=""cac:Contact/cbc:ElectronicMail""><div><span style=""font-weight:bold;"">E-mail: </span><xsl:value-of select=""cac:Contact/cbc:ElectronicMail"" /></div></xsl:if>
+</xsl:if>"),
+
+            ["UBL21_PAYEE"] = new SnippetInfo(
+                key: "UBL21_PAYEE",
+                displayName: "Ödeme Alacaklısı (Payee)",
+                iconText: "💼",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Ödemenin satıcıdan farklı bir tarafa yapılacağı durumda (faktoring vb.) alacaklı taraf bilgilerini gösterir.\nXPath: /n1:Invoice/cac:PayeeParty",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:PayeeParty"">
+  <div>
+    <span style=""font-weight:bold;"">Payee: </span>
+    <xsl:value-of select=""/n1:Invoice/cac:PayeeParty/cac:PartyName/cbc:Name"" />
+    <xsl:if test=""/n1:Invoice/cac:PayeeParty/cac:PartyIdentification/cbc:ID"">
+      (<xsl:value-of select=""/n1:Invoice/cac:PayeeParty/cac:PartyIdentification/cbc:ID"" />)
+    </xsl:if>
+  </div>
+</xsl:if>"),
+
+            ["UBL21_TAXREP"] = new SnippetInfo(
+                key: "UBL21_TAXREP",
+                displayName: "Vergi Temsilcisi",
+                iconText: "🎗",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Taraflar",
+                description: "Satıcının, alıcının ülkesindeki vergi temsilcisini gösterir. Satıcının o ülkede VAT kaydı olmadığında kullanılır.\nXPath: /n1:Invoice/cac:TaxRepresentativeParty",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:TaxRepresentativeParty"">
+  <div style=""border:1px solid #ccc; padding:5px;"">
+    <div style=""font-weight:bold;"">Tax Representative</div>
+    <div><xsl:value-of select=""/n1:Invoice/cac:TaxRepresentativeParty/cac:PartyName/cbc:Name"" /></div>
+    <div><span style=""font-weight:bold;"">VAT: </span><xsl:value-of select=""/n1:Invoice/cac:TaxRepresentativeParty/cac:PartyTaxScheme/cbc:CompanyID"" /></div>
+  </div>
+</xsl:if>"),
+
+            // ═══════════════════════════════════════════════════════════════
+            // UBL 2.1 — Kalemler
+            // ═══════════════════════════════════════════════════════════════
+
+            ["UBL21_LINES_TABLE"] = new SnippetInfo(
+                key: "UBL21_LINES_TABLE",
+                displayName: "Kalem Tablosu (Int.)",
+                iconText: "📋",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Kalemler",
+                description: "Fatura kalemlerini İngilizce başlıklı tam tablo olarak gösterir: sıra no, ürün adı, miktar+birim, birim fiyat, KDV kategorisi ve oranı, satır tutarı.\nXPath: /n1:Invoice/cac:InvoiceLine",
+                xsltCode:
+@"<!-- Invoice Lines -->
+<table style=""width:100%; border-collapse:collapse;"">
+  <tr style=""background-color:#f0f0f0;"">
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold;"">#</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold;"">Item</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:right;"">Qty</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:right;"">Unit Price</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:center;"">VAT</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:right;"">Amount</td>
+  </tr>
+  <xsl:for-each select=""/n1:Invoice/cac:InvoiceLine"">
+    <tr>
+      <td style=""border:1px solid #999; padding:4px;""><xsl:value-of select=""cbc:ID"" /></td>
+      <td style=""border:1px solid #999; padding:4px;"">
+        <xsl:value-of select=""cac:Item/cbc:Name"" />
+        <xsl:if test=""cac:Item/cbc:Description"">
+          <div style=""font-size:9px; color:#666;""><xsl:value-of select=""cac:Item/cbc:Description"" /></div>
+        </xsl:if>
+      </td>
+      <td style=""border:1px solid #999; padding:4px; text-align:right;"">
+        <xsl:value-of select=""cbc:InvoicedQuantity"" />
+        <xsl:text> </xsl:text><xsl:value-of select=""cbc:InvoicedQuantity/@unitCode"" />
+      </td>
+      <td style=""border:1px solid #999; padding:4px; text-align:right;""><xsl:value-of select=""cac:Price/cbc:PriceAmount"" /></td>
+      <td style=""border:1px solid #999; padding:4px; text-align:center;"">
+        <xsl:value-of select=""cac:Item/cac:ClassifiedTaxCategory/cbc:ID"" />
+        <xsl:if test=""cac:Item/cac:ClassifiedTaxCategory/cbc:Percent""> %<xsl:value-of select=""cac:Item/cac:ClassifiedTaxCategory/cbc:Percent"" /></xsl:if>
+      </td>
+      <td style=""border:1px solid #999; padding:4px; text-align:right;"">
+        <xsl:value-of select=""cbc:LineExtensionAmount"" />
+        <xsl:text> </xsl:text><xsl:value-of select=""cbc:LineExtensionAmount/@currencyID"" />
+      </td>
+    </tr>
+  </xsl:for-each>
+</table>"),
+
+            ["UBL21_ITEM_IDS"] = new SnippetInfo(
+                key: "UBL21_ITEM_IDS",
+                displayName: "Ürün Kimlikleri",
+                iconText: "🆔",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Kalemler",
+                description: "Kalem içindeki ürün kimliklerini gösterir: satıcı ürün kodu, alıcı ürün kodu ve standart kimlik (schemeID 0160 = GTIN/barkod).\nXPath: cac:Item/cac:SellersItemIdentification, cac:BuyersItemIdentification, cac:StandardItemIdentification",
+                xsltCode:
+@"<xsl:if test=""cac:Item/cac:SellersItemIdentification"">
+  <span style=""font-size:9px;"">Seller ID: <xsl:value-of select=""cac:Item/cac:SellersItemIdentification/cbc:ID"" /></span>
+</xsl:if>
+<xsl:if test=""cac:Item/cac:BuyersItemIdentification"">
+  <span style=""font-size:9px;""> · Buyer ID: <xsl:value-of select=""cac:Item/cac:BuyersItemIdentification/cbc:ID"" /></span>
+</xsl:if>
+<xsl:if test=""cac:Item/cac:StandardItemIdentification"">
+  <span style=""font-size:9px;""> · GTIN: <xsl:value-of select=""cac:Item/cac:StandardItemIdentification/cbc:ID"" /></span>
+</xsl:if>"),
+
+            ["UBL21_ITEM_CLASSIFICATION"] = new SnippetInfo(
+                key: "UBL21_ITEM_CLASSIFICATION",
+                displayName: "Ürün Sınıflandırma Kodu",
+                iconText: "🗂",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Kalemler",
+                description: "Ürünün uluslararası sınıflandırma kodlarını listID ile gösterir (ör. CPV, UNSPSC, HS/GTIP). Kamu alım faturalarında sık kullanılır.\nXPath: cac:Item/cac:CommodityClassification/cbc:ItemClassificationCode ve @listID",
+                xsltCode:
+@"<xsl:for-each select=""cac:Item/cac:CommodityClassification"">
+  <span style=""font-size:9px; color:#666;"">
+    <xsl:value-of select=""cbc:ItemClassificationCode/@listID"" />: <xsl:value-of select=""cbc:ItemClassificationCode"" />
+  </span>
+</xsl:for-each>"),
+
+            ["UBL21_ITEM_ATTRIBUTES"] = new SnippetInfo(
+                key: "UBL21_ITEM_ATTRIBUTES",
+                displayName: "Ürün Özellikleri (Int.)",
+                iconText: "🏷",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Kalemler",
+                description: "Ürünün ad-değer çiftli ek özelliklerini (renk, beden, seri no vb.) döngüyle listeler.\nXPath: cac:Item/cac:AdditionalItemProperty (cbc:Name, cbc:Value)",
+                xsltCode:
+@"<xsl:for-each select=""cac:Item/cac:AdditionalItemProperty"">
+  <div style=""font-size:9px;"">
+    <span style=""font-weight:bold;""><xsl:value-of select=""cbc:Name"" />: </span>
+    <xsl:value-of select=""cbc:Value"" />
+  </div>
+</xsl:for-each>"),
+
+            ["UBL21_ITEM_ORIGIN"] = new SnippetInfo(
+                key: "UBL21_ITEM_ORIGIN",
+                displayName: "Menşe Ülkesi",
+                iconText: "🌐",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Kalemler",
+                description: "Ürünün menşe ülkesini ISO 3166-1 koduyla gösterir. Gümrük ve ihracat faturalarında önemlidir.\nXPath: cac:Item/cac:OriginCountry/cbc:IdentificationCode",
+                xsltCode:
+@"<xsl:if test=""cac:Item/cac:OriginCountry"">
+  <span style=""font-size:9px;"">Country of Origin: <xsl:value-of select=""cac:Item/cac:OriginCountry/cbc:IdentificationCode"" /></span>
+</xsl:if>"),
+
+            ["UBL21_LINE_PRICE"] = new SnippetInfo(
+                key: "UBL21_LINE_PRICE",
+                displayName: "Birim Fiyat + Baz Miktar",
+                iconText: "💲",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Kalemler",
+                description: "Kalemin birim fiyatını ve fiyatın kaç birime karşılık geldiğini (BaseQuantity, ör. 100 adet başına fiyat) gösterir.\nXPath: cac:Price/cbc:PriceAmount, cac:Price/cbc:BaseQuantity",
+                xsltCode:
+@"<xsl:value-of select=""cac:Price/cbc:PriceAmount"" />
+<xsl:text> </xsl:text><xsl:value-of select=""cac:Price/cbc:PriceAmount/@currencyID"" />
+<xsl:if test=""cac:Price/cbc:BaseQuantity"">
+  <xsl:text> / </xsl:text><xsl:value-of select=""cac:Price/cbc:BaseQuantity"" />
+  <xsl:text> </xsl:text><xsl:value-of select=""cac:Price/cbc:BaseQuantity/@unitCode"" />
+</xsl:if>"),
+
+            ["UBL21_LINE_ALLOWANCE"] = new SnippetInfo(
+                key: "UBL21_LINE_ALLOWANCE",
+                displayName: "Kalem İndirim/Artırım",
+                iconText: "➖",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Kalemler",
+                description: "Kalem düzeyindeki indirim (allowance) ve artırımları (charge) gösterir. ChargeIndicator=false indirim, true artırımdır.\nXPath: cac:InvoiceLine/cac:AllowanceCharge",
+                xsltCode:
+@"<xsl:for-each select=""cac:AllowanceCharge"">
+  <div style=""font-size:9px;"">
+    <xsl:choose>
+      <xsl:when test=""cbc:ChargeIndicator='true'"">Charge: </xsl:when>
+      <xsl:otherwise>Allowance: </xsl:otherwise>
+    </xsl:choose>
+    <xsl:if test=""cbc:AllowanceChargeReason""><xsl:value-of select=""cbc:AllowanceChargeReason"" /> — </xsl:if>
+    <xsl:value-of select=""cbc:Amount"" />
+    <xsl:text> </xsl:text><xsl:value-of select=""cbc:Amount/@currencyID"" />
+  </div>
+</xsl:for-each>"),
+
+            // ═══════════════════════════════════════════════════════════════
+            // UBL 2.1 — Vergi
+            // ═══════════════════════════════════════════════════════════════
+
+            ["UBL21_TAXTOTAL"] = new SnippetInfo(
+                key: "UBL21_TAXTOTAL",
+                displayName: "KDV Dökümü (Int.)",
+                iconText: "🧮",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Vergi",
+                description: "EN 16931 KDV dökümü: her vergi kategorisi (S/Z/E/AE/K/G/O) için matrah, oran ve vergi tutarını tablo halinde gösterir.\nXPath: /n1:Invoice/cac:TaxTotal/cac:TaxSubtotal",
+                xsltCode:
+@"<!-- VAT Breakdown -->
+<table style=""width:100%; border-collapse:collapse;"">
+  <tr style=""background-color:#f0f0f0;"">
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold;"">VAT Category</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:right;"">Rate</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:right;"">Taxable Amount</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:right;"">VAT Amount</td>
+  </tr>
+  <xsl:for-each select=""/n1:Invoice/cac:TaxTotal/cac:TaxSubtotal"">
+    <tr>
+      <td style=""border:1px solid #999; padding:4px;""><xsl:value-of select=""cac:TaxCategory/cbc:ID"" /></td>
+      <td style=""border:1px solid #999; padding:4px; text-align:right;"">
+        <xsl:if test=""cac:TaxCategory/cbc:Percent"">%<xsl:value-of select=""cac:TaxCategory/cbc:Percent"" /></xsl:if>
+      </td>
+      <td style=""border:1px solid #999; padding:4px; text-align:right;""><xsl:value-of select=""cbc:TaxableAmount"" /></td>
+      <td style=""border:1px solid #999; padding:4px; text-align:right;""><xsl:value-of select=""cbc:TaxAmount"" /></td>
+    </tr>
+  </xsl:for-each>
+  <tr>
+    <td colspan=""3"" style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:right;"">Total VAT:</td>
+    <td style=""border:1px solid #999; padding:4px; font-weight:bold; text-align:right;"">
+      <xsl:value-of select=""/n1:Invoice/cac:TaxTotal[1]/cbc:TaxAmount"" />
+      <xsl:text> </xsl:text><xsl:value-of select=""/n1:Invoice/cac:TaxTotal[1]/cbc:TaxAmount/@currencyID"" />
+    </td>
+  </tr>
+</table>"),
+
+            ["UBL21_TAX_CATEGORY_LABEL"] = new SnippetInfo(
+                key: "UBL21_TAX_CATEGORY_LABEL",
+                displayName: "KDV Kategori Açıklaması",
+                iconText: "🔤",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Vergi",
+                description: "UNCL5305 vergi kategori kodunu okunur İngilizce açıklamaya çevirir: S=Standard, Z=Zero rated, E=Exempt, AE=Reverse charge, K=IC supply, G=Export, O=Not subject to VAT.\nXPath: cac:TaxCategory/cbc:ID",
+                xsltCode:
+@"<xsl:choose>
+  <xsl:when test=""cac:TaxCategory/cbc:ID='S'"">Standard rate</xsl:when>
+  <xsl:when test=""cac:TaxCategory/cbc:ID='Z'"">Zero rated</xsl:when>
+  <xsl:when test=""cac:TaxCategory/cbc:ID='E'"">Exempt from VAT</xsl:when>
+  <xsl:when test=""cac:TaxCategory/cbc:ID='AE'"">VAT reverse charge</xsl:when>
+  <xsl:when test=""cac:TaxCategory/cbc:ID='K'"">Intra-community supply</xsl:when>
+  <xsl:when test=""cac:TaxCategory/cbc:ID='G'"">Export outside the EU</xsl:when>
+  <xsl:when test=""cac:TaxCategory/cbc:ID='O'"">Not subject to VAT</xsl:when>
+  <xsl:otherwise><xsl:value-of select=""cac:TaxCategory/cbc:ID"" /></xsl:otherwise>
+</xsl:choose>"),
+
+            ["UBL21_TAX_EXEMPTION"] = new SnippetInfo(
+                key: "UBL21_TAX_EXEMPTION",
+                displayName: "KDV İstisna Nedeni (Int.)",
+                iconText: "🚫",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Vergi",
+                description: "Vergi kategorisi E/AE/K/G/O olduğunda zorunlu olan istisna gerekçesini ve kodunu (VATEX listesi) gösterir.\nXPath: cac:TaxCategory/cbc:TaxExemptionReason, cbc:TaxExemptionReasonCode",
+                xsltCode:
+@"<xsl:if test=""cac:TaxCategory/cbc:TaxExemptionReason"">
+  <div style=""font-size:9px; color:#666;"">
+    <span style=""font-weight:bold;"">Exemption: </span>
+    <xsl:if test=""cac:TaxCategory/cbc:TaxExemptionReasonCode"">
+      [<xsl:value-of select=""cac:TaxCategory/cbc:TaxExemptionReasonCode"" />]
+      <xsl:text> </xsl:text>
+    </xsl:if>
+    <xsl:value-of select=""cac:TaxCategory/cbc:TaxExemptionReason"" />
+  </div>
+</xsl:if>"),
+
+            ["UBL21_TAX_CURRENCY"] = new SnippetInfo(
+                key: "UBL21_TAX_CURRENCY",
+                displayName: "İkinci Para Biriminde KDV",
+                iconText: "💶",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Vergi",
+                description: "Çok para birimli faturalarda her iki TaxTotal kaydını da para birimi koduyla listeler (belge para birimi + vergi muhasebe para birimi).\nXPath: /n1:Invoice/cac:TaxTotal/cbc:TaxAmount ve @currencyID",
+                xsltCode:
+@"<xsl:for-each select=""/n1:Invoice/cac:TaxTotal"">
+  <div>
+    <span style=""font-weight:bold;"">Total VAT (<xsl:value-of select=""cbc:TaxAmount/@currencyID"" />): </span>
+    <xsl:value-of select=""cbc:TaxAmount"" />
+  </div>
+</xsl:for-each>"),
+
+            // ═══════════════════════════════════════════════════════════════
+            // UBL 2.1 — Toplamlar
+            // ═══════════════════════════════════════════════════════════════
+
+            ["UBL21_MONETARYTOTAL"] = new SnippetInfo(
+                key: "UBL21_MONETARYTOTAL",
+                displayName: "Belge Toplamları (Int.)",
+                iconText: "💰",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Toplamlar",
+                description: "EN 16931 belge toplamları tablosu: satır toplamı, indirim/artırım toplamları, vergi hariç/dahil tutar, ön ödeme, yuvarlama ve ödenecek tutar.\nXPath: /n1:Invoice/cac:LegalMonetaryTotal",
+                xsltCode:
+@"<!-- Document Totals -->
+<table style=""width:100%; border-collapse:collapse;"">
+  <tr>
+    <td style=""padding:3px; text-align:right;"">Sum of line amounts:</td>
+    <td style=""padding:3px; text-align:right; width:25%;""><xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount"" /></td>
+  </tr>
+  <xsl:if test=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount"">
+    <tr>
+      <td style=""padding:3px; text-align:right;"">Total allowances:</td>
+      <td style=""padding:3px; text-align:right;"">-<xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount"" /></td>
+    </tr>
+  </xsl:if>
+  <xsl:if test=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount"">
+    <tr>
+      <td style=""padding:3px; text-align:right;"">Total charges:</td>
+      <td style=""padding:3px; text-align:right;"">+<xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount"" /></td>
+    </tr>
+  </xsl:if>
+  <tr>
+    <td style=""padding:3px; text-align:right;"">Total excl. VAT:</td>
+    <td style=""padding:3px; text-align:right;""><xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount"" /></td>
+  </tr>
+  <tr>
+    <td style=""padding:3px; text-align:right;"">Total incl. VAT:</td>
+    <td style=""padding:3px; text-align:right;""><xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount"" /></td>
+  </tr>
+  <xsl:if test=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount"">
+    <tr>
+      <td style=""padding:3px; text-align:right;"">Prepaid amount:</td>
+      <td style=""padding:3px; text-align:right;"">-<xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount"" /></td>
+    </tr>
+  </xsl:if>
+  <xsl:if test=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount"">
+    <tr>
+      <td style=""padding:3px; text-align:right;"">Rounding:</td>
+      <td style=""padding:3px; text-align:right;""><xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount"" /></td>
+    </tr>
+  </xsl:if>
+  <tr style=""font-weight:bold; font-size:12px;"">
+    <td style=""padding:3px; text-align:right; border-top:2px solid #333;"">Amount due for payment:</td>
+    <td style=""padding:3px; text-align:right; border-top:2px solid #333;"">
+      <xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount"" />
+      <xsl:text> </xsl:text><xsl:value-of select=""/n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount/@currencyID"" />
+    </td>
+  </tr>
+</table>"),
+
+            ["UBL21_ALLOWANCECHARGE"] = new SnippetInfo(
+                key: "UBL21_ALLOWANCECHARGE",
+                displayName: "Belge İndirim/Artırımları",
+                iconText: "⚖",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Toplamlar",
+                description: "Belge düzeyindeki indirim ve artırımları neden kodu, oran ve tutarıyla listeler. ChargeIndicator=false indirim, true artırımdır.\nXPath: /n1:Invoice/cac:AllowanceCharge",
+                xsltCode:
+@"<xsl:for-each select=""/n1:Invoice/cac:AllowanceCharge"">
+  <div>
+    <xsl:choose>
+      <xsl:when test=""cbc:ChargeIndicator='true'""><span style=""font-weight:bold;"">Charge: </span></xsl:when>
+      <xsl:otherwise><span style=""font-weight:bold;"">Allowance: </span></xsl:otherwise>
+    </xsl:choose>
+    <xsl:if test=""cbc:AllowanceChargeReason""><xsl:value-of select=""cbc:AllowanceChargeReason"" /> — </xsl:if>
+    <xsl:if test=""cbc:MultiplierFactorNumeric"">%<xsl:value-of select=""cbc:MultiplierFactorNumeric"" /> → </xsl:if>
+    <xsl:value-of select=""cbc:Amount"" />
+    <xsl:text> </xsl:text><xsl:value-of select=""cbc:Amount/@currencyID"" />
+  </div>
+</xsl:for-each>"),
+
+            // ═══════════════════════════════════════════════════════════════
+            // UBL 2.1 — Ödeme
+            // ═══════════════════════════════════════════════════════════════
+
+            ["UBL21_PAYMENTMEANS"] = new SnippetInfo(
+                key: "UBL21_PAYMENTMEANS",
+                displayName: "Ödeme Bilgileri (IBAN/BIC)",
+                iconText: "🏦",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Ödeme",
+                description: "Ödeme yöntemini (UNCL4461 kodu), ödeme referansını (PaymentID/remittance) ve alacaklı hesabını (IBAN + BIC) gösterir. SEPA havaleleri için temel bloktur.\nXPath: /n1:Invoice/cac:PaymentMeans",
+                xsltCode:
+@"<!-- Payment Information -->
+<xsl:for-each select=""/n1:Invoice/cac:PaymentMeans"">
+  <table style=""width:100%; border:1px solid #ccc; padding:5px;"">
+    <tr>
+      <td style=""font-weight:bold; width:30%;"">Payment Means:</td>
+      <td>
+        <xsl:value-of select=""cbc:PaymentMeansCode/@name"" />
+        <xsl:text> (</xsl:text><xsl:value-of select=""cbc:PaymentMeansCode"" /><xsl:text>)</xsl:text>
+      </td>
+    </tr>
+    <xsl:if test=""cbc:PaymentID"">
+      <tr>
+        <td style=""font-weight:bold;"">Payment Reference:</td>
+        <td><xsl:value-of select=""cbc:PaymentID"" /></td>
+      </tr>
+    </xsl:if>
+    <xsl:if test=""cac:PayeeFinancialAccount"">
+      <tr>
+        <td style=""font-weight:bold;"">IBAN:</td>
+        <td><xsl:value-of select=""cac:PayeeFinancialAccount/cbc:ID"" /></td>
+      </tr>
+      <xsl:if test=""cac:PayeeFinancialAccount/cbc:Name"">
+        <tr>
+          <td style=""font-weight:bold;"">Account Name:</td>
+          <td><xsl:value-of select=""cac:PayeeFinancialAccount/cbc:Name"" /></td>
+        </tr>
+      </xsl:if>
+      <xsl:if test=""cac:PayeeFinancialAccount/cac:FinancialInstitutionBranch/cbc:ID"">
+        <tr>
+          <td style=""font-weight:bold;"">BIC:</td>
+          <td><xsl:value-of select=""cac:PayeeFinancialAccount/cac:FinancialInstitutionBranch/cbc:ID"" /></td>
+        </tr>
+      </xsl:if>
+    </xsl:if>
+  </table>
+</xsl:for-each>"),
+
+            ["UBL21_PAYMENTTERMS"] = new SnippetInfo(
+                key: "UBL21_PAYMENTTERMS",
+                displayName: "Ödeme Koşulları (Int.)",
+                iconText: "📜",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Ödeme",
+                description: "Ödeme koşullarını serbest metin olarak gösterir (ör. '30 days net', gecikme faizi koşulları).\nXPath: /n1:Invoice/cac:PaymentTerms/cbc:Note",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:PaymentTerms"">
+  <span style=""font-weight:bold;"">Payment Terms: </span>
+  <xsl:value-of select=""/n1:Invoice/cac:PaymentTerms/cbc:Note"" />
+</xsl:if>"),
+
+            ["UBL21_MANDATE"] = new SnippetInfo(
+                key: "UBL21_MANDATE",
+                displayName: "Otomatik Ödeme Talimatı (SEPA)",
+                iconText: "🔁",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Ödeme",
+                description: "SEPA otomatik borçlandırma (direct debit) talimat bilgilerini gösterir: talimat referansı ve borçlu hesap IBAN'ı.\nXPath: /n1:Invoice/cac:PaymentMeans/cac:PaymentMandate",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:PaymentMeans/cac:PaymentMandate"">
+  <div>
+    <span style=""font-weight:bold;"">Direct Debit Mandate: </span>
+    <xsl:value-of select=""/n1:Invoice/cac:PaymentMeans/cac:PaymentMandate/cbc:ID"" />
+    <xsl:if test=""/n1:Invoice/cac:PaymentMeans/cac:PaymentMandate/cac:PayerFinancialAccount/cbc:ID"">
+      <xsl:text> · Debited account: </xsl:text>
+      <xsl:value-of select=""/n1:Invoice/cac:PaymentMeans/cac:PaymentMandate/cac:PayerFinancialAccount/cbc:ID"" />
+    </xsl:if>
+  </div>
+</xsl:if>"),
+
+            // ═══════════════════════════════════════════════════════════════
+            // UBL 2.1 — Referanslar
+            // ═══════════════════════════════════════════════════════════════
+
+            ["UBL21_ORDERREF"] = new SnippetInfo(
+                key: "UBL21_ORDERREF",
+                displayName: "Sipariş Referansı (Int.)",
+                iconText: "🛒",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Referanslar",
+                description: "Alıcının sipariş numarasını (PO) ve satıcının satış sipariş numarasını gösterir.\nXPath: /n1:Invoice/cac:OrderReference (cbc:ID, cbc:SalesOrderID)",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:OrderReference"">
+  <div>
+    <span style=""font-weight:bold;"">Purchase Order: </span>
+    <xsl:value-of select=""/n1:Invoice/cac:OrderReference/cbc:ID"" />
+    <xsl:if test=""/n1:Invoice/cac:OrderReference/cbc:SalesOrderID"">
+      <xsl:text> · Sales Order: </xsl:text>
+      <xsl:value-of select=""/n1:Invoice/cac:OrderReference/cbc:SalesOrderID"" />
+    </xsl:if>
+  </div>
+</xsl:if>"),
+
+            ["UBL21_BILLINGREF"] = new SnippetInfo(
+                key: "UBL21_BILLINGREF",
+                displayName: "Önceki Fatura Referansı",
+                iconText: "↩️",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Referanslar",
+                description: "Düzeltme/iade faturalarında atıf yapılan önceki fatura numarası ve tarihini listeler.\nXPath: /n1:Invoice/cac:BillingReference/cac:InvoiceDocumentReference",
+                xsltCode:
+@"<xsl:for-each select=""/n1:Invoice/cac:BillingReference/cac:InvoiceDocumentReference"">
+  <div>
+    <span style=""font-weight:bold;"">Preceding Invoice: </span>
+    <xsl:value-of select=""cbc:ID"" />
+    <xsl:if test=""cbc:IssueDate""> (<xsl:value-of select=""cbc:IssueDate"" />)</xsl:if>
+  </div>
+</xsl:for-each>"),
+
+            ["UBL21_CONTRACTREF"] = new SnippetInfo(
+                key: "UBL21_CONTRACTREF",
+                displayName: "Sözleşme Referansı",
+                iconText: "🤝",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Referanslar",
+                description: "Faturanın dayandığı sözleşmenin referans numarasını gösterir.\nXPath: /n1:Invoice/cac:ContractDocumentReference/cbc:ID",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:ContractDocumentReference"">
+  <span style=""font-weight:bold;"">Contract Reference: </span>
+  <xsl:value-of select=""/n1:Invoice/cac:ContractDocumentReference/cbc:ID"" />
+</xsl:if>"),
+
+            ["UBL21_DESPATCHREF"] = new SnippetInfo(
+                key: "UBL21_DESPATCHREF",
+                displayName: "İrsaliye/Teslim Alma Ref.",
+                iconText: "🚚",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Referanslar",
+                description: "Sevkiyat belgesi (despatch advice) ve teslim alma belgesi (receipt advice) referanslarını gösterir.\nXPath: /n1:Invoice/cac:DespatchDocumentReference, cac:ReceiptDocumentReference",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:DespatchDocumentReference"">
+  <div><span style=""font-weight:bold;"">Despatch Advice: </span><xsl:value-of select=""/n1:Invoice/cac:DespatchDocumentReference/cbc:ID"" /></div>
+</xsl:if>
+<xsl:if test=""/n1:Invoice/cac:ReceiptDocumentReference"">
+  <div><span style=""font-weight:bold;"">Receipt Advice: </span><xsl:value-of select=""/n1:Invoice/cac:ReceiptDocumentReference/cbc:ID"" /></div>
+</xsl:if>"),
+
+            ["UBL21_ADDITIONALDOC"] = new SnippetInfo(
+                key: "UBL21_ADDITIONALDOC",
+                displayName: "Ek Belgeler (Int.)",
+                iconText: "📎",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Referanslar",
+                description: "Faturaya eklenen destekleyici belgeleri listeler: belge no, açıklama ve varsa harici bağlantı (URI).\nXPath: /n1:Invoice/cac:AdditionalDocumentReference",
+                xsltCode:
+@"<xsl:for-each select=""/n1:Invoice/cac:AdditionalDocumentReference"">
+  <div style=""padding:2px;"">
+    <span style=""font-weight:bold;""><xsl:value-of select=""cbc:ID"" /></span>
+    <xsl:if test=""cbc:DocumentDescription""> — <xsl:value-of select=""cbc:DocumentDescription"" /></xsl:if>
+    <xsl:if test=""cac:Attachment/cac:ExternalReference/cbc:URI"">
+      <xsl:text> · </xsl:text>
+      <a style=""color:#0066cc;"">
+        <xsl:attribute name=""href""><xsl:value-of select=""cac:Attachment/cac:ExternalReference/cbc:URI"" /></xsl:attribute>
+        <xsl:value-of select=""cac:Attachment/cac:ExternalReference/cbc:URI"" />
+      </a>
+    </xsl:if>
+  </div>
+</xsl:for-each>"),
+
+            ["UBL21_PROJECTREF"] = new SnippetInfo(
+                key: "UBL21_PROJECTREF",
+                displayName: "Proje / Muhasebe Kodu",
+                iconText: "📁",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Referanslar",
+                description: "Proje referansını ve alıcının muhasebe/maliyet merkezi kodunu (AccountingCost) gösterir.\nXPath: /n1:Invoice/cac:ProjectReference/cbc:ID, /n1:Invoice/cbc:AccountingCost",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:ProjectReference"">
+  <div><span style=""font-weight:bold;"">Project: </span><xsl:value-of select=""/n1:Invoice/cac:ProjectReference/cbc:ID"" /></div>
+</xsl:if>
+<xsl:if test=""/n1:Invoice/cbc:AccountingCost"">
+  <div><span style=""font-weight:bold;"">Accounting Cost: </span><xsl:value-of select=""/n1:Invoice/cbc:AccountingCost"" /></div>
+</xsl:if>"),
+
+            // ═══════════════════════════════════════════════════════════════
+            // UBL 2.1 — Teslimat
+            // ═══════════════════════════════════════════════════════════════
+
+            ["UBL21_DELIVERY"] = new SnippetInfo(
+                key: "UBL21_DELIVERY",
+                displayName: "Teslimat Bilgileri (Int.)",
+                iconText: "📦",
+                category: "UBL 2.1 (Uluslararası)",
+                subCategory: "Teslimat",
+                description: "Fiili teslim tarihini, teslimat noktası kimliğini (ör. GLN) ve teslimat adresini gösterir.\nXPath: /n1:Invoice/cac:Delivery",
+                xsltCode:
+@"<xsl:if test=""/n1:Invoice/cac:Delivery"">
+  <div style=""border:1px solid #ccc; padding:5px;"">
+    <div style=""font-weight:bold;"">Delivery</div>
+    <xsl:if test=""/n1:Invoice/cac:Delivery/cbc:ActualDeliveryDate"">
+      <div><span style=""font-weight:bold;"">Delivery Date: </span><xsl:value-of select=""/n1:Invoice/cac:Delivery/cbc:ActualDeliveryDate"" /></div>
+    </xsl:if>
+    <xsl:if test=""/n1:Invoice/cac:Delivery/cac:DeliveryLocation/cbc:ID"">
+      <div><span style=""font-weight:bold;"">Location ID: </span><xsl:value-of select=""/n1:Invoice/cac:Delivery/cac:DeliveryLocation/cbc:ID"" /></div>
+    </xsl:if>
+    <xsl:for-each select=""/n1:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address"">
+      <div>
+        <xsl:value-of select=""cbc:StreetName"" />
+        <xsl:text>, </xsl:text><xsl:value-of select=""cbc:PostalZone"" />
+        <xsl:text> </xsl:text><xsl:value-of select=""cbc:CityName"" />
+        <xsl:text> — </xsl:text><xsl:value-of select=""cac:Country/cbc:IdentificationCode"" />
+      </div>
+    </xsl:for-each>
+    <xsl:if test=""/n1:Invoice/cac:Delivery/cac:DeliveryParty/cac:PartyName/cbc:Name"">
+      <div><span style=""font-weight:bold;"">Deliver to: </span><xsl:value-of select=""/n1:Invoice/cac:Delivery/cac:DeliveryParty/cac:PartyName/cbc:Name"" /></div>
+    </xsl:if>
+  </div>
 </xsl:if>"),
         };
     }

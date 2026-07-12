@@ -3,6 +3,29 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.27.0] — 2026-07-12 — DeepSeek + Dinamik AI Parametreleri + UBL 2.1 Uluslararası Snippet'ler
+
+### Eklenen
+- **DeepSeek sağlayıcısı:** AI asistanına 4. sağlayıcı (deepseek-chat / deepseek-reasoner,
+  OpenAI-uyumlu uç). DeepSeek'in `max_tokens` üst sınırı 8192 olarak uygulanır.
+- **Dinamik AI parametre sistemi (`AI_PARAM_DESCRIPTORS`):** Hangi kontrolün hangi
+  sağlayıcı+modelde görüneceği descriptor kayıtlarından belirlenir — yeni bir parametre
+  (ör. web araması) eklemek tek kayıt demektir.
+- **Derin düşünme (thinking):** Anthropic extended thinking (8192 bütçe), OpenAI
+  `reasoning_effort=high` (o-serisi/gpt-5), Gemini `thinkingConfig` (dinamik bütçe).
+  Ayarlar → AI'da modele göre görünen kontroller + AI panelinde hızlı 🧠 düğmesi.
+  DeepSeek'te düşünme ayrı model (deepseek-reasoner) olduğundan anahtar gösterilmez.
+- **Temperature ayarı:** Tüm sağlayıcılarda; boş bırakılırsa sağlayıcı varsayılanı
+  kullanılır (parametre gönderilmez). Anthropic'te thinking açıkken temperature
+  gönderilmez (API kuralı).
+- **UBL 2.1 (Uluslararası) snippet seti:** 39 yeni snippet (`UBL21_*`) — EN 16931 /
+  Peppol BIS 3.0 kapsamı, İngilizce çıktı etiketleri. Toplam snippet sayısı 294'e çıktı.
+- 6 yeni arayüz metni × 5 dil.
+
+### Düzeltilen
+- OpenAI reasoning modelleri (o-serisi/gpt-5) `max_tokens` parametresini reddediyordu —
+  OpenAI'da artık `max_completion_tokens` gönderiliyor.
+
 ## [2.26.0] — 2026-07-12 — Çoklu Dil (i18n): 5 Dil + Çeviri Düzenleyici
 
 ### Eklenen

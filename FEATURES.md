@@ -1,6 +1,6 @@
 # Özellikler (Features)
 
-## E-Fatura Dizayn Editörü — v2.26.0
+## E-Fatura Dizayn Editörü — v2.27.0
 
 Cross-platform (macOS / Linux / Windows) masaüstü uygulaması.
 **Tauri v2 + SvelteKit (Svelte 5) + CodeMirror 6 + Saxon-HE (GraalVM native sidecar).**
@@ -40,9 +40,14 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   "Uygula" dendiğinde dosya **otomatik kaydedilir** (AI'ın kaydedilmemiş kopya üzerinde çalışmasını önler).
 - **Ekler:** Dosya seçici + panodan yapıştırma. Görsel/PDF → çok-kipli (multimodal) gönderim;
   metin dosyaları → önbelleklenen bağlam. Görseller `⬇ göm` ile base64 data-URI olarak editöre gömülebilir.
-- **3 sağlayıcı:** Anthropic (Claude), Google (Gemini), OpenAI-uyumlu (OpenAI, NVIDIA, yerel).
-  Model listesi API'den canlı çekilir; sohbete uygun olmayan modeller (görsel üretim vb.) elenir.
+- **4 sağlayıcı:** Anthropic (Claude), Google (Gemini), OpenAI-uyumlu (OpenAI, NVIDIA, yerel),
+  DeepSeek (v2.27.0; deepseek-chat / deepseek-reasoner). Model listesi API'den canlı çekilir;
+  sohbete uygun olmayan modeller (görsel üretim vb.) elenir.
 - **Model rozeti:** Panel başlığında etkin sağlayıcı ve model adı gösterilir.
+- **Dinamik model parametreleri (v2.27.0):** `AI_PARAM_DESCRIPTORS` deseni — hangi kontrolün
+  hangi sağlayıcı+modelde görüneceği descriptor kayıtlarından belirlenir. Derin düşünme
+  (Anthropic extended thinking, OpenAI `reasoning_effort`, Gemini `thinkingConfig`) ve
+  temperature; Ayarlar → AI'daki kontroller + AI panelinde hızlı 🧠 düğmesi.
 - **Prompt caching (v2.19.0):** Sistem promptu + dosya bağlamı **kararlı önek** olarak ayrı gönderilir —
   Anthropic'te `cache_control: ephemeral`, OpenAI'de otomatik önek önbelleği, Gemini'de örtük önbellek.
 - **Token disiplini:** Dosya yalnızca son mesaja eklenir (her turda değil), geçmiş 12 mesajla sınırlanır,
@@ -66,11 +71,12 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   çıktı, temiz dönüşümle **bayt bayt aynıdır** (render etkilenmez).
   Kaynak: [`app/src/lib/xslt-map.ts`](app/src/lib/xslt-map.ts)
 
-### ✂️ Snippet Sistemi — 255 Snippet
+### ✂️ Snippet Sistemi — 294 Snippet
 
 | Kategori | Adet | İçerik |
 | --- | --- | --- |
 | UBL-TR e-Fatura / e-Arşiv / e-İrsaliye + HTML/Sayfa Düzeni | 149 | Başlık, taraflar, kalemler, vergi, toplamlar, ödeme, referanslar, barkod/QR, üst-alt bilgi |
+| UBL 2.1 (Uluslararası) (v2.27.0) | 39 | EN 16931 / Peppol BIS 3.0 kapsamı — başlık, taraflar, kalemler, vergi, toplamlar; İngilizce çıktı etiketleri (`UBL21_*`) |
 | XSLT Komutları | 56 | **XSLT 1.0 / 2.0 / 3.0** ayrı alt kategoriler — tam komut seti |
 | XPath Fonksiyonları | 26 | XPath 1.0 + XPath 2.0/3.0 (dize, sayı, tarih, dizi, düzenli ifade) |
 | CSS Kuralları | 24 | Metin, Kutu & Kenarlık, Yerleşim, Tablo, Sayfa & Baskı |
@@ -78,7 +84,7 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
 - **Kullanıcı snippet'leri:** Kendi snippet'lerini ekleyip kalıcı saklayabilirsin.
 - **Sürükle-bırak:** Özel fare-izleme implementasyonu (WKWebView'de HTML5 drag API güvenilmez) —
   görsel ghost gösterge, hedef editörde mavi vurgulama.
-- **Autocomplete:** 348 öneri (16 XSLT etiketi + 77 UBL-TR XPath + 255 snippet) — `Ctrl+Space` veya `<` ile tetiklenir.
+- **Autocomplete:** 387 öneri (16 XSLT etiketi + 77 UBL-TR XPath + 294 snippet) — `Ctrl+Space` veya `<` ile tetiklenir.
 
 ### 🖥️ Editör ve Arayüz
 
