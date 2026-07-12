@@ -1,6 +1,6 @@
 [package]
 name = "efatura-edit"
-version = "2.24.0"
+version = "2.24.1"
 description = "E-Fatura Dizayn Editörü — Tauri + SvelteKit + Saxon-JS"
 authors = ["Zafer Bilgisayar"]
 edition = "2021"

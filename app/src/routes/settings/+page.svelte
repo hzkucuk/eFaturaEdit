@@ -114,13 +114,32 @@
     }
   }
 
-  /** Günlük klasörünü sistem dosya yöneticisinde aç. */
-  async function openLogDir() {
+  let logPath = $state('');
+  let logError = $state('');
+
+  // Yolu baştan göster: klasör açılamasa bile kullanıcı elle bulabilsin.
+  onMount(async () => {
     try {
-      const dir = await invoke<string>('log_dir');
-      await openUrl(`file://${dir}`);
+      logPath = await invoke<string>('log_dir');
     } catch (err) {
-      log.error(`[ayarlar] günlük klasörü açılamadı: ${describeError(err)}`);
+      log.error(`[ayarlar] günlük yolu alınamadı: ${describeError(err)}`);
+    }
+  });
+
+  /**
+   * Günlük klasörünü aç. Rust tarafından açılır — arayüzün `opener` izni yalnızca
+   * $APPDATA altını kapsıyor, günlük klasörü ise başka yerde (istek sessizce
+   * reddediliyordu).
+   *
+   * Hata olursa SESSİZ KALMA: kullanıcı "tıklıyorum, hiçbir şey olmuyor" diyordu.
+   */
+  async function openLogDir() {
+    logError = '';
+    try {
+      logPath = await invoke<string>('open_log_dir');
+    } catch (err) {
+      logError = describeError(err);
+      log.error(`[ayarlar] günlük klasörü açılamadı: ${logError}`);
     }
   }
 </script>
@@ -402,9 +421,20 @@
         <span class="static-label">Günlükler</span>
         <span class="upd-cell">
           <button class="link-btn" onclick={openLogDir}>Günlük klasörünü aç</button>
-          <span class="log-hint">Sorun bildirirken bu klasördeki dosyayı ekleyin.</span>
+          {#if logError}
+            <span class="upd-err">Açılamadı: {logError}</span>
+          {:else}
+            <span class="log-hint">Sorun bildirirken bu klasördeki dosyayı ekleyin.</span>
+          {/if}
         </span>
       </div>
+      {#if logPath}
+        <!-- Yol her zaman görünür: klasör açılamasa bile elle bulunabilsin. -->
+        <div class="row">
+          <span class="static-label"></span>
+          <code class="log-path" title="Günlük klasörü">{logPath}</code>
+        </div>
+      {/if}
 
       <div class="row">
         <span class="static-label">Güncelleme</span>
@@ -474,6 +504,14 @@
   .fb-dot {
     color: #9ca3af;
   }
+
+  .log-path {
+    font-family: var(--mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: #6b7280;
+    word-break: break-all;
+  }
+  :global(html.dark) .log-path { color: #9aa1ac; }
 
   .log-hint {
     font-size: 11px;

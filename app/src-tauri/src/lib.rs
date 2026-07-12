@@ -118,6 +118,7 @@ pub fn run() {
             take_opened_files,
             xslt::xslt_transform,
             xslt::log_dir,
+            xslt::open_log_dir,
             ai::ai_chat,
             ai::ai_list_models
         ])

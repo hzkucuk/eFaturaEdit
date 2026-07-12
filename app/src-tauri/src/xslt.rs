@@ -145,7 +145,7 @@ pub async fn xslt_transform(
     })
 }
 
-/// Günlük dosyalarının bulunduğu klasörün yolu (Ayarlar'da gösterilir/açılır).
+/// Günlük dosyalarının bulunduğu klasörün yolu (Ayarlar'da gösterilir).
 #[tauri::command]
 pub fn log_dir(app: tauri::AppHandle) -> Result<String, String> {
     use tauri::Manager;
@@ -153,4 +153,32 @@ pub fn log_dir(app: tauri::AppHandle) -> Result<String, String> {
         .app_log_dir()
         .map(|p| p.to_string_lossy().into_owned())
         .map_err(|e| format!("Günlük klasörü bulunamadı: {e}"))
+}
+
+/// Günlük klasörünü sistem dosya yöneticisinde aç.
+///
+/// Neden arayüzden değil de Rust'tan: `opener` eklentisinin arayüz izni yalnızca
+/// `$APPDATA`/`$APPLOCALDATA` altını açabiliyor; günlük klasörü ise başka yerde
+/// (macOS: `~/Library/Logs/<bundle>`). Arayüzden çağrılınca istek **izinle
+/// reddediliyor** ve hiçbir şey olmuyordu. Rust tarafı bu kapsama tabi değil.
+#[tauri::command]
+pub fn open_log_dir(app: tauri::AppHandle) -> Result<String, String> {
+    use tauri::Manager;
+    use tauri_plugin_opener::OpenerExt;
+
+    let dir = app
+        .path()
+        .app_log_dir()
+        .map_err(|e| format!("Günlük klasörü bulunamadı: {e}"))?;
+
+    // İlk günlük yazılmadan önce klasör henüz olmayabilir.
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("Günlük klasörü oluşturulamadı ({}): {e}", dir.display()))?;
+
+    app.opener()
+        .open_path(dir.to_string_lossy(), None::<&str>)
+        .map_err(|e| format!("Günlük klasörü açılamadı ({}): {e}", dir.display()))?;
+
+    log::info!("[günlük] klasör açıldı: {}", dir.display());
+    Ok(dir.to_string_lossy().into_owned())
 }

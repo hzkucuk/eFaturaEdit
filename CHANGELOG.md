@@ -3,6 +3,24 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.24.1] — 2026-07-12 — "Günlük Klasörünü Aç" Çalışmıyordu
+
+### Düzeltilen
+- **"Günlük klasörünü aç" düğmesi hiçbir şey yapmıyordu.** `opener` eklentisinin **arayüz izni**
+  yalnızca `$APPDATA` / `$APPLOCALDATA` altını açmaya yetkiliydi; günlük klasörü ise başka yerde
+  (macOS: `~/Library/Logs/<bundle>`). İstek **izinle reddediliyor**, hata da yalnızca günlüğe yazılıp
+  kullanıcıya hiçbir şey söylenmiyordu.
+  - Klasör artık **Rust tarafından** açılıyor (arayüzün izin kapsamına tabi değil, üç platformda da
+    çalışır). Klasör henüz oluşmamışsa yaratılır.
+  - **Hata artık sessiz kalmıyor:** açılamazsa düğmenin yanında sebebiyle birlikte gösterilir.
+  - **Tam yol her zaman ekranda:** açma çalışmasa bile kullanıcı klasörü elle bulabilir — sorun
+    bildiren biri için tek başına yeterli.
+  - Bu, kendi yazdığımız 1. dersin ("hata vermiyor ≠ çalışıyor") kendi kodumuzdaki ihlaliydi.
+- **Sürüm senkronu:** `eFaturaEdit.Core.csproj` beş sürümdür `2.19.1`'de kalmıştı (direktifte yazılı
+  olmasına rağmen atlanmış). Tüm 6 nokta hizalandı; direktife doğrulama adımı eklendi.
+
+---
+
 ## [2.24.0] — 2026-07-12 — Alt Bilgi Çubuğu + Kaydetme Onarımları
 
 ### Düzeltilen
