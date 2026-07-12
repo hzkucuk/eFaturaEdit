@@ -15,6 +15,7 @@
   import { manifest } from '$lib/data';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import { updater, checkForUpdate } from '$lib/updater.svelte';
+  import { log, describeError } from '$lib/logger';
   import UpdateModal from '$lib/UpdateModal.svelte';
 
   const REPO_URL = 'https://github.com/hzkucuk/eFaturaEdit';
@@ -109,6 +110,16 @@
   function onApiKeyBlur() {
     if (currentAiConfig.apiKey.trim().length > 0) {
       void fetchModels();
+    }
+  }
+
+  /** Günlük klasörünü sistem dosya yöneticisinde aç. */
+  async function openLogDir() {
+    try {
+      const dir = await invoke<string>('log_dir');
+      await openUrl(`file://${dir}`);
+    } catch (err) {
+      log.error(`[ayarlar] günlük klasörü açılamadı: ${describeError(err)}`);
     }
   }
 </script>
@@ -387,6 +398,14 @@
       </div>
 
       <div class="row">
+        <span class="static-label">Günlükler</span>
+        <span class="upd-cell">
+          <button class="link-btn" onclick={openLogDir}>Günlük klasörünü aç</button>
+          <span class="log-hint">Sorun bildirirken bu klasördeki dosyayı ekleyin.</span>
+        </span>
+      </div>
+
+      <div class="row">
         <span class="static-label">Güncelleme</span>
         <span class="upd-cell">
           <button
@@ -443,6 +462,12 @@
 <UpdateModal />
 
 <style>
+  .log-hint {
+    font-size: 11px;
+    color: #6b7280;
+  }
+  :global(html.dark) .log-hint { color: #9aa1ac; }
+
   .upd-cell {
     display: flex;
     align-items: center;

@@ -118,7 +118,23 @@ Her versiyon artışı sonrası uygulama otomatik derlenip **GitHub Release** ol
     kalırsa manifest **eksik platformla** yayınlanır ve o platformdaki kullanıcılar güncellemeyi hiç
     görmez (sessiz başarısızlık!). Kontrol:
     `curl -sL .../releases/latest/download/latest.json` → 11 platform girdisi olmalı.
+- ⚠️ **Sidecar CPU komut seti (`-march`).** GraalVM native-image x64'te varsayılan olarak **modern
+  komutları (AVX2 vb.)** hedefler. Böyle bir ikili, Windows'un ARM üzerindeki x64 emülasyonunda
+  (Prism) ve eski CPU'larda **ilk komutta, hata bile veremeden ölür** — semptom "Boru sonlandı
+  (os error 109)" gibi alakasız görünür. `sidecar/build.sh` bu yüzden x64 hedeflerde
+  **`-march=compatibility`** kullanır; kaldırma.
+- ⚠️ **GraalVM native-image, Windows/ARM64'ü desteklemiyor** — o platform için yerel Saxon ikilisi
+  üretilemez. Uygulama orada XSLT 1.0'a düşer ve bunu kullanıcıya açıkça söyler (sessiz düşüş
+  YASAK: 1.0 işlemcisi 2.0 komutlarını hata vermeden yok sayar, çıktı sessizce yanlış olur).
 - Bu Mac'te 4 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** bu CI ile yapılır.
+
+## Günlükleme (v2.23.0+)
+- `tauri-plugin-log` → dosyaya yazar; **Ayarlar → Hakkında → "Günlük klasörünü aç"**.
+- Kullanıcı bir sorun bildirdiğinde **İLK İSTENECEK ŞEY günlük dosyasıdır.** Oturum künyesinde
+  sürüm + işletim sistemi + **mimari** var — bu satır, "Windows'ta çalışmıyor" vakasını saatler
+  yerine saniyeler içinde çözerdi.
+- Yeni bir dış süreç/ağ çağrısı eklerken **mutlaka logla**: girdiler (boyut), çıkış kodu, stderr, süre.
+  Bu projede üç ayrı hata sırf sessiz oldukları için saatler kaybettirdi.
 - Etiket zaten varsa: `git tag -d vX.Y.Z && git push origin :vX.Y.Z` ile silip yeniden oluştur.
   **Ancak** o etiketin release'i yayımlanmış/derleniyorsa silme — bir sonraki yamayı yeni sürüm
   (`X.Y.Z+1`) olarak çıkar.

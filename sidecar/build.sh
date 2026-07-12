@@ -53,6 +53,32 @@ javac -cp "$CP" -d "$OUT_DIR" src/Transform.java
 
 echo "==> native-image ($TRIPLE)"
 mkdir -p "$BIN_DIR"
+
+# CPU komut seti: native-image, x64'te varsayılan olarak MODERN komutları
+# (AVX2 vb.) hedefler. Bu ikili:
+#   - Windows'un ARM üzerindeki x64 emülasyonunda (Prism) ve
+#   - eski/kısıtlı CPU'larda
+# ilk komutta ANINDA ölür — hata bile veremez. Bizde tam olarak bu oldu:
+# ARM64 Windows 11 VM'de süreç başlıyor, biz stdin'e yazamadan gidiyor
+# ("Boru sonlandı", os error 109). x64 Windows'ta ise sorunsuz çalışıyor.
+#
+# `compatibility` = en düşük ortak payda (x86-64 taban). Hız kaybı bu iş yükü
+# için önemsiz; çalışmayan bir motorun hızı zaten sıfırdır.
+#
+# Bayrağı yalnızca DESTEKLENİYORSA ekle: -march AMD64'e özgüdür, ARM64
+# (macOS/Linux) derlemelerinde yoktur ve derlemeyi kırardı.
+MARCH_FLAG=""
+case "$TRIPLE" in
+  x86_64-*)
+    if "$NATIVE_IMAGE" -march=list >/dev/null 2>&1; then
+      MARCH_FLAG="-march=compatibility"
+      echo "    (CPU uyumluluk modu: $MARCH_FLAG)"
+    else
+      echo "    (uyarı: -march desteklenmiyor, varsayılan komut setiyle derleniyor)"
+    fi
+    ;;
+esac
+
 # -J-Duser.language: macOS'ta JVM locale'i sistem tercihlerinden gelir; LANG
 # yetmez. Türkçe locale'de "DARWIN".toLowerCase() → "darwın" olur ve
 # native-image, include/darwin (jni_md.h) dizinini bulamaz.
@@ -63,6 +89,7 @@ mkdir -p "$BIN_DIR"
   -cp "$CP${SEP}$OUT_DIR" \
   -o "$TARGET" \
   --no-fallback \
+  ${MARCH_FLAG} \
   -H:ConfigurationFileDirectories=native-config \
   -H:+ReportExceptionStackTraces \
   -H:IncludeLocales=en,tr \

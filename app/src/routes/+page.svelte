@@ -36,6 +36,7 @@
   import { checkForUpdate } from '$lib/updater.svelte';
   import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
   import { instrumentXslt, type XsltElementRef } from '$lib/xslt-map';
+  import { log, installGlobalErrorLogging } from '$lib/logger';
   import type { Completion } from '@codemirror/autocomplete';
 
   // ─── UI state ────────────────────────────────────────────────────────
@@ -658,6 +659,9 @@
       // `for-each-group` gibi 2.0 komutlarını hata vermeden yok sayar —
       // kullanıcı şablonunun çalıştığını sanır, oysa çıktı yanlıştır.
       if (!engineStatus.saxon) {
+        if (!engineWarning) {
+          log.error(`[motor] Saxon kullanilamiyor, XSLT 1.0'a dusuldu: ${engineStatus.reason}`);
+        }
         engineWarning = engineStatus.reason;
         status(
           `Dönüşüm tamam (${(html.length / 1024).toFixed(1)} KB) — ⚠️ yedek motor: yalnızca XSLT 1.0`,
@@ -1488,6 +1492,7 @@ window.addEventListener('message', function(e) {
     refreshUserSnippets();
     void loadApiKeys(); // API anahtarlarını OS anahtar zincirinden belleğe yükle
     void setupFileEntry();
+    installGlobalErrorLogging(); // yakalanmayan hatalar da diske düşsün
     // Güncelleme denetimi: açılışı bekletmesin diye ertelenir ve sessizdir
     // (internet yoksa veya dev modundaysak kullanıcıya hata gösterilmez).
     setTimeout(() => void checkForUpdate(), 3000);

@@ -3,6 +3,45 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.23.0] — 2026-07-12 — Günlükleme Sistemi + Windows ARM64 XSLT Motoru
+
+### Düzeltilen
+- **Windows'ta XSLT motoru çalışmıyordu** (`XSLT motoruna veri yazılamadı: Boru sonlandı. os error 109`).
+  Kök neden **mimari**: sidecar x86_64 olarak derleniyor ve GraalVM native-image varsayılan olarak
+  **modern CPU komutlarını (AVX2 vb.)** hedefliyor. Windows'un ARM üzerindeki x64 emülasyonunda
+  (Prism) bu komutlar desteklenmediğinden süreç **ilk komutta, hata bile veremeden ölüyor**; biz de
+  ölmüş bir boruya yazmaya çalışıp anlamsız bir hata gösteriyorduk.
+  - Doğrulama: aynı sidecar **x64 Windows'ta 600 KB'lık gerçek yükle sorunsuz** çalışıyor (CI'da
+    ölçüldü); yalnızca ARM64 emülasyonunda ölüyor.
+  - Çözüm: sidecar artık **`-march=compatibility`** ile, en düşük ortak komut setiyle derleniyor.
+    Bu yalnızca ARM64 emülasyonunu değil, **eski CPU'lu amd64 kullanıcılarını** da kurtarır — onlar
+    da aynı sebeple patlıyor olabilirdi ve haberimiz olmazdı.
+- **Hata gizleniyordu.** stdin yazımı başarısız olunca sidecar'ın `stderr`'i ve çıkış kodu okunmadan
+  dönülüyordu — yani asıl sebep çöpe atılıp semptom gösteriliyordu. Artık motorun söyledikleri ve
+  çıkış kodu hem hataya hem günlüğe giriyor (çıkış kodu tanı için altın: `-1073741515` → eksik DLL).
+- **Uygulama çuvallıyordu.** Geri düşüş koşulu bu hata metniyle eşleşmediğinden, tarayıcı motoruna
+  düşmek yerine sert hata veriliyor ve Windows kullanıcısı **hiçbir şey yapamıyordu**. Rust tarafı
+  artık "motorun kendisi çalışmıyor" durumunu ayrı işaretliyor (`XSLT_ENGINE_UNAVAILABLE`) ve
+  uygulama XSLT 1.0'a düşüyor.
+- **Ama sessizce değil:** kalıcı bir uyarı bandı çıkıyor. Sessiz geri düşüş tehlikelidir — tarayıcının
+  1.0 işlemcisi `format-dateTime`, `tokenize`, `for-each-group` gibi 2.0 komutlarını **hata vermeden
+  yok sayar**; kullanıcı şablonunun çalıştığını sanır, oysa çıktı yanlıştır.
+
+### Eklenen
+- **Günlükleme sistemi (`tauri-plugin-log`).** Her şey diske yazılıyor:
+  - Oturum künyesi: sürüm, işletim sistemi, **mimari** — bu vakanın ilk bakışta çözülmesini sağlayacak satır.
+  - XSLT motoru tam enstrümante: yük boyutları, kaç bayt yazıldı, çıkış kodu, sidecar stderr'i, süre.
+  - Yakalanmayan hatalar ve reddedilen promise'ler (eskiden sessizce yutuluyordu).
+  - 2 MB'da dönen dosyalar, yerel saat damgası.
+- **Ayarlar → Hakkında → "Günlük klasörünü aç"** — sorun bildirirken eklenecek dosya.
+
+### Bilinen sınırlama
+- **GraalVM native-image, Windows/ARM64'ü hedef olarak desteklemiyor** — ARM64 Windows için yerel
+  Saxon ikilisi üretilemez. `-march=compatibility` ile x64 ikilisinin emülasyon altında çalışması
+  hedefleniyor; çalışmazsa uygulama XSLT 1.0'a düşer ve bunu açıkça bildirir.
+
+---
+
 ## [2.22.2] — 2026-07-12 — AI Sohbeti Sayfa Geçişinde Kaybolmuyor
 
 ### Düzeltilen
