@@ -76,6 +76,33 @@ fn take_opened_files(state: tauri::State<'_, PendingOpen>) -> Vec<String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
+        // Günlükleme — HER ŞEYDEN ÖNCE kurulur ki sonraki eklentilerin/kurulum
+        // adımlarının hataları da dosyaya düşsün.
+        //
+        // Neden dosyaya: kullanıcı makinesinde (özellikle Windows'ta) sorunlar
+        // "sessizce" çıkıyor ve elimizde yalnızca kullanıcının anlattığı semptom
+        // oluyordu. Artık gerçek sebep diskte duruyor: Ayarlar → Günlükler.
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .targets([
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
+                        file_name: Some("efatura-edit".into()),
+                    }),
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+                    // Webview konsoluna da bas — geliştirirken DevTools'ta görünür.
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Webview),
+                ])
+                .level(if cfg!(debug_assertions) {
+                    log::LevelFilter::Debug
+                } else {
+                    log::LevelFilter::Info
+                })
+                // Dosya büyürse döndür (tek dosya sınırsız büyümesin).
+                .max_file_size(2 * 1024 * 1024)
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll)
+                .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -90,10 +117,20 @@ pub fn run() {
             secret_get,
             take_opened_files,
             xslt::xslt_transform,
+            xslt::log_dir,
             ai::ai_chat,
             ai::ai_list_models
         ])
         .setup(|app| {
+            // Her oturumun başına künye yaz: sorun bildiren kullanıcıdan günlüğü
+            // istediğimizde sürüm/platform tahmin etmek zorunda kalmayalım.
+            log::info!(
+                "=== e-Fatura Edit {} başladı — {} {} ===",
+                app.package_info().version,
+                std::env::consts::OS,
+                std::env::consts::ARCH
+            );
+
             // Windows/Linux: "Birlikte Aç" dosyayı komut satırı argümanı olarak
             // geçirir. (macOS bunun yerine aşağıdaki `Opened` olayını kullanır.)
             #[cfg(not(target_os = "macos"))]

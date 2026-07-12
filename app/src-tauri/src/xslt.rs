@@ -31,14 +31,23 @@ pub async fn xslt_transform(
     xslt: String,
     xml: String,
 ) -> Result<String, String> {
-    let sidecar = app
-        .shell()
-        .sidecar("xslt-transform")
-        .map_err(|e| format!("{ENGINE_UNAVAILABLE}: XSLT motoru bulunamadı: {e}"))?;
+    let started = std::time::Instant::now();
+    log::info!(
+        "[xslt] dönüşüm başlıyor — XSLT {} bayt, XML {} bayt",
+        xslt.len(),
+        xml.len()
+    );
 
-    let (mut rx, mut child) = sidecar
-        .spawn()
-        .map_err(|e| format!("{ENGINE_UNAVAILABLE}: XSLT motoru başlatılamadı: {e}"))?;
+    let sidecar = app.shell().sidecar("xslt-transform").map_err(|e| {
+        log::error!("[xslt] sidecar çözümlenemedi: {e}");
+        format!("{ENGINE_UNAVAILABLE}: XSLT motoru bulunamadı: {e}")
+    })?;
+
+    let (mut rx, mut child) = sidecar.spawn().map_err(|e| {
+        log::error!("[xslt] sidecar başlatılamadı: {e}");
+        format!("{ENGINE_UNAVAILABLE}: XSLT motoru başlatılamadı: {e}")
+    })?;
+    log::debug!("[xslt] sidecar süreci başladı");
 
     // Uzunluk-önekli girdiyi yaz.
     let mut payload: Vec<u8> = Vec::with_capacity(xslt.len() + xml.len() + 8);
@@ -55,15 +64,24 @@ pub async fn xslt_transform(
     // dönmüyoruz — çünkü asıl sebep sürecin stderr'indedir; hemen dönseydik
     // onu okumadan atmış olurduk ve kullanıcıya sebebi değil semptomu
     // gösterirdik (v2.22.x'te tam olarak bu oldu).
+    let total = payload.len();
+    let mut written = 0usize;
     let mut write_error: Option<String> = None;
     for chunk in payload.chunks(32 * 1024) {
         if let Err(e) = child.write(chunk) {
+            log::error!(
+                "[xslt] stdin yazma hatası — {written}/{total} bayt yazılmıştı: {e}"
+            );
             write_error = Some(e.to_string());
             break;
         }
+        written += chunk.len();
     }
     // stdin'i kapat ki sidecar okumayı bitirsin.
     drop(child);
+    if write_error.is_none() {
+        log::debug!("[xslt] stdin tamamlandı ({total} bayt)");
+    }
 
     let mut stdout: Vec<u8> = Vec::new();
     let mut stderr = String::new();
@@ -89,6 +107,13 @@ pub async fn xslt_transform(
         } else {
             format!(" Motorun bildirdiği: {detail}")
         };
+        // Çıkış kodu tanı için altın değerinde:
+        //   -1073741515 (0xC0000135) → gerekli bir DLL yok (ör. VCRUNTIME140)
+        //   -1073741819 (0xC0000005) → erişim ihlali / süreç öldürüldü
+        log::error!(
+            "[xslt] motor veri yazılırken öldü — yazma hatası: {e}{exit}. stderr: {}",
+            if detail.is_empty() { "(boş)" } else { detail }
+        );
         return Err(format!(
             "{ENGINE_UNAVAILABLE}: XSLT motoruna veri yazılamadı ({e}){exit}.{said}"
         ));
@@ -96,6 +121,10 @@ pub async fn xslt_transform(
 
     let exit = code.unwrap_or(-1);
     if exit != 0 {
+        log::error!(
+            "[xslt] motor sıfırdan farklı kodla çıktı: {exit}. stderr: {}",
+            if detail.is_empty() { "(boş)" } else { detail }
+        );
         // Motor tek kelime etmeden öldüyse bu bir şablon hatası değil, motorun
         // kendisi çalışamıyor demektir → geri düşülebilir olarak işaretle.
         return Err(if detail.is_empty() {
@@ -105,5 +134,23 @@ pub async fn xslt_transform(
         });
     }
 
-    String::from_utf8(stdout).map_err(|e| format!("XSLT çıktısı okunamadı: {e}"))
+    log::info!(
+        "[xslt] Saxon dönüşümü tamam — {} bayt HTML, {} ms",
+        stdout.len(),
+        started.elapsed().as_millis()
+    );
+    String::from_utf8(stdout).map_err(|e| {
+        log::error!("[xslt] çıktı UTF-8 değil: {e}");
+        format!("XSLT çıktısı okunamadı: {e}")
+    })
+}
+
+/// Günlük dosyalarının bulunduğu klasörün yolu (Ayarlar'da gösterilir/açılır).
+#[tauri::command]
+pub fn log_dir(app: tauri::AppHandle) -> Result<String, String> {
+    use tauri::Manager;
+    app.path()
+        .app_log_dir()
+        .map(|p| p.to_string_lossy().into_owned())
+        .map_err(|e| format!("Günlük klasörü bulunamadı: {e}"))
 }

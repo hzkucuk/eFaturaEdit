@@ -65,11 +65,11 @@ jobs:
           $enc = [System.Text.Encoding]::UTF8
           $xsltB = $enc.GetBytes($xslt)
           $xmlB  = $enc.GetBytes($xml)
-          function BE([int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); return [byte[]]$b }
-
-          $payload = New-Object System.Collections.Generic.List[byte]
-          $payload.AddRange((BE $xsltB.Length)); $payload.AddRange($xsltB)
-          $payload.AddRange((BE $xmlB.Length));  $payload.AddRange($xmlB)
+          $ms = New-Object System.IO.MemoryStream
+          function WriteBE($stream, [int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); $stream.Write($b, 0, 4) }
+          WriteBE $ms $xsltB.Length; $ms.Write($xsltB, 0, $xsltB.Length)
+          WriteBE $ms $xmlB.Length;  $ms.Write($xmlB, 0, $xmlB.Length)
+          $payload = $ms.ToArray()
 
           $psi = New-Object System.Diagnostics.ProcessStartInfo
           $psi.FileName = $exe
@@ -80,7 +80,7 @@ jobs:
 
           $p = [System.Diagnostics.Process]::Start($psi)
           $stdin = $p.StandardInput.BaseStream
-          $stdin.Write($payload.ToArray(), 0, $payload.Count)
+          $stdin.Write($payload, 0, $payload.Length)
           $stdin.Close()
 
           $out = $p.StandardOutput.ReadToEnd()
@@ -108,11 +108,12 @@ jobs:
           $xmlB  = [System.IO.File]::ReadAllBytes($xmlPath)
           Write-Host "XSLT: $([math]::Round($xsltB.Length/1KB,1)) KB · XML: $([math]::Round($xmlB.Length/1KB,1)) KB"
 
-          function BE([int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); return [byte[]]$b }
-          $payload = New-Object System.Collections.Generic.List[byte]
-          $payload.AddRange((BE $xsltB.Length)); $payload.AddRange($xsltB)
-          $payload.AddRange((BE $xmlB.Length));  $payload.AddRange($xmlB)
-          Write-Host "toplam yük: $([math]::Round($payload.Count/1KB,1)) KB"
+          $ms = New-Object System.IO.MemoryStream
+          function WriteBE($stream, [int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); $stream.Write($b, 0, 4) }
+          WriteBE $ms $xsltB.Length; $ms.Write($xsltB, 0, $xsltB.Length)
+          WriteBE $ms $xmlB.Length;  $ms.Write($xmlB, 0, $xmlB.Length)
+          $payload = $ms.ToArray()
+          Write-Host "toplam yük: $([math]::Round($payload.Length/1KB,1)) KB"
 
           $psi = New-Object System.Diagnostics.ProcessStartInfo
           $psi.FileName = $exe
@@ -129,7 +130,7 @@ jobs:
 
           try {
             $stdin = $p.StandardInput.BaseStream
-            $stdin.Write($payload.ToArray(), 0, $payload.Count)
+            $stdin.Write($payload, 0, $payload.Length)
             $stdin.Flush()
             $stdin.Close()
           } catch {
