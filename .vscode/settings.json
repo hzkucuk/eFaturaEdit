@@ -1,0 +1,21 @@
+{
+  // ─── Java (sidecar/) ───────────────────────────────────────────────
+  // Saxon sidecar tek dosyalık bir Java programı; Maven/Gradle projesi YOK,
+  // `sidecar/build.sh` doğrudan javac + native-image çağırıyor. Bu yüzden IDE
+  // classpath'i kendiliğinden bulamıyor ve `net.sf.saxon.*` importları
+  // "çözülemedi" diye işaretleniyordu — derlemede bir sorun olmamasına rağmen
+  // 13 sahte hata görünüyordu. Aşağısı IDE'ye jar'ların yerini söyler.
+  //
+  // Not: build.sh ile senkron kalmalı (bkz. oradaki CP değişkeni).
+  "java.project.sourcePaths": ["sidecar/src"],
+  "java.project.outputPath": "sidecar/out",
+  "java.project.referencedLibraries": ["sidecar/lib/*.jar"],
+
+  // ─── Diğer ─────────────────────────────────────────────────────────
+  "files.exclude": {
+    "**/target": true,
+    "**/node_modules": true,
+    "sidecar/out": true
+  },
+  "rust-analyzer.linkedProjects": ["app/src-tauri/Cargo.toml"]
+}

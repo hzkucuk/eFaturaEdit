@@ -387,7 +387,10 @@ $RECYCLE.BIN/
 .idea/
 
 # Visual Studio Code
-.vscode/
+# .vscode: kişisel dosyalar hariç, PAYLAŞILAN ayarlar (Java classpath vb.) izlenir
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Windows Installer files
 *.cab
