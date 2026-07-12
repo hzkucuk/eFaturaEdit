@@ -9,6 +9,7 @@
 -->
 <script lang="ts">
   import { settings, themeKind } from '$lib/settings.svelte';
+  import { setLocale, detectSystemLocale } from '$lib/i18n.svelte';
   import { browser } from '$app/environment';
 
   let { children } = $props();
@@ -17,6 +18,14 @@
     if (!browser) return;
     const dark = themeKind(settings.theme) === 'dark';
     document.documentElement.classList.toggle('dark', dark);
+  });
+
+  // Dil: kullanıcı bir seçim yaptıysa o, yapmadıysa SİSTEM dili. Seçim
+  // `settings.language`'da saklanır; burada tek yönlü uygulanır (i18n modülü
+  // ayarları okumaz — döngüsel bağımlılık olmasın).
+  $effect(() => {
+    if (!browser) return;
+    setLocale(settings.language ?? detectSystemLocale());
   });
 </script>
 

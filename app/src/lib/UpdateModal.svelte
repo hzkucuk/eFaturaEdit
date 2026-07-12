@@ -5,6 +5,7 @@
    */
   import { updater, downloadAndInstall, dismissUpdate } from '$lib/updater.svelte';
   import manifest from '$lib/data/manifest.json';
+  import { m, f } from '$lib/i18n.svelte';
 
   const open = $derived(
     (updater.stage === 'available' && !updater.dismissed) ||
@@ -24,7 +25,7 @@
   <div class="u-backdrop">
     <div class="u-modal" role="dialog" aria-modal="true" aria-labelledby="u-title">
       <h2 id="u-title">
-        {#if busy}⬇️ Güncelleme kuruluyor{:else}🎉 Yeni sürüm hazır{/if}
+        {#if busy}{m.update.installingTitle}{:else}{m.update.availableTitle}{/if}
       </h2>
 
       <p class="u-ver">
@@ -43,21 +44,21 @@
         </div>
         <p class="u-status">
           {#if updater.stage === 'installing'}
-            Kuruluyor — uygulama birazdan yeniden başlayacak…
+            {m.update.installing}
           {:else if updater.total > 0}
-            {mb(updater.downloaded)} / {mb(updater.total)} MB (%{pct})
+            {f(m.update.progress, { done: mb(updater.downloaded), total: mb(updater.total), pct })}
           {:else}
-            İndiriliyor…
+            {m.update.downloading}
           {/if}
         </p>
       {:else}
         <div class="u-actions">
-          <button class="u-later" onclick={dismissUpdate}>Sonra</button>
+          <button class="u-later" onclick={dismissUpdate}>{m.common.later}</button>
           <button class="u-go" onclick={() => void downloadAndInstall()}>
-            İndir ve Kur
+            {m.update.download}
           </button>
         </div>
-        <p class="u-hint">Kurulum bitince uygulama yeniden başlatılır.</p>
+        <p class="u-hint">{m.update.restartHint}</p>
       {/if}
     </div>
   </div>

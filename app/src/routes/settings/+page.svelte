@@ -16,6 +16,7 @@
   import { openUrl } from '@tauri-apps/plugin-opener';
   import { updater, checkForUpdate } from '$lib/updater.svelte';
   import { log, describeError } from '$lib/logger';
+  import { m, f, allLocales, detectSystemLocale } from '$lib/i18n.svelte';
   import UpdateModal from '$lib/UpdateModal.svelte';
 
   const REPO_URL = 'https://github.com/hzkucuk/eFaturaEdit';
@@ -45,7 +46,7 @@
 
   function withKnownAliases(provider: AiProvider, models: string[]): string[] {
     const aliases = KNOWN_ALIASES[provider] ?? [];
-    return [...aliases, ...models.filter((m) => !aliases.includes(m))];
+    return [...aliases, ...models.filter((model) => !aliases.includes(model))];
   }
 
   // Sağlayıcı değişince o sağlayıcının önbelleklenmiş model listesini göster;
@@ -67,11 +68,11 @@
 
   function pickAutoModel(models: string[]): string {
     const chatCandidates = models.filter(
-      (m) => !NON_CHAT_HINTS.some((hint) => m.toLowerCase().includes(hint)),
+      (model) => !NON_CHAT_HINTS.some((hint) => model.toLowerCase().includes(hint)),
     );
     const pool = chatCandidates.length > 0 ? chatCandidates : models;
     // Kararlı (preview/exp içermeyen) bir sürüm varsa onu tercih et.
-    const stable = pool.find((m) => !/preview|exp/i.test(m));
+    const stable = pool.find((model) => !/preview|exp/i.test(model));
     return stable ?? pool[0];
   }
 
@@ -146,17 +147,17 @@
 
 <div class="settings-page">
   <header class="page-header">
-    <button class="back" onclick={() => goto('/')}>← Geri</button>
-    <h1>Ayarlar</h1>
-    <button class="reset" onclick={resetSettings}>Varsayılana Sıfırla</button>
+    <button class="back" onclick={() => goto('/')}>← {m.common.back}</button>
+    <h1>{m.settings.title}</h1>
+    <button class="reset" onclick={resetSettings}>{m.settings.resetAll}</button>
   </header>
 
   <div class="content">
     <section class="group">
-      <h2>Editör</h2>
+      <h2>{m.settings.editor}</h2>
 
       <div class="row">
-        <label for="font-size">Yazı Tipi Boyutu</label>
+        <label for="font-size">{m.settings.fontSize}</label>
         <input
           id="font-size"
           type="range"
@@ -170,20 +171,20 @@
       </div>
 
       <div class="row">
-        <label for="tab-width">Sekme Genişliği</label>
+        <label for="tab-width">{m.settings.tabWidth}</label>
         <select
           id="tab-width"
           value={settings.tabWidth}
           onchange={(e) => updateSetting('tabWidth', +(e.currentTarget as HTMLSelectElement).value)}
         >
-          <option value={2}>2 boşluk</option>
-          <option value={4}>4 boşluk</option>
-          <option value={8}>8 boşluk</option>
+          <option value={2}>{f(m.settings.spaces, { n: 2 })}</option>
+          <option value={4}>{f(m.settings.spaces, { n: 4 })}</option>
+          <option value={8}>{f(m.settings.spaces, { n: 8 })}</option>
         </select>
       </div>
 
       <div class="row">
-        <label for="wrap">Kelime Kaydırma</label>
+        <label for="wrap">{m.settings.wordWrap}</label>
         <input
           id="wrap"
           type="checkbox"
@@ -194,7 +195,7 @@
       </div>
 
       <div class="row">
-        <label for="linenum">Satır Numarası</label>
+        <label for="linenum">{m.settings.lineNumbers}</label>
         <input
           id="linenum"
           type="checkbox"
@@ -206,10 +207,26 @@
     </section>
 
     <section class="group">
-      <h2>Görünüm</h2>
+      <h2>{m.settings.appearance}</h2>
+
+      <!-- Dil: seçilmemişse sistem dilinden algılanır (bkz. +layout.svelte). -->
+      <div class="row">
+        <label for="language">{m.settings.language}</label>
+        <select
+          id="language"
+          value={settings.language ?? detectSystemLocale()}
+          onchange={(e) =>
+            updateSetting('language', (e.currentTarget as HTMLSelectElement).value)}
+        >
+          {#each allLocales() as opt}
+            <option value={opt.code}>{opt.flag} {opt.label}</option>
+          {/each}
+        </select>
+        <span class="hint lang-hint">{m.settings.languageHint}</span>
+      </div>
 
       <div class="row">
-        <label for="theme">Tema</label>
+        <label for="theme">{m.settings.theme}</label>
         <select
           id="theme"
           value={settings.theme}
@@ -220,7 +237,9 @@
             )}
         >
           {#each THEME_OPTIONS as opt}
-            <option value={opt.value}>{opt.label} ({opt.kind === 'dark' ? 'Koyu' : 'Açık'})</option>
+            <option value={opt.value}>
+              {opt.label} ({opt.kind === 'dark' ? m.settings.themeDark : m.settings.themeLight})
+            </option>
           {/each}
         </select>
       </div>
@@ -409,22 +428,22 @@
     </section>
 
     <section class="group about">
-      <h2>Hakkında</h2>
+      <h2>{m.settings.about}</h2>
       <div class="about-head">
         <div>
-          <div class="about-name">e-Fatura Dizayn Editörü</div>
-          <div class="about-ver">Sürüm {manifest.version}</div>
+          <div class="about-name">{m.settings.appName}</div>
+          <div class="about-ver">{f(m.settings.version, { v: manifest.version })}</div>
         </div>
       </div>
 
       <div class="row">
-        <span class="static-label">Günlükler</span>
+        <span class="static-label">{m.settings.logs}</span>
         <span class="upd-cell">
-          <button class="link-btn" onclick={openLogDir}>Günlük klasörünü aç</button>
+          <button class="link-btn" onclick={openLogDir}>{m.settings.openLogDir}</button>
           {#if logError}
-            <span class="upd-err">Açılamadı: {logError}</span>
+            <span class="upd-err">{f(m.settings.logOpenFailed, { msg: logError })}</span>
           {:else}
-            <span class="log-hint">Sorun bildirirken bu klasördeki dosyayı ekleyin.</span>
+            <span class="log-hint">{m.settings.logHint}</span>
           {/if}
         </span>
       </div>
@@ -432,26 +451,26 @@
         <!-- Yol her zaman görünür: klasör açılamasa bile elle bulunabilsin. -->
         <div class="row">
           <span class="static-label"></span>
-          <code class="log-path" title="Günlük klasörü">{logPath}</code>
+          <code class="log-path" title={m.settings.logDirTitle}>{logPath}</code>
         </div>
       {/if}
 
       <div class="row">
-        <span class="static-label">Güncelleme</span>
+        <span class="static-label">{m.settings.update}</span>
         <span class="upd-cell">
           <button
             class="link-btn"
             onclick={() => void checkForUpdate(true)}
             disabled={updater.stage === 'checking'}
           >
-            {updater.stage === 'checking' ? 'Denetleniyor…' : 'Güncellemeleri denetle'}
+            {updater.stage === 'checking' ? m.update.checking : m.update.check}
           </button>
           {#if updater.stage === 'none'}
-            <span class="upd-ok">✓ En güncel sürümü kullanıyorsun</span>
+            <span class="upd-ok">{m.update.upToDate}</span>
           {:else if updater.stage === 'available'}
-            <span class="upd-new">🎉 v{updater.version} yayınlandı</span>
+            <span class="upd-new">{f(m.update.found, { version: updater.version })}</span>
           {:else if updater.stage === 'error'}
-            <span class="upd-err">Denetlenemedi: {updater.error}</span>
+            <span class="upd-err">{f(m.update.checkFailed, { msg: updater.error })}</span>
           {/if}
         </span>
       </div>
@@ -462,35 +481,35 @@
       </p>
 
       <div class="row">
-        <span class="static-label">Lisans</span>
+        <span class="static-label">{m.settings.license}</span>
         <span class="upd-cell">
           <span class="about-val">MIT</span>
           <span class="fb-dot">·</span>
           <button
             class="link-btn"
             onclick={() => openUrl(`${REPO_URL}/blob/master/LICENSE.tr.md`)}
-            title="MIT lisansının Türkçe açıklaması (bilgilendirme amaçlı)"
-          >Türkçe açıklaması</button>
+            title={m.settings.licenseTrTitle}
+          >{m.settings.licenseTr}</button>
         </span>
       </div>
       <div class="row">
-        <span class="static-label">Telif</span>
+        <span class="static-label">{m.settings.copyright}</span>
         <span class="about-val">© 2018–2026 Zafer Bilgisayar</span>
       </div>
       <div class="row">
-        <span class="static-label">Kaynak kodu</span>
+        <span class="static-label">{m.settings.sourceCode}</span>
         <button class="link-btn" onclick={() => openUrl(REPO_URL)}>github.com/hzkucuk/eFaturaEdit</button>
       </div>
       <div class="row">
-        <span class="static-label">İletişim</span>
+        <span class="static-label">{m.settings.contact}</span>
         <span class="upd-cell">
           <button class="link-btn" onclick={() => openUrl(`mailto:${CONTACT_EMAIL}`)}>{CONTACT_EMAIL}</button>
           <span class="fb-dot">·</span>
-          <button class="link-btn" onclick={() => openUrl(`${REPO_URL}/issues`)}>Sorun bildir (GitHub Issues)</button>
+          <button class="link-btn" onclick={() => openUrl(`${REPO_URL}/issues`)}>{m.settings.reportIssue}</button>
         </span>
       </div>
 
-      <h3 class="about-sub">Kullanılan açık kaynak bileşenler</h3>
+      <h3 class="about-sub">{m.settings.openSourceLibs}</h3>
       <ul class="about-libs">
         <li><b>Saxon-HE</b> — XSLT 2.0/3.0 motoru · Mozilla Public License 2.0 · © Saxonica</li>
         <li><b>Tauri</b> · <b>SvelteKit</b> / <b>Svelte</b> · <b>CodeMirror 6</b> · <b>Vite</b> — MIT/Apache-2.0</li>
@@ -520,6 +539,10 @@
     word-break: break-all;
   }
   :global(html.dark) .log-path { color: #9aa1ac; }
+
+  .lang-hint {
+    flex: 1 1 auto;
+  }
 
   .log-hint {
     font-size: 11px;

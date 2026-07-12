@@ -37,6 +37,7 @@
   import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
   import { instrumentXslt, type XsltElementRef } from '$lib/xslt-map';
   import { log, installGlobalErrorLogging } from '$lib/logger';
+  import { m, f } from '$lib/i18n.svelte';
   import type { Completion } from '@codemirror/autocomplete';
 
   // ─── UI state ────────────────────────────────────────────────────────
@@ -241,10 +242,10 @@
       editorState.xmlDirty = false;
       xsltEditor?.setValue(xsl);
       xmlEditor?.setValue(xml);
-      status(`${label} yüklendi (${(xsl.length / 1024).toFixed(0)} KB XSLT + ${(xml.length / 1024).toFixed(0)} KB XML)`);
+      status(f(m.status.sampleLoaded, { label, xsltKb: (xsl.length / 1024).toFixed(0), xmlKb: (xml.length / 1024).toFixed(0) }));
       if (settings.autoTransformOnLoad) await runTransform();
     } catch (err) {
-      status(`Yüklenemedi: ${(err as Error).message}`, true);
+      status(f(m.errors.loadFailed, { msg: (err as Error).message }), true);
     }
   }
 
@@ -253,7 +254,7 @@
     try {
       userSamples = await listUserSamples();
     } catch (err) {
-      status(`Kullanıcı örnekleri okunamadı: ${(err as Error).message}`, true);
+      status(f(m.samples.userReadFailed, { msg: (err as Error).message }), true);
     }
   }
 
@@ -271,24 +272,24 @@
       editorState.xmlDirty = false;
       xsltEditor?.setValue(xslt);
       xmlEditor?.setValue(xml);
-      status(`Kullanıcı örneği yüklendi: ${sample.name}`);
+      status(f(m.samples.loaded, { name: sample.name }));
       if (settings.autoTransformOnLoad) await runTransform();
     } catch (err) {
-      status(`Yüklenemedi: ${(err as Error).message}`, true);
+      status(f(m.errors.loadFailed, { msg: (err as Error).message }), true);
     }
   }
 
   async function addCurrentAsUserSample() {
     if (!editorState.xsltPath || !editorState.xmlPath) {
-      status('Örnek olarak eklemek için hem XSLT hem XML diskte kayıtlı (kaydedilmiş) olmalı.', true);
+      status(m.samples.needSavedPair, true);
       return;
     }
     try {
       const sample = await addSamplePair(editorState.xsltPath, editorState.xmlPath);
-      status(`Örnek eklendi: ${sample.name}`);
+      status(f(m.samples.added, { name: sample.name }));
       await refreshUserSamples();
     } catch (err) {
-      status(`Örnek eklenemedi: ${(err as Error).message}`, true);
+      status(f(m.samples.addFailed, { msg: (err as Error).message }), true);
     }
   }
 
@@ -296,10 +297,10 @@
     e.stopPropagation();
     try {
       await removeUserSample(sample);
-      status(`Örnek silindi: ${sample.name}`);
+      status(f(m.samples.removed, { name: sample.name }));
       await refreshUserSamples();
     } catch (err) {
-      status(`Silinemedi: ${(err as Error).message}`, true);
+      status(f(m.errors.deleteFailed, { msg: (err as Error).message }), true);
     }
   }
 
@@ -307,7 +308,7 @@
     try {
       await openSamplesFolder();
     } catch (err) {
-      status(`Klasör açılamadı: ${(err as Error).message}`, true);
+      status(f(m.samples.folderOpenFailed, { msg: (err as Error).message }), true);
     }
   }
 
@@ -316,7 +317,7 @@
     try {
       userSnippets = await listUserSnippets();
     } catch (err) {
-      status(`Kullanıcı snippet'leri okunamadı: ${(err as Error).message}`, true);
+      status(f(m.snip.userReadFailed, { msg: (err as Error).message }), true);
     }
   }
 
@@ -330,9 +331,9 @@
       userSnippets = await saveUserSnippet(s, originalKey);
       snippetEditorOpen = false;
       editingSnippet = undefined;
-      status(`Snippet kaydedildi: ${s.key}`);
+      status(f(m.snip.saved, { key: s.key }));
     } catch (err) {
-      status(`Snippet kaydedilemedi: ${(err as Error).message}`, true);
+      status(f(m.snip.saveFailed, { msg: (err as Error).message }), true);
     }
   }
 
@@ -345,9 +346,9 @@
     if (!confirmed) return;
     try {
       userSnippets = await removeUserSnippet(s.key);
-      status(`Snippet silindi: ${s.key}`);
+      status(f(m.snip.deleted, { key: s.key }));
     } catch (err) {
-      status(`Silinemedi: ${(err as Error).message}`, true);
+      status(f(m.errors.deleteFailed, { msg: (err as Error).message }), true);
     }
   }
 
@@ -372,7 +373,7 @@
       xmlEditor?.setValue(xml);
       return true;
     } catch (err) {
-      status(`Varsayılan XML verisi yüklenemedi: ${(err as Error).message}`, true);
+      status(f(m.errors.defaultXmlFailed, { msg: (err as Error).message }), true);
       return false;
     }
   }
@@ -382,11 +383,7 @@
       const result = await openFile('xslt');
       if (!result) return;
       if (!isXsltDoc(result.content)) {
-        status(
-          `${basename(result.path)} bir XSLT şablonu değil (XSLT ad alanı yok). ` +
-            'Veri dosyasını "XML Aç" ile yükleyin.',
-          true
-        );
+        status(f(m.errors.notAnXslt, { name: basename(result.path) }), true);
         return;
       }
       ignoreNextChange.xslt = true;
@@ -398,12 +395,12 @@
       const paired = await ensureXmlData();
       status(
         paired
-          ? `XSLT açıldı: ${result.path} — varsayılan XML verisiyle eşlendi`
-          : `XSLT açıldı: ${result.path}`
+          ? f(m.status.xsltOpenedPaired, { path: result.path })
+          : f(m.status.xsltOpened, { path: result.path })
       );
       if (settings.autoTransformOnLoad && editorState.xmlText) await runTransform();
     } catch (err) {
-      status(`XSLT açılamadı: ${(err as Error).message}`, true);
+      status(f(m.errors.openFailed, { what: 'XSLT', msg: (err as Error).message }), true);
     }
   }
 
@@ -414,11 +411,7 @@
       // Şablonu veri alanına almayı reddet — aksi halde dönüşümün girdisi
       // şablonun kendisi olur ve önizleme sessizce anlamsız çıkar.
       if (isXsltDoc(result.content)) {
-        status(
-          `${basename(result.path)} bir XSLT şablonu, veri dosyası değil. ` +
-            '"XSLT Aç" ile şablon editörüne yükleyin.',
-          true
-        );
+        status(f(m.errors.notAnXml, { name: basename(result.path) }), true);
         return;
       }
       ignoreNextChange.xml = true;
@@ -427,10 +420,10 @@
       editorState.xmlDirty = false;
       xmlEditor?.setValue(result.content);
       pushRecent(result.path, 'xml');
-      status(`XML açıldı: ${result.path}`);
+      status(f(m.status.xmlOpened, { path: result.path }));
       if (settings.autoTransformOnLoad && editorState.xsltText) await runTransform();
     } catch (err) {
-      status(`XML açılamadı: ${(err as Error).message}`, true);
+      status(f(m.errors.openFailed, { what: 'XML', msg: (err as Error).message }), true);
     }
   }
 
@@ -464,7 +457,7 @@
     const candidates = paths.filter((p) => ['xslt', 'xsl', 'xml'].includes(ext(p)));
 
     if (candidates.length === 0) {
-      status('Yalnızca .xslt, .xsl ve .xml dosyaları açılabilir.', true);
+      status(m.errors.onlySupportedFiles, true);
       return;
     }
 
@@ -511,8 +504,8 @@
       // XSLT geldi ama veri yoksa → varsayılan UBL-TR verisiyle eşle.
       if (xsltFile && (await ensureXmlData())) loaded.push('varsayılan XML verisi');
 
-      const note = skipped.length > 0 ? ` (atlandı: ${skipped.join(', ')})` : '';
-      status(`Açıldı — ${loaded.join(' · ')}${note}`);
+      const note = skipped.length > 0 ? f(m.misc.skippedNote, { files: skipped.join(', ') }) : '';
+      status(f(m.status.opened, { what: loaded.join(' · ') + note }));
 
       if (settings.autoTransformOnLoad && editorState.xsltText && editorState.xmlText) {
         await runTransform();
@@ -540,10 +533,10 @@
         xmlEditor?.setValue(result.content);
       }
       pushRecent(path, kind);
-      status(`Yeniden açıldı: ${path}`);
+      status(f(m.misc.reopened, { path }));
       if (settings.autoTransformOnLoad && editorState.xsltText && editorState.xmlText) await runTransform();
     } catch (err) {
-      status(`Açılamadı: ${(err as Error).message}`, true);
+      status(f(m.misc.openFailedShort, { msg: (err as Error).message }), true);
     }
   }
 
@@ -583,7 +576,7 @@
     }
 
     if (!anySaved && !anyError && !silent) {
-      status('Kaydedilecek değişiklik yok.');
+      status(m.status.nothingToSave);
       return false;
     }
     if (anySaved && !anyError && settings.autoTransformOnSave) {
@@ -603,9 +596,9 @@
         const editor = kind === 'xslt' ? xsltEditor : xmlEditor;
         editor?.goToLine(err.line, err.column ?? 1);
         if (!silent)
-          status(`${kind.toUpperCase()} syntax hatası (satır ${err.line}): ${err.message}`, true);
+          status(f(m.misc.syntaxErrLine, { kind: kind.toUpperCase(), line: err.line, msg: err.message }), true);
       } else if (!silent) {
-        status(`${kind.toUpperCase()} syntax hatası: ${(err as Error).message}`, true);
+        status(f(m.misc.syntaxErr, { kind: kind.toUpperCase(), msg: (err as Error).message }), true);
       }
       return false;
     }
@@ -617,7 +610,7 @@
         if (kind === 'xslt') editorState.xsltDirty = false;
         else editorState.xmlDirty = false;
         pushRecent(currentPath, kind);
-        if (!silent) status(`${kind.toUpperCase()} kaydedildi: ${currentPath}`);
+        if (!silent) status(f(m.status.saved, { kind: kind.toUpperCase(), path: currentPath }));
       } else {
         const path = await saveFileAs(
           text,
@@ -633,11 +626,11 @@
           editorState.xmlDirty = false;
         }
         pushRecent(path, kind);
-        if (!silent) status(`${kind.toUpperCase()} farklı kaydedildi: ${path}`);
+        if (!silent) status(f(m.misc.savedAsOne, { kind: kind.toUpperCase(), path }));
       }
       return true;
     } catch (err) {
-      status(`Kaydedilemedi: ${(err as Error).message}`, true);
+      status(f(m.errors.saveFailed, { msg: (err as Error).message }), true);
       return false;
     }
   }
@@ -697,23 +690,23 @@
         saved.push(`XML: ${xmlPath}`);
       } else {
         // XSLT yazıldı ama kullanıcı XML'i atladı — sessiz geçme, söyle.
-        status(`XSLT kaydedildi: ${xsltPath} — ⚠️ XML kaydedilmedi`, true);
+        status(f(m.status.savedXsltOnly, { path: xsltPath }), true);
         if (settings.autoTransformOnSave) await runTransform();
         return;
       }
     }
 
-    status(`Farklı kaydedildi — ${saved.join(' · ')}`);
+    status(f(m.status.savedAs, { what: saved.join(' · ') }));
     if (settings.autoTransformOnSave) await runTransform();
   }
 
   // ─── Actions: transform ─────────────────────────────────────────────
   async function runTransform(silent = false) {
     if (!editorState.xsltText || !editorState.xmlText) {
-      if (!silent) status('Önce XSLT ve XML yükleyin.', true);
+      if (!silent) status(m.status.needBoth, true);
       return;
     }
-    if (!silent) status('Dönüştürülüyor...');
+    if (!silent) status(m.status.transforming);
     try {
       // Görsel düzenleyici açıkken önizleme, `data-xsl-id` enjekte edilmiş
       // GEÇİCİ bir kopyayla üretilir; böylece önizlemedeki her öğenin şablonda
@@ -744,23 +737,20 @@
           log.error(`[motor] Saxon kullanilamiyor, XSLT 1.0'a dusuldu: ${engineStatus.reason}`);
         }
         engineWarning = engineStatus.reason;
-        status(
-          `Dönüşüm tamam (${(html.length / 1024).toFixed(1)} KB) — ⚠️ yedek motor: yalnızca XSLT 1.0`,
-          true
-        );
+        status(f(m.status.transformedFallback, { kb: (html.length / 1024).toFixed(1) }), true);
       } else {
-        status(`Dönüşüm tamam (${(html.length / 1024).toFixed(1)} KB HTML)`);
+        status(f(m.status.transformed, { kb: (html.length / 1024).toFixed(1) }));
       }
     } catch (err) {
       if (err instanceof XsltError && err.line) {
         const editor = err.source === 'xml' ? xmlEditor : xsltEditor;
         editor?.goToLine(err.line, err.column ?? 1);
         editorState.previewHtml = `<pre style="color:#c00;padding:1rem;font-family:monospace;">Hata (${err.source} satır ${err.line}):\n\n${escapeHtml(err.message)}</pre>`;
-        status(`Hata (${err.source} satır ${err.line}): ${err.message}`, true);
+        status(f(m.misc.transformErrAt, { source: err.source ?? 'transform', line: err.line, msg: err.message }), true);
       } else {
         const msg = (err as Error).message ?? String(err);
         editorState.previewHtml = `<pre style="color:#c00;padding:1rem;font-family:monospace;">${escapeHtml(msg)}</pre>`;
-        status(`Dönüşüm hatası: ${msg}`, true);
+        status(f(m.misc.transformErr, { msg }), true);
       }
     }
   }
@@ -769,7 +759,7 @@
   function insertSnippet(snippet: Snippet) {
     if (xsltEditor) {
       xsltEditor.insertAtCursor(snippet.xsltCode);
-      status(`Eklendi: ${snippet.key}`);
+      status(f(m.snip.inserted, { key: snippet.key }));
     }
   }
 
@@ -781,20 +771,20 @@
     snippetText: string,
   ) {
     if (!editorKind) {
-      status(`Sürükleme iptal: hedef editör değil (${snippetKey || '?'})`);
+      status(f(m.snip.dragCancel, { key: snippetKey || '?' }));
       return;
     }
     if (!snippetText) {
-      status('Sürüklenen içerik boş.', true);
+      status(m.snip.dragEmpty, true);
       return;
     }
     const editor = editorKind === 'xslt' ? xsltEditor : xmlEditor;
     if (!editor) {
-      status(`Hedef editör hazır değil (${editorKind})`, true);
+      status(f(m.snip.editorNotReady, { editor: editorKind }), true);
       return;
     }
     editor.insertAtCoords(x, y, snippetText);
-    status(`✓ Eklendi (${editorKind.toUpperCase()}): ${snippetKey || 'snippet'}`);
+    status(f(m.snip.insertedTo, { editor: editorKind.toUpperCase(), key: snippetKey || 'snippet' }));
   }
 
   function onSnippetMouseDown(e: MouseEvent, snippet: Snippet) {
@@ -820,7 +810,7 @@
    */
   async function printPreview() {
     if (!editorState.previewHtml) {
-      status('Önizleme boş.', true);
+      status(m.misc.previewEmpty, true);
       return;
     }
     try {
@@ -837,9 +827,9 @@
       const path = await join(previewDir, filename);
       await writeTextFile(path, editorState.previewHtml);
       await openPath(path);
-      status('Tarayıcıda açıldı — Cmd+P ile yazdır veya "PDF olarak Kaydet" seç.');
+      status(m.misc.printOpened);
     } catch (err) {
-      status(`Yazdırma için tarayıcı açılamadı: ${(err as Error).message ?? err}`, true);
+      status(f(m.misc.printFailed, { msg: (err as Error).message ?? String(err) }), true);
     }
   }
 
@@ -847,16 +837,16 @@
     if (!editorState.previewHtml) return;
     navigator.clipboard
       .writeText(editorState.previewHtml)
-      .then(() => status(`HTML kopyalandı (${(editorState.previewHtml.length / 1024).toFixed(1)} KB)`))
-      .catch((err) => status(`Kopyalanamadı: ${err.message}`, true));
+      .then(() => status(f(m.misc.htmlCopied, { kb: (editorState.previewHtml.length / 1024).toFixed(1) })))
+      .catch((err) => status(f(m.misc.copyFailed, { msg: err.message }), true));
   }
 
   async function openDevTools() {
     try {
       await invoke('open_devtools');
-      status('DevTools açıldı.');
+      status(m.misc.devtoolsOpened);
     } catch (err) {
-      status(`DevTools açılamadı: ${(err as Error).message ?? err}`, true);
+      status(f(m.misc.devtoolsFailed, { msg: (err as Error).message ?? String(err) }), true);
     }
   }
 
@@ -1021,13 +1011,13 @@
     }
     const alt = name.replace(/"/g, '');
     xsltEditor.insertAtCursor(`<img src="${dataUrl}" alt="${alt}" style="width:150px; height:auto;" />`);
-    status(`Görsel "${name}" XSLT'ye base64 olarak gömüldü — boyutu style ile ayarlayabilirsiniz.`);
+    status(f(m.misc.imageEmbedded, { name }));
     runTransform();
   }
 
   function setPreviewWidth(w: number | null) {
     updateSetting('previewWidth', w);
-    status(`Önizleme genişliği: ${w ? w + 'px' : 'Tam'}`);
+    status(f(m.misc.previewWidth, { w: w ? w + 'px' : m.misc.previewWidthFull }));
   }
 
   function zoomPreview(delta: number) {
@@ -1223,7 +1213,7 @@ window.addEventListener('message', function(e) {
     n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${(n / 1024).toFixed(1)} KB`;
 
   /** Hangi XSLT motoru gerçekten kullanılıyor? Footer'ın en kritik bilgisi. */
-  const engineLabel = $derived(engineStatus.saxon ? 'Saxon · XSLT 1.0/2.0/3.0' : 'Tarayıcı · yalnızca XSLT 1.0');
+  const engineLabel = $derived(engineStatus.saxon ? m.engine.saxon : m.engine.fallback);
 
   /** Footer saati — saniyeli, her saniye ilerler. */
   let now = $state(new Date());
@@ -1312,7 +1302,7 @@ window.addEventListener('message', function(e) {
   function wzGoToSource() {
     if (!wzSource) return;
     xsltEditor?.goToLine(wzSource.line, 1);
-    status(`XSLT satır ${wzSource.line} — <${wzSource.name}>`);
+    status(f(m.status.goToLine, { line: wzSource.line, tag: wzSource.name }));
   }
 
   /** Düzenlenen özelliklerden CSS kuralı üret (boş değerler atlanır). */
@@ -1343,11 +1333,7 @@ window.addEventListener('message', function(e) {
     // için modu buradan DEĞİL, onPreviewLoad'dan gönderiyoruz (yarış durumu).
     if (editorState.xsltText && editorState.xmlText) await runTransform(true);
     else previewFrame?.contentWindow?.postMessage({ type: 'wysiwyg-mode', on: wzMode }, '*');
-    status(
-      wzMode
-        ? 'Görsel düzenleyici açık — önizlemede bir öğeye tıklayın.'
-        : 'Görsel düzenleyici kapatıldı.'
-    );
+    status(wzMode ? m.wysiwyg.opened : m.wysiwyg.closed);
   }
 
   /** İframe her yeniden yüklendiğinde köprü sıfırlanır → seçim modunu geri ver. */
@@ -1419,13 +1405,13 @@ window.addEventListener('message', function(e) {
 
     if (plain === 0) {
       status(
-        `"${oldText}" şablonda birebir bulunamadı — bu metin büyük olasılıkla XML verisinden geliyor ve şablondan düzenlenemez.`,
+        f(m.wzPanel.textNotFound, { text: oldText }),
         true,
       );
       return;
     }
     status(
-      `"${oldText}" şablonda ${plain} yerde geçiyor — hangisinin değişeceği belirsiz. XSLT editöründen elle düzenleyin.`,
+      f(m.wzPanel.textAmbiguous, { text: oldText, n: plain }),
       true,
     );
   }
@@ -1434,10 +1420,10 @@ window.addEventListener('message', function(e) {
   function rgbToHex(value: string | undefined): string {
     if (!value) return '#000000';
     if (value.startsWith('#')) return value;
-    const m = value.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
-    if (!m) return '#000000';
+    const match = value.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (!match) return '#000000';
     const hex = (n: string) => Number(n).toString(16).padStart(2, '0');
-    return `#${hex(m[1])}${hex(m[2])}${hex(m[3])}`;
+    return `#${hex(match[1])}${hex(match[2])}${hex(match[3])}`;
   }
 
   function wzReset() {
@@ -1455,15 +1441,12 @@ window.addEventListener('message', function(e) {
   function wzApply() {
     if (!wzSel || !wzRule) return;
     const xslt = editorState.xsltText;
-    const m = xslt.match(styleBlockRegex);
-    if (!m) {
-      status(
-        'XSLT içinde bir <' + STYLE_TAG + '> bloğu bulunamadı — önce bir stil bloğu ekleyin.',
-        true,
-      );
+    const match = xslt.match(styleBlockRegex);
+    if (!match) {
+      status(m.wzPanel.styleBlockMissing, true);
       return;
     }
-    const inner = m[2];
+    const inner = match[2];
 
     // Bu seçici için mevcut kural var mı? (satır başında, süslü parantezli)
     const escaped = wzSel.selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1479,7 +1462,7 @@ window.addEventListener('message', function(e) {
     } else {
       // Kural yok → stil bloğunun SONUNA ekle. Kapanış etiketi benzersiz bir
       // çıpa; SEARCH kısa kalır, diff okunur olur.
-      const closing = m[3];
+      const closing = match[3];
       search = closing;
       replace = `\n${wzRule}\n${closing}`;
     }
@@ -1575,7 +1558,7 @@ window.addEventListener('message', function(e) {
     try {
       const ok = await saveAll();
       if (!ok && (editorState.xsltDirty || editorState.xmlDirty)) {
-        status('Kaydedilemedi — sözdizimi hatası olabilir. Lütfen düzeltip tekrar deneyin.', true);
+        status(m.exit.saveFailedSyntax, true);
         exitInProgress = false;
         return; // modal açık kalır, kullanıcı düzeltsin
       }
@@ -1583,7 +1566,7 @@ window.addEventListener('message', function(e) {
       exitConfirmOpen = false;
       await getCurrentWindow().close();
     } catch (err) {
-      status(`Çıkış sırasında hata: ${(err as Error).message ?? err}`, true);
+      status(f(m.exit.exitError, { msg: (err as Error).message ?? String(err) }), true);
       exitInProgress = false;
     }
   }
@@ -1596,7 +1579,7 @@ window.addEventListener('message', function(e) {
     try {
       await getCurrentWindow().close();
     } catch (err) {
-      status(`Çıkış sırasında hata: ${(err as Error).message ?? err}`, true);
+      status(f(m.exit.exitError, { msg: (err as Error).message ?? String(err) }), true);
       exitInProgress = false;
       forceClose = false;
     }
@@ -1620,7 +1603,7 @@ window.addEventListener('message', function(e) {
     // (internet yoksa veya dev modundaysak kullanıcıya hata gösterilmez).
     setTimeout(() => void checkForUpdate(), 3000);
     if (showWelcome) {
-      status(`e-Fatura Edit v${manifest.version} — ${allSnippets.length} snippet · ${xsltCompletions.length} tamamlama · hazır`);
+      status(f(m.status.ready, { version: manifest.version, snippets: allSnippets.length, completions: xsltCompletions.length }));
     }
   });
 
@@ -1674,15 +1657,13 @@ window.addEventListener('message', function(e) {
   {#if engineWarning}
     <!-- Sessizce XSLT 1.0'a düşmek, 2.0 şablonlarını hata vermeden bozar. Söyle. -->
     <div class="engine-warn">
-      <strong>⚠️ XSLT 2.0/3.0 motoru çalışmıyor</strong>
-      <span>Önizleme tarayıcının <b>XSLT 1.0</b> işlemcisiyle üretiliyor —
-        <code>format-dateTime</code>, <code>tokenize</code>, <code>for-each-group</code> gibi
-        2.0+ komutları <b>sessizce yok sayılır</b>, çıktı yanıltıcı olabilir.</span>
+      <strong>{m.engine.warnTitle}</strong>
+      <span>{m.engine.warnBody}</span>
       <details>
-        <summary>Ayrıntı</summary>
+        <summary>{m.common.details}</summary>
         <code class="engine-reason">{engineWarning}</code>
       </details>
-      <button class="engine-close" onclick={() => (engineWarning = '')} title="Gizle">✕</button>
+      <button class="engine-close" onclick={() => (engineWarning = '')} title={m.common.hide}>✕</button>
     </div>
   {/if}
 
@@ -1691,8 +1672,8 @@ window.addEventListener('message', function(e) {
     <div class="drop-overlay">
       <div class="drop-card">
         <span class="drop-icon">📥</span>
-        <strong>Dosyayı bırak</strong>
-        <span class="drop-hint">.xslt / .xsl → şablon editörü · .xml → veri editörü</span>
+        <strong>{m.drop.title}</strong>
+        <span class="drop-hint">{m.drop.hint}</span>
       </div>
     </div>
   {/if}
@@ -1704,25 +1685,25 @@ window.addEventListener('message', function(e) {
       <span class="ver">v{manifest.version}</span>
     </div>
     <div class="actions">
-      <div class="btn-group" title="Düzenle">
-        <button onclick={undoActive} title="Geri Al (Cmd/Ctrl+Z)">↩</button>
-        <button onclick={redoActive} title="İleri Al (Cmd/Ctrl+Shift+Z)">↪</button>
+      <div class="btn-group" title={m.groups.edit}>
+        <button onclick={undoActive} title={m.toolbar.undo}>↩</button>
+        <button onclick={redoActive} title={m.toolbar.redo}>↪</button>
       </div>
 
-      <div class="btn-group" title="Dosya">
-        <button onclick={openXslt} title="XSLT dosyası aç">📂 XSLT</button>
-        <button onclick={openXml} title="XML dosyası aç">📄 XML</button>
+      <div class="btn-group" title={m.groups.file}>
+        <button onclick={openXslt} title={m.toolbar.openXsltTitle}>📂 XSLT</button>
+        <button onclick={openXml} title={m.toolbar.openXmlTitle}>📄 XML</button>
 
         {#if recentFiles.length > 0}
           <div class="recent-menu-wrap">
-            <button onclick={() => (recentMenuOpen = !recentMenuOpen)} title="Son dosyalar">
-              🕒 Son ▼
+            <button onclick={() => (recentMenuOpen = !recentMenuOpen)} title={m.toolbar.recentTitle}>
+              🕒 {m.toolbar.recent} ▼
             </button>
             {#if recentMenuOpen}
               <div class="dropdown recent">
                 <div class="dd-header">
-                  <span>Son Açılanlar</span>
-                  <button class="dd-clear" onclick={clearRecent} title="Tümünü sil">🗑</button>
+                  <span>{m.toolbar.recentHeader}</span>
+                  <button class="dd-clear" onclick={clearRecent} title={m.toolbar.clearAll}>🗑</button>
                 </div>
                 {#each recentFiles as f}
                   <button class="dd-item" onclick={() => reopenRecent(f.path, f.kind)} title={f.path}>
@@ -1740,27 +1721,27 @@ window.addEventListener('message', function(e) {
           onclick={() => saveAll()}
           class:dirty={editorState.xsltDirty || editorState.xmlDirty}
           disabled={!canSave}
-          title="XSLT ve XML'i birlikte kaydet (Cmd/Ctrl+S)"
+          title={m.toolbar.saveTitle}
         >
           {#if editorState.xsltDirty || editorState.xmlDirty}
             💾* ({[editorState.xsltDirty && 'XSLT', editorState.xmlDirty && 'XML'].filter(Boolean).join('+')})
           {:else}
-            💾 Kaydet
+            💾 {m.common.save}
           {/if}
         </button>
 
-        <button onclick={saveAsPair} title="XSLT ve XML'i farklı adla/klasöre kaydet">💾 Farklı</button>
+        <button onclick={saveAsPair} title={m.toolbar.saveAsTitle}>💾 {m.common.saveAs}</button>
       </div>
 
-      <div class="btn-group" title="İşlemler">
+      <div class="btn-group" title={m.groups.actions}>
         <div class="sample-menu-wrap">
-          <button onclick={() => (sampleMenuOpen = !sampleMenuOpen)} title="Örnek fatura yükle">
-            🎲 Örnek ▼
+          <button onclick={() => (sampleMenuOpen = !sampleMenuOpen)} title={m.samples.menuTitle}>
+            🎲 {m.toolbar.samples} ▼
           </button>
           {#if sampleMenuOpen}
             <div class="dropdown">
               <button class="dd-item primary" onclick={loadDefaultSample}>
-                🌟 Varsayılan (default.xslt + default.xml)
+                {m.samples.defaultPair}
               </button>
               <div class="dd-divider"></div>
               {#each samples.groups as group}
@@ -1775,38 +1756,38 @@ window.addEventListener('message', function(e) {
 
               <div class="dd-divider"></div>
               <div class="dd-header">
-                <span>Kullanıcı Örnekleri</span>
-                <button class="dd-clear" onclick={openUserSamplesFolder} title="Örnekler klasörünü Finder'da aç">📁</button>
+                <span>{m.samples.userHeader}</span>
+                <button class="dd-clear" onclick={openUserSamplesFolder} title={m.samples.openFolderTitle}>📁</button>
               </div>
               {#if userSamples.length === 0}
-                <div class="dd-empty">Henüz yok — aşağıdan geçerli dosyaları ekleyebilirsin.</div>
+                <div class="dd-empty">{m.samples.empty}</div>
               {/if}
               {#each userSamples as us (us.name)}
                 <div class="dd-item-row">
                   <button class="dd-item" onclick={() => loadUserSampleEntry(us)}>
                     <span class="dd-name">{us.name}</span>
                   </button>
-                  <button class="dd-remove" onclick={(e) => removeUserSampleEntry(us, e)} title="Bu örneği sil">🗑</button>
+                  <button class="dd-remove" onclick={(e) => removeUserSampleEntry(us, e)} title={m.samples.removeTitle}>🗑</button>
                 </div>
               {/each}
               <button
                 class="dd-item primary"
                 onclick={addCurrentAsUserSample}
                 disabled={!editorState.xsltPath || !editorState.xmlPath}
-                title={!editorState.xsltPath || !editorState.xmlPath ? 'Önce XSLT ve XML dosyalarını diske kaydet' : 'Açık olan XSLT + XML ikilisini örnek olarak kaydet'}
+                title={!editorState.xsltPath || !editorState.xmlPath ? m.samples.addCurrentTitleDisabled : m.samples.addCurrentTitle}
               >
-                ➕ Geçerli ikiliyi örnek olarak kaydet
+                {m.samples.addCurrent}
               </button>
             </div>
           {/if}
         </div>
 
-        <button class="primary" onclick={() => runTransform()} title="Dönüştür (Cmd/Ctrl+R)">▶ Dönüştür</button>
+        <button class="primary" onclick={() => runTransform()} title={m.toolbar.transformTitle}>▶ {m.toolbar.transform}</button>
       </div>
 
-      <div class="btn-group" title="Yardım ve Ayarlar">
-        <button onclick={() => (helpOpen = true)} title="Yardım ve Dokümantasyon (F1)">❓ Yardım</button>
-        <button onclick={() => goto('/settings')} title="Ayarlar (tema, font, davranış)">⚙️ Ayarlar</button>
+      <div class="btn-group" title={m.groups.helpSettings}>
+        <button onclick={() => (helpOpen = true)} title={m.toolbar.helpTitle}>❓ {m.toolbar.help}</button>
+        <button onclick={() => goto('/settings')} title={m.toolbar.settingsTitle}>⚙️ {m.toolbar.settings}</button>
       </div>
     </div>
     <div class="status" class:error={statusIsError}>{statusMsg}</div>
@@ -1821,9 +1802,9 @@ window.addEventListener('message', function(e) {
     <aside class="snippets" style="grid-template-rows: 1fr 4px {aiPanelHeight}px;">
       <div class="snippets-top">
         <div class="snippets-header">
-          <h3>Snippet'ler ({allSnippets.length})</h3>
-          <button class="snippet-add" onclick={() => { editingSnippet = undefined; snippetEditorOpen = true; }} title="Yeni snippet ekle">➕</button>
-          <input type="text" placeholder="Ara..." bind:value={snippetFilter} class="search" />
+          <h3>{m.panels.snippets} ({allSnippets.length})</h3>
+          <button class="snippet-add" onclick={() => { editingSnippet = undefined; snippetEditorOpen = true; }} title={m.panels.addSnippet}>➕</button>
+          <input type="text" placeholder={m.common.search} bind:value={snippetFilter} class="search" />
           <div class="tabs">
             {#each categories as cat}
               <button
@@ -1835,7 +1816,7 @@ window.addEventListener('message', function(e) {
               </button>
             {/each}
           </div>
-          <div class="hint">💡 Tıkla = imlece ekle · Sürükle = istediğin yere bırak</div>
+          <div class="hint">💡 {m.panels.dragHint}</div>
         </div>
         <div class="snippet-list">
           {#each visibleSnippets as snippet (snippet.key)}
@@ -1858,7 +1839,7 @@ window.addEventListener('message', function(e) {
               {#if userSnippetKeys.has(snippet.key)}
                 <button
                   class="snippet-edit"
-                  title="Düzenle"
+                  title={m.snip.edit}
                   onmousedown={(e) => e.stopPropagation()}
                   onclick={(e) => {
                     e.stopPropagation();
@@ -1869,7 +1850,7 @@ window.addEventListener('message', function(e) {
                 </button>
                 <button
                   class="snippet-delete"
-                  title="Sil"
+                  title={m.snip.del}
                   onmousedown={(e) => e.stopPropagation()}
                   onclick={(e) => onDeleteSnippet(snippet, e)}
                 >
@@ -1878,7 +1859,7 @@ window.addEventListener('message', function(e) {
               {/if}
             </div>
           {:else}
-            <p class="muted">Snippet bulunamadı.</p>
+            <p class="muted">{m.snip.none}</p>
           {/each}
         </div>
       </div>
@@ -1908,23 +1889,23 @@ window.addEventListener('message', function(e) {
         {#if editorState.xsltPath}
           <span class="ph-path" title={editorState.xsltPath}>{editorState.xsltPath}</span>
         {:else}
-          <span class="ph-new">(kaydedilmemiş)</span>
+          <span class="ph-new">{m.common.unsaved}</span>
         {/if}
-        <span class="ph-meta">{editorState.xsltText.length.toLocaleString('tr-TR')} karakter</span>
-        {#if editorState.xsltDirty}<span class="dirty-mark" title="Kaydedilmemiş değişiklik">●</span>{/if}
+        <span class="ph-meta">{editorState.xsltText.length.toLocaleString()} {m.common.characters}</span>
+        {#if editorState.xsltDirty}<span class="dirty-mark" title={m.common.unsavedChanges}>●</span>{/if}
       </div>
       <div class="editor-slot" data-editor-kind="xslt">
         {#if showWelcome}
           <div class="welcome">
-            <h2>e-Fatura Dizayn Editörü</h2>
-            <p>Başlamak için bir seçenek belirle:</p>
+            <h2>{m.welcome.title}</h2>
+            <p>{m.welcome.subtitle}</p>
             <div class="welcome-actions">
-              <button class="w-btn primary" onclick={loadDefaultSample} title="Hızlı başlangıç — örnek XSLT + XML birlikte yükler">🎲 Örnek Fatura Yükle</button>
-              <button class="w-btn" onclick={openXslt} title="Bilgisayarından bir .xslt/.xsl dosyası aç">📂 XSLT Dosyası Aç</button>
-              <button class="w-btn" onclick={openXml} title="Bilgisayarından bir .xml dosyası aç">📄 XML Dosyası Aç</button>
+              <button class="w-btn primary" onclick={loadDefaultSample} title={m.welcome.loadSampleTitle}>{m.welcome.loadSample}</button>
+              <button class="w-btn" onclick={openXslt} title={m.welcome.openXsltTitle}>{m.welcome.openXslt}</button>
+              <button class="w-btn" onclick={openXml} title={m.welcome.openXmlTitle}>{m.welcome.openXml}</button>
             </div>
             <p class="hint-lg">
-              🎨 {allSnippets.length} snippet · 🔎 Ctrl+Space autocomplete · 💾 Cmd+S kaydet
+              {f(m.welcome.hint, { snippets: allSnippets.length })}
             </p>
           </div>
         {:else}
@@ -1944,15 +1925,15 @@ window.addEventListener('message', function(e) {
         {#if editorState.xmlPath}
           <span class="ph-path" title={editorState.xmlPath}>{editorState.xmlPath}</span>
         {:else}
-          <span class="ph-new">(kaydedilmemiş)</span>
+          <span class="ph-new">{m.common.unsaved}</span>
         {/if}
-        <span class="ph-meta">{editorState.xmlText.length.toLocaleString('tr-TR')} karakter</span>
-        {#if editorState.xmlDirty}<span class="dirty-mark" title="Kaydedilmemiş değişiklik">●</span>{/if}
+        <span class="ph-meta">{editorState.xmlText.length.toLocaleString()} {m.common.characters}</span>
+        {#if editorState.xmlDirty}<span class="dirty-mark" title={m.common.unsavedChanges}>●</span>{/if}
       </div>
       <div class="editor-slot" data-editor-kind="xml">
         {#if showWelcome}
           <div class="welcome sub">
-            <p class="hint-lg">Örnek yükledikten sonra sağdaki önizleme otomatik oluşur.</p>
+            <p class="hint-lg">{m.welcome.xmlHint}</p>
           </div>
         {:else}
           <CodeEditor bind:this={xmlEditor} bind:value={editorState.xmlText} language="xml" />
@@ -1965,38 +1946,38 @@ window.addEventListener('message', function(e) {
     <!-- Preview paneli -->
     <section class="preview">
       <div class="panel-header preview-header">
-        <span>Önizleme ({(editorState.previewHtml.length / 1024).toFixed(1)} KB)</span>
+        <span>{f(m.misc.previewKb, { kb: (editorState.previewHtml.length / 1024).toFixed(1) })}</span>
         <div class="preview-actions">
           <!-- Responsive boyut butonları -->
           <button
             class:active={settings.previewWidth === 320}
             onclick={() => setPreviewWidth(320)}
-            title="Mobil (320px)"
+            title={m.preview.mobile}
           >📱 320</button>
           <button
             class:active={settings.previewWidth === 768}
             onclick={() => setPreviewWidth(768)}
-            title="Tablet (768px)"
+            title={m.preview.tablet}
           >📱 768</button>
           <button
             class:active={settings.previewWidth === 1200}
             onclick={() => setPreviewWidth(1200)}
-            title="Masaüstü (1200px)"
+            title={m.preview.desktop}
           >🖥️ 1200</button>
           <button
             class:active={settings.previewWidth === null}
             onclick={() => setPreviewWidth(null)}
-            title="Tam genişlik"
+            title={m.preview.full}
           >⬜ Full</button>
 
           <span class="mini-sep"></span>
 
           <!-- Zoom -->
-          <button onclick={() => zoomPreview(-0.1)} title="Yakınlaştır az (Cmd+-)">−</button>
-          <button onclick={resetZoom} title="Zoom sıfırla (Cmd+0)">
+          <button onclick={() => zoomPreview(-0.1)} title={m.preview.zoomOut}>−</button>
+          <button onclick={resetZoom} title={m.misc.zoomResetCmd}>
             {Math.round(settings.previewZoom * 100)}%
           </button>
-          <button onclick={() => zoomPreview(0.1)} title="Yakınlaştır (Cmd++)">+</button>
+          <button onclick={() => zoomPreview(0.1)} title={m.preview.zoomIn}>+</button>
 
           <span class="mini-sep"></span>
 
@@ -2004,31 +1985,31 @@ window.addEventListener('message', function(e) {
             class:active={wzMode}
             onclick={toggleWzMode}
             disabled={!editorState.previewHtml}
-            title="Görsel düzenleyici: önizlemede bir öğeye tıklayıp stilini panelden değiştir"
-          >🎯 Seç & Düzenle</button>
+            title={m.wysiwyg.toggleTitle}
+          >{m.wysiwyg.toggle}</button>
 
           <button
             onclick={captureStyleFromPreview}
             disabled={!editorState.previewHtml}
-            title="DevTools'ta (Styles panelinde) yaptığın CSS değişikliklerini XSLT'deki stil bloğuna aktar"
-          >🎨 Stili XSLT'ye Al</button>
+            title={m.wysiwyg.captureStyleTitle}
+          >{m.wysiwyg.captureStyle}</button>
 
           <span class="mini-sep"></span>
 
-          <button onclick={printPreview} disabled={!editorState.previewHtml} title="Yazdır / PDF (Cmd+P)">🖨</button>
+          <button onclick={printPreview} disabled={!editorState.previewHtml} title={m.preview.print}>🖨</button>
         </div>
       </div>
 
       {#if wzMode}
         <div class="wz-panel">
           {#if !wzSel}
-            <p class="wz-hint">🎯 Önizlemede düzenlemek istediğin öğeye tıkla.</p>
+            <p class="wz-hint">{m.wysiwyg.hint}</p>
           {:else}
             <div class="wz-head">
               <code class="wz-sel">{wzSel.selector}</code>
               <span class="wz-tag">&lt;{wzSel.tag}&gt;</span>
-              <button class="wz-reset" onclick={wzReset} title="Değişiklikleri sıfırla">↺</button>
-              <button class="wz-apply" onclick={wzApply} disabled={!wzRule}>✓ XSLT'ye Uygula</button>
+              <button class="wz-reset" onclick={wzReset} title={m.wysiwyg.resetTitle}>↺</button>
+              <button class="wz-apply" onclick={wzApply} disabled={!wzRule}>{m.wysiwyg.applyToXslt}</button>
             </div>
 
             <!-- Kaynak eşlemesi (salt-okunur): bu öğeyi hangi XSLT satırı üretti? -->
@@ -2037,21 +2018,21 @@ window.addEventListener('message', function(e) {
                 <button
                   class="wz-src-btn"
                   onclick={wzGoToSource}
-                  title="XSLT editöründe bu satıra git"
+                  title={m.wysiwyg.sourceGoTitle}
                 >
-                  📍 XSLT satır {wzSource.line} · &lt;{wzSource.name}&gt;
-                  {#if !wzSel.xslExact}<span class="wz-src-approx">(en yakın üst öğe)</span>{/if}
+                  {f(m.wysiwyg.sourceLine, { line: wzSource.line, tag: wzSource.name })}
+                  {#if !wzSel.xslExact}<span class="wz-src-approx">{m.wysiwyg.sourceApprox}</span>{/if}
                 </button>
               {:else}
-                <span class="wz-src-none" title="Bu öğe xsl:element gibi dinamik üretilmiş olabilir">
-                  📍 Kaynak satır bulunamadı
+                <span class="wz-src-none" title={m.wysiwyg.sourceNoneTitle}>
+                  {m.wysiwyg.sourceNone}
                 </span>
               {/if}
             </div>
 
             {#if wzSel.text}
               <div class="wz-text-row">
-                <label for="wz-text">📝 Metin</label>
+                <label for="wz-text">{m.wysiwyg.text}</label>
                 <input
                   id="wz-text"
                   type="text"
@@ -2062,54 +2043,54 @@ window.addEventListener('message', function(e) {
                   class="wz-apply"
                   onclick={wzApplyText}
                   disabled={!wzText || wzText === wzSel.text}
-                >✓ Metni Uygula</button>
+                >{m.wysiwyg.applyText}</button>
               </div>
             {/if}
 
             <div class="wz-grid">
-              <label>Yazı rengi
+              <label>{m.wzPanel.color}
                 <input type="color" value={wzEdits['color'] ?? rgbToHex(wzSel.computed['color'])}
                   oninput={(e) => wzSet('color', (e.currentTarget as HTMLInputElement).value)} />
               </label>
-              <label>Arka plan
+              <label>{m.wzPanel.background}
                 <input type="color" value={wzEdits['background-color'] ?? rgbToHex(wzSel.computed['background-color'])}
                   oninput={(e) => wzSet('background-color', (e.currentTarget as HTMLInputElement).value)} />
               </label>
-              <label>Yazı boyutu
+              <label>{m.wzPanel.fontSize}
                 <input type="text" placeholder={wzSel.computed['font-size']} value={wzEdits['font-size'] ?? ''}
                   oninput={(e) => wzSet('font-size', (e.currentTarget as HTMLInputElement).value)} />
               </label>
-              <label>Kalınlık
+              <label>{m.wzPanel.weight}
                 <select value={wzEdits['font-weight'] ?? ''}
                   onchange={(e) => wzSet('font-weight', (e.currentTarget as HTMLSelectElement).value)}>
-                  <option value="">(değiştirme)</option>
+                  <option value="">{m.wzPanel.noChange}</option>
                   <option value="normal">normal</option>
                   <option value="bold">bold</option>
                   <option value="600">600</option>
                 </select>
               </label>
-              <label>Hizalama
+              <label>{m.wzPanel.align}
                 <select value={wzEdits['text-align'] ?? ''}
                   onchange={(e) => wzSet('text-align', (e.currentTarget as HTMLSelectElement).value)}>
-                  <option value="">(değiştirme)</option>
-                  <option value="left">sol</option>
-                  <option value="center">orta</option>
-                  <option value="right">sağ</option>
+                  <option value="">{m.wzPanel.noChange}</option>
+                  <option value="left">{m.wzPanel.alignLeft}</option>
+                  <option value="center">{m.wzPanel.alignCenter}</option>
+                  <option value="right">{m.wzPanel.alignRight}</option>
                 </select>
               </label>
-              <label>İç boşluk
+              <label>{m.wzPanel.padding}
                 <input type="text" placeholder={wzSel.computed['padding']} value={wzEdits['padding'] ?? ''}
                   oninput={(e) => wzSet('padding', (e.currentTarget as HTMLInputElement).value)} />
               </label>
-              <label>Kenarlık
+              <label>{m.wzPanel.border}
                 <input type="text" placeholder="1px solid #ccc" value={wzEdits['border'] ?? ''}
                   oninput={(e) => wzSet('border', (e.currentTarget as HTMLInputElement).value)} />
               </label>
-              <label>Köşe
+              <label>{m.wzPanel.radius}
                 <input type="text" placeholder={wzSel.computed['border-radius']} value={wzEdits['border-radius'] ?? ''}
                   oninput={(e) => wzSet('border-radius', (e.currentTarget as HTMLInputElement).value)} />
               </label>
-              <label>Genişlik
+              <label>{m.wzPanel.width}
                 <input type="text" placeholder={wzSel.computed['width']} value={wzEdits['width'] ?? ''}
                   oninput={(e) => wzSet('width', (e.currentTarget as HTMLInputElement).value)} />
               </label>
@@ -2118,11 +2099,7 @@ window.addEventListener('message', function(e) {
             {#if wzRule}
               <pre class="wz-rule">{wzRule}</pre>
             {/if}
-            <p class="wz-warn">
-              ⚠️ Bu bir CSS <b>kuralıdır</b>: seçiciye uyan <b>tüm</b> öğeleri etkiler
-              (ör. tek bir fatura satırı değil, hepsi). Yalnızca belirli bir satır
-              için seçiciye <code>:nth-child(n)</code> ekleyebilirsin.
-            </p>
+            <p class="wz-warn">{m.wzPanel.ruleWarn}</p>
           {/if}
         </div>
       {/if}
@@ -2136,7 +2113,7 @@ window.addEventListener('message', function(e) {
             bind:this={previewFrame}
             srcdoc={previewHtmlWithBridge}
             onload={onPreviewLoad}
-            title="Önizleme"
+            title={m.panels.preview}
             sandbox="allow-same-origin allow-scripts allow-modals"
             style:transform="scale({settings.previewZoom})"
             style:transform-origin="top left"
@@ -2155,27 +2132,27 @@ window.addEventListener('message', function(e) {
        yok sayılır ve fatura yanlış basılır (bkz. engineStatus).  -->
   <footer class="footbar">
     <!-- Dosyalar -->
-    <span class="fb-item" title={editorState.xsltPath ?? 'Kaydedilmemiş XSLT'}>
+    <span class="fb-item" title={editorState.xsltPath ?? m.misc.unsavedXslt}>
       <b>XSLT</b>
       {editorState.xsltPath ? basename(editorState.xsltPath) : '(yeni)'}
       <span class="fb-dim">{fmtBytes(editorState.xsltText.length)}</span>
-      {#if editorState.xsltDirty}<span class="fb-dirty" title="Kaydedilmemiş değişiklik">●</span>{/if}
+      {#if editorState.xsltDirty}<span class="fb-dirty" title={m.common.unsavedChanges}>●</span>{/if}
     </span>
 
     <span class="fb-sep"></span>
 
-    <span class="fb-item" title={editorState.xmlPath ?? 'Kaydedilmemiş XML'}>
+    <span class="fb-item" title={editorState.xmlPath ?? m.misc.unsavedXml}>
       <b>XML</b>
       {editorState.xmlPath ? basename(editorState.xmlPath) : '(yeni)'}
       <span class="fb-dim">{fmtBytes(editorState.xmlText.length)}</span>
-      {#if editorState.xmlDirty}<span class="fb-dirty" title="Kaydedilmemiş değişiklik">●</span>{/if}
+      {#if editorState.xmlDirty}<span class="fb-dirty" title={m.common.unsavedChanges}>●</span>{/if}
     </span>
 
     <span class="fb-sep"></span>
 
     <!-- Son dönüşüm -->
     {#if lastHtmlBytes > 0}
-      <span class="fb-item" title="Son dönüşümün çıktısı ve süresi">
+      <span class="fb-item" title={m.footer.lastTransform}>
         ⚡ {fmtBytes(lastHtmlBytes)} · {lastTransformMs} ms
       </span>
       <span class="fb-sep"></span>
@@ -2185,8 +2162,8 @@ window.addEventListener('message', function(e) {
     <span class="fb-spacer"></span>
 
     <!-- AI modeli -->
-    <span class="fb-item fb-dim" title="Ayarlar → AI Asistan'dan değiştirilebilir">
-      🤖 {settings.aiProviders[settings.aiProvider].model || '(model seçilmedi)'}
+    <span class="fb-item fb-dim" title={m.footer.aiModelTitle}>
+      🤖 {settings.aiProviders[settings.aiProvider].model || m.footer.noModel}
     </span>
 
     <span class="fb-sep"></span>
@@ -2197,15 +2174,15 @@ window.addEventListener('message', function(e) {
       class:degraded={!engineStatus.saxon}
       onclick={() => { if (!engineStatus.saxon) engineWarning = engineStatus.reason; }}
       title={engineStatus.saxon
-        ? 'Saxon-HE motoru: tam XSLT 1.0/2.0/3.0 desteği'
-        : `Saxon çalışmıyor — önizleme tarayıcının XSLT 1.0 işlemcisiyle üretiliyor. 2.0+ komutları SESSİZCE yok sayılır. Ayrıntı için tıkla.\n\n${engineStatus.reason}`}
+        ? m.engine.saxonTitle
+        : f(m.engine.fallbackTitle, { reason: engineStatus.reason })}
     >
       {engineStatus.saxon ? '✅' : '⚠️'} {engineLabel}
     </button>
 
     <span class="fb-sep"></span>
 
-    <span class="fb-item fb-dim" title="Yüklü snippet sayısı">✂️ {allSnippets.length}</span>
+    <span class="fb-item fb-dim" title={m.footer.snippetCount}>✂️ {allSnippets.length}</span>
 
     <span class="fb-sep"></span>
 
@@ -2213,7 +2190,7 @@ window.addEventListener('message', function(e) {
 
     <span class="fb-sep"></span>
 
-    <span class="fb-item fb-clock" title="Tarih ve saat">🕐 {clockText}</span>
+    <span class="fb-item fb-clock" title={m.footer.clock}>🕐 {clockText}</span>
   </footer>
 </div>
 
@@ -2236,11 +2213,11 @@ window.addEventListener('message', function(e) {
 {#if previewMenu}
   <ContextMenu x={previewMenu.x} y={previewMenu.y} onclose={() => (previewMenu = null)}>
     {#snippet children()}
-      <button onclick={() => { printPreview(); previewMenu = null; }}>🖨 Yazdır / PDF Kaydet… (tarayıcıda)</button>
-      <button onclick={() => { copyPreviewHtml(); previewMenu = null; }}>📋 HTML'i Kopyala</button>
+      <button onclick={() => { printPreview(); previewMenu = null; }}>{m.preview.menuPrint}</button>
+      <button onclick={() => { copyPreviewHtml(); previewMenu = null; }}>{m.preview.menuCopyHtml}</button>
       <div class="divider"></div>
-      <button onclick={() => { runTransform(); previewMenu = null; }}>▶ Yeniden Dönüştür</button>
-      <button onclick={() => { openDevTools(); previewMenu = null; }}>🔧 Geliştirici Araçları</button>
+      <button onclick={() => { runTransform(); previewMenu = null; }}>{m.preview.menuRetransform}</button>
+      <button onclick={() => { openDevTools(); previewMenu = null; }}>{m.preview.menuDevtools}</button>
     {/snippet}
   </ContextMenu>
 {/if}
@@ -2270,19 +2247,22 @@ window.addEventListener('message', function(e) {
 <!-- ─── Çıkışta kaydetme onayı ────────────────────────────────────── -->
 {#if exitConfirmOpen}
   <div class="exit-overlay" role="presentation">
-    <div class="exit-modal" role="alertdialog" aria-label="Kaydedilmemiş değişiklikler">
-      <h3>⚠️ Kaydedilmemiş Değişiklikler</h3>
+    <div class="exit-modal" role="alertdialog" aria-label={m.common.unsavedChanges}>
+      <h3>{m.exit.title}</h3>
       <p>
-        {[editorState.xsltDirty && 'XSLT', editorState.xmlDirty && 'XML'].filter(Boolean).join(' ve ')}
-        dosyasında kaydedilmemiş değişiklikler var. Çıkmadan önce kaydetmek ister misin?
+        {f(m.exit.body, {
+          files: [editorState.xsltDirty && 'XSLT', editorState.xmlDirty && 'XML']
+            .filter(Boolean)
+            .join(m.exit.and),
+        })}
       </p>
       <div class="exit-actions">
-        <button class="exit-btn cancel" onclick={cancelExit} disabled={exitInProgress}>İptal</button>
+        <button class="exit-btn cancel" onclick={cancelExit} disabled={exitInProgress}>{m.common.cancel}</button>
         <button class="exit-btn discard" onclick={confirmDiscardAndExit} disabled={exitInProgress}>
-          Kaydetmeden Çık
+          {m.exit.discard}
         </button>
         <button class="exit-btn save" onclick={confirmSaveAndExit} disabled={exitInProgress}>
-          {exitInProgress ? 'Kaydediliyor…' : 'Kaydet ve Çık'}
+          {exitInProgress ? m.exit.saving : m.exit.saveExit}
         </button>
       </div>
     </div>
@@ -2292,17 +2272,13 @@ window.addEventListener('message', function(e) {
 <!-- ─── DevTools stilini XSLT'ye uygula onayı ─────────────────────── -->
 {#if styleApplyOpen}
   <div class="exit-overlay" role="presentation">
-    <div class="style-modal" role="alertdialog" aria-label="Stil değişikliklerini XSLT'ye uygula">
-      <h3>🎨 Stil Değişikliklerini XSLT'ye Uygula</h3>
-      <p>
-        DevTools'ta yaptığın CSS değişiklikleri yakalandı. Uygularsan XSLT'deki
-        <code>&lt;style&gt;</code> bloğunun içeriği aşağıdakiyle <b>değiştirilecek</b>
-        (metin/veri içeriği etkilenmez, yalnızca stil).
-      </p>
+    <div class="style-modal" role="alertdialog" aria-label={m.styleModal.title}>
+      <h3>{m.styleModal.title}</h3>
+      <p>{m.styleModal.body}</p>
       <pre class="style-preview">{capturedCss}</pre>
       <div class="exit-actions">
-        <button class="exit-btn cancel" onclick={cancelStyleApply}>İptal</button>
-        <button class="exit-btn save" onclick={applyCapturedCssToXslt}>Uygula</button>
+        <button class="exit-btn cancel" onclick={cancelStyleApply}>{m.common.cancel}</button>
+        <button class="exit-btn save" onclick={applyCapturedCssToXslt}>{m.common.apply}</button>
       </div>
     </div>
   </div>
@@ -2311,83 +2287,64 @@ window.addEventListener('message', function(e) {
 <!-- ─── AI önerisini uygulama onayı ───────────────────────────────── -->
 {#if aiApplyOpen}
   <div class="exit-overlay" role="presentation">
-    <div class="style-modal ai-apply-modal" role="alertdialog" aria-label="AI önerisini uygula">
-      <h3>🤖 AI Önerisini Uygula</h3>
+    <div class="style-modal ai-apply-modal" role="alertdialog" aria-label={m.aiApply.title}>
+      <h3>{m.aiApply.title}</h3>
       <div class="ai-apply-body">
       <div class="ai-apply-left">
       {#if aiApplySuggestion?.kind === 'edits'}
-        <p>
-          <b>{aiApplyTarget.toUpperCase()}</b> dosyasına <b>{aiApplySuggestion.edits.length}</b>
-          hedefli değişiklik uygulanacak (dosyanın geri kalanı korunur). Emin misiniz?
-        </p>
+        <p>{f(m.aiApply.editsBody, { target: aiApplyTarget.toUpperCase(), n: aiApplySuggestion.edits.length })}</p>
         {#if aiApplyUnmatched.length > 0}
-          <p class="ai-partial-warning">
-            ⚠️ {aiApplyUnmatched.length} değişikliğin arananan metni dosyada
-            <b>bulunamadı</b> ve atlanacak. AI'dan bu bölümleri güncel dosyaya göre
-            tekrar üretmesini isteyebilirsiniz.
-          </p>
+          <p class="ai-partial-warning">{f(m.aiApply.unmatched, { n: aiApplyUnmatched.length })}</p>
         {/if}
         {#each aiApplySuggestion.edits as ed, i}
           <div class="ai-edit-diff">
             <div class="ai-edit-diff-label">
-              Değişiklik {i + 1}
-              {#if aiApplyUnmatched.includes(ed)}<span class="ai-edit-skip">atlandı — eşleşmedi</span>{/if}
+              {f(m.aiApply.editN, { i: i + 1 })}
+              {#if aiApplyUnmatched.includes(ed)}<span class="ai-edit-skip">{m.aiApply.skipped}</span>{/if}
             </div>
             <pre class="ai-diff-old">{ed.search}</pre>
             <pre class="ai-diff-new">{ed.replace}</pre>
           </div>
         {/each}
       {:else}
-        <p>
-          <b>{aiApplyTarget.toUpperCase()}</b> editörünün tüm içeriği bu öneriyle
-          <b>değiştirilecek</b>. Emin misiniz?
-        </p>
+        <p>{f(m.aiApply.fullBody, { target: aiApplyTarget.toUpperCase() })}</p>
         {#if aiApplyLooksPartial}
-          <p class="ai-partial-warning">
-            ⚠️ Bu öneri dosyanın <b>tamamı</b> gibi görünmüyor (kök öğe eksik ya da
-            mevcut dosyadan çok kısa). Uygularsanız {aiApplyTarget.toUpperCase()}
-            içeriğinin <b>tümü</b> bu parçayla değişir ve dosya bozulabilir.
-          </p>
+          <p class="ai-partial-warning">{f(m.aiApply.partialWarn, { target: aiApplyTarget.toUpperCase() })}</p>
         {/if}
         <!-- Büyük dosyalarda 600 KB'lık metni doğrudan basmak WebView'i dondurur;
              kod metni varsayılan gizli, istekle açılır. Sonuç sağ panelde canlı. -->
         {#if aiApplyShowFull}
           <pre class="style-preview">{aiApplyNewText}</pre>
-          <button class="link-btn" onclick={() => (aiApplyShowFull = false)}>▲ Kodu gizle</button>
+          <button class="link-btn" onclick={() => (aiApplyShowFull = false)}>{m.aiApply.hideCode}</button>
         {:else}
           <p class="ai-fulltext-note">
-            Sonuç {aiApplyNewText.split('\n').length} satır / {(aiApplyNewText.length / 1024).toFixed(1)} KB.
-            <button class="link-btn" onclick={() => (aiApplyShowFull = true)}>Kod metnini göster</button>
+            {f(m.aiApply.resultStats, { lines: aiApplyNewText.split('\n').length, kb: (aiApplyNewText.length / 1024).toFixed(1) })}
+            <button class="link-btn" onclick={() => (aiApplyShowFull = true)}>{m.aiApply.showCode}</button>
           </p>
         {/if}
       {/if}
 
       {#if aiApplyPreviewError}
-        <p class="ai-partial-warning">
-          ⛔ Bu değişiklikler uygulanınca sonuç <b>geçerli değil</b> (dönüşüm hatası).
-          Genellikle bazı düzenlemeler eşleşmeyip atlandığında yapı yarım kalır
-          (ör. açılan etiket kapanmaz). Uygulamanız <b>önerilmez</b>; AI'dan eksik
-          düzenlemeleri güncel dosyaya göre tamamlamasını isteyin. Hata: {aiApplyPreviewError}
-        </p>
+        <p class="ai-partial-warning">{f(m.aiApply.invalidResult, { msg: aiApplyPreviewError })}</p>
       {/if}
       </div>
 
       <!-- Sağ sütun: uygulanınca oluşacak sonucun canlı, ölçeklenebilir önizlemesi -->
       <div class="ai-apply-right">
         <div class="ai-result-preview-head">
-          <span>🔍 Sonuç önizlemesi</span>
-          {#if aiApplyPreviewLoading}<span class="ai-preview-loading-tag">oluşturuluyor…</span>{/if}
+          <span>{m.aiApply.resultPreview}</span>
+          {#if aiApplyPreviewLoading}<span class="ai-preview-loading-tag">{m.aiApply.generating}</span>{/if}
           <div class="ai-preview-zoom">
-            <button onclick={() => zoomAiApply(-0.1)} title="Uzaklaştır">−</button>
+            <button onclick={() => zoomAiApply(-0.1)} title={m.preview.zoomOut}>−</button>
             <span class="ai-preview-zoom-val">{Math.round(aiApplyZoom * 100)}%</span>
-            <button onclick={() => zoomAiApply(0.1)} title="Yakınlaştır">+</button>
-            <button onclick={() => (aiApplyZoom = 0.6)} title="Sıfırla">⟲</button>
+            <button onclick={() => zoomAiApply(0.1)} title={m.preview.zoomIn}>+</button>
+            <button onclick={() => (aiApplyZoom = 0.6)} title={m.preview.zoomReset}>⟲</button>
           </div>
         </div>
         <div class="ai-preview-frame-wrap">
           <iframe
             class="ai-result-preview"
-            title="Sonuç önizlemesi"
+            title={m.preview.result}
             srcdoc={aiApplyPreviewHtml}
             sandbox="allow-same-origin"
             style:transform="scale({aiApplyZoom})"
@@ -2400,9 +2357,9 @@ window.addEventListener('message', function(e) {
       </div>
 
       <div class="exit-actions">
-        <button class="exit-btn cancel" onclick={cancelAiApply}>İptal</button>
+        <button class="exit-btn cancel" onclick={cancelAiApply}>{m.common.cancel}</button>
         <button class="exit-btn save" onclick={confirmAiApply} disabled={!aiApplyHasChange}>
-          Uygula
+          {m.common.apply}
         </button>
       </div>
     </div>

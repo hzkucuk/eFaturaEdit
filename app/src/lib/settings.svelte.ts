@@ -92,6 +92,8 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
 };
 
 export interface Settings {
+  /** Arayüz dili. `null` = henüz seçilmedi → sistem dilinden algılanır. */
+  language: string | null;
   fontSize: number;
   tabWidth: number;
   wordWrap: boolean;
@@ -116,6 +118,7 @@ export interface Settings {
 }
 
 const DEFAULTS: Settings = {
+  language: null, // ilk açılışta sistem dilinden algılanır
   fontSize: 13,
   tabWidth: 2,
   wordWrap: true,
