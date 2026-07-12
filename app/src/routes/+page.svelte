@@ -10,7 +10,7 @@
   import { xsltSnippets } from '$lib/data/xslt-snippets';
   import { xpathSnippets } from '$lib/data/xpath-snippets';
   import type { Snippet } from '$lib/data/types';
-  import { transformXml, validateXml, XsltError } from '$lib/xslt';
+  import { transformXml, validateXml, XsltError, engineStatus } from '$lib/xslt';
   import { settings, updatePanelSize, updateSetting, themeKind, loadApiKeys } from '$lib/settings.svelte';
   import { editorState } from '$lib/editor-state.svelte';
   import { openFile, saveFile, saveFileAs, reopenFile } from '$lib/fileio';
@@ -652,7 +652,20 @@
       }
       const html = await transformXml(editorState.xmlText, xsltForPreview);
       editorState.previewHtml = html;
-      status(`Dönüşüm tamam (${(html.length / 1024).toFixed(1)} KB HTML)`);
+
+      // Saxon çalışmıyorsa tarayıcının XSLT 1.0 işlemcisine düşülmüştür. Bunu
+      // SESSİZ geçmek tehlikeli: 1.0 işlemcisi `format-dateTime`, `tokenize`,
+      // `for-each-group` gibi 2.0 komutlarını hata vermeden yok sayar —
+      // kullanıcı şablonunun çalıştığını sanır, oysa çıktı yanlıştır.
+      if (!engineStatus.saxon) {
+        engineWarning = engineStatus.reason;
+        status(
+          `Dönüşüm tamam (${(html.length / 1024).toFixed(1)} KB) — ⚠️ yedek motor: yalnızca XSLT 1.0`,
+          true
+        );
+      } else {
+        status(`Dönüşüm tamam (${(html.length / 1024).toFixed(1)} KB HTML)`);
+      }
     } catch (err) {
       if (err instanceof XsltError && err.line) {
         const editor = err.source === 'xml' ? xmlEditor : xsltEditor;
@@ -1400,6 +1413,13 @@ window.addEventListener('message', function(e) {
   // `forceClose` true iken onCloseRequested engellenmeden pencerenin
   // gerçekten kapanmasına izin verilir (sonsuz döngüyü engeller).
   let forceClose = false;
+  /**
+   * Saxon (XSLT 2.0/3.0) motoru çalışmıyorsa sebebi — kalıcı uyarı bandında
+   * gösterilir. Durum çubuğu mesajı bir sonraki işlemde silinir; bu uyarı ise
+   * kalmalı, çünkü kullanıcı 2.0 komutlarının SESSİZCE yok sayıldığını bilmeli.
+   */
+  let engineWarning = $state('');
+
   let unlistenClose: (() => void) | null = null;
   let unlistenDrop: (() => void) | null = null;
   let unlistenOpened: (() => void) | null = null;
@@ -1523,6 +1543,21 @@ window.addEventListener('message', function(e) {
 </script>
 
 <div class="app" class:dark={themeKind(settings.theme) === 'dark'}>
+  {#if engineWarning}
+    <!-- Sessizce XSLT 1.0'a düşmek, 2.0 şablonlarını hata vermeden bozar. Söyle. -->
+    <div class="engine-warn">
+      <strong>⚠️ XSLT 2.0/3.0 motoru çalışmıyor</strong>
+      <span>Önizleme tarayıcının <b>XSLT 1.0</b> işlemcisiyle üretiliyor —
+        <code>format-dateTime</code>, <code>tokenize</code>, <code>for-each-group</code> gibi
+        2.0+ komutları <b>sessizce yok sayılır</b>, çıktı yanıltıcı olabilir.</span>
+      <details>
+        <summary>Ayrıntı</summary>
+        <code class="engine-reason">{engineWarning}</code>
+      </details>
+      <button class="engine-close" onclick={() => (engineWarning = '')} title="Gizle">✕</button>
+    </div>
+  {/if}
+
   {#if dropActive}
     <!-- Finder/Explorer'dan dosya sürükleniyor — Tauri'nin native olayıyla tetiklenir. -->
     <div class="drop-overlay">
@@ -2481,6 +2516,52 @@ window.addEventListener('message', function(e) {
     font-weight: 600;
   }
   .wz-apply:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* XSLT motoru uyarı bandı — kalıcı, kullanıcı kapatana kadar durur. */
+  .engine-warn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding: 0.45rem 0.8rem;
+    background: #fef3c7;
+    border-bottom: 1px solid #fcd34d;
+    color: #78350f;
+    font-size: 12px;
+  }
+  .engine-warn strong {
+    white-space: nowrap;
+  }
+  .engine-warn code {
+    font-family: var(--mono, ui-monospace, monospace);
+    font-size: 11px;
+  }
+  .engine-warn details {
+    font-size: 11px;
+  }
+  .engine-warn summary {
+    cursor: pointer;
+  }
+  .engine-reason {
+    display: block;
+    margin-top: 0.3rem;
+    max-width: 70ch;
+    word-break: break-word;
+    opacity: 0.85;
+  }
+  .engine-close {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  :global(html.dark) .engine-warn {
+    background: #422006;
+    border-bottom-color: #713f12;
+    color: #fde68a;
+  }
+
   /* Dosya bırakma göstergesi — tüm pencereyi kaplar, tıklamayı engellemez. */
   .drop-overlay {
     position: fixed;

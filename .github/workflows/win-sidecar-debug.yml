@@ -93,4 +93,56 @@ jobs:
 
           if ($p.ExitCode -ne 0) { throw "sidecar çıkış kodu $($p.ExitCode)" }
           if ($out -notmatch 'MERHABA') { throw "XSLT 2.0 (upper-case) çalışmadı — çıktı: $out" }
-          Write-Host "✅ sidecar Windows'ta ÇALIŞIYOR ve XSLT 2.0 yapıyor"
+          Write-Host "✅ küçük yük: sidecar ÇALIŞIYOR ve XSLT 2.0 yapıyor"
+
+      # KRİTİK: kullanıcının gerçek dosyası 600 KB XSLT + 173 KB XML. Küçük yükle
+      # test etmek yanıltıcı olur — Windows'ta boru tamponu küçüktür ve hata
+      # boyuta bağlı olabilir. Depodaki GERÇEK örnek şablonla tekrar sına.
+      - name: 3) GERÇEK boyutlu yük (600 KB) — asıl senaryo
+        shell: pwsh
+        run: |
+          $exe = (Get-ChildItem app/src-tauri/binaries/xslt-transform-*.exe | Select-Object -First 1).FullName
+          $xsltPath = "app/static/samples/default.xslt"
+          $xmlPath  = "app/static/samples/default.xml"
+          $xsltB = [System.IO.File]::ReadAllBytes($xsltPath)
+          $xmlB  = [System.IO.File]::ReadAllBytes($xmlPath)
+          Write-Host "XSLT: $([math]::Round($xsltB.Length/1KB,1)) KB · XML: $([math]::Round($xmlB.Length/1KB,1)) KB"
+
+          function BE([int]$n) { $b = [BitConverter]::GetBytes($n); [Array]::Reverse($b); return $b }
+          $payload = New-Object System.Collections.Generic.List[byte]
+          $payload.AddRange((BE $xsltB.Length)); $payload.AddRange($xsltB)
+          $payload.AddRange((BE $xmlB.Length));  $payload.AddRange($xmlB)
+          Write-Host "toplam yük: $([math]::Round($payload.Count/1KB,1)) KB"
+
+          $psi = New-Object System.Diagnostics.ProcessStartInfo
+          $psi.FileName = $exe
+          $psi.RedirectStandardInput = $true
+          $psi.RedirectStandardOutput = $true
+          $psi.RedirectStandardError = $true
+          $psi.UseShellExecute = $false
+          $p = [System.Diagnostics.Process]::Start($psi)
+
+          # stdout'u ayrı okumak ŞART: yazarken çocuk stdout'u doldurup bloke
+          # olursa ve biz de yazmaya çalışırsak karşılıklı kilitlenme olur.
+          $outTask = $p.StandardOutput.ReadToEndAsync()
+          $errTask = $p.StandardError.ReadToEndAsync()
+
+          try {
+            $stdin = $p.StandardInput.BaseStream
+            $stdin.Write($payload.ToArray(), 0, $payload.Count)
+            $stdin.Flush()
+            $stdin.Close()
+          } catch {
+            Write-Host "❌ STDIN YAZMA HATASI: $_"
+          }
+
+          $p.WaitForExit()
+          $out = $outTask.Result
+          $err = $errTask.Result
+          Write-Host "çıkış kodu: $($p.ExitCode)"
+          Write-Host "çıktı boyutu: $($out.Length) karakter"
+          if ($err) { Write-Host "=== STDERR ==="; Write-Host $err }
+
+          if ($p.ExitCode -ne 0) { throw "GERÇEK yükte sidecar çöktü (kod $($p.ExitCode))" }
+          if ($out.Length -lt 1000) { throw "GERÇEK yükte çıktı boş/kısa: $($out.Length)" }
+          Write-Host "✅ GERÇEK boyutlu yük de ÇALIŞIYOR ($($out.Length) karakter HTML)"

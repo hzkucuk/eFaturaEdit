@@ -43,6 +43,23 @@ export function validateXml(text: string, source: 'xml' | 'xslt'): void {
 /** Sidecar bir kez bulunamazsa tekrar tekrar denemeyelim. */
 let saxonAvailable = true;
 
+/**
+ * Motor durumu — arayüz bunu okuyup kullanıcıyı uyarır.
+ *
+ * Sessiz geri düşüş TEHLİKELİDİR: tarayıcı işlemcisi XSLT 2.0 komutlarını hata
+ * vermeden yok sayar; kullanıcı şablonunun çalıştığını sanır, oysa çıktı yanlıştır.
+ * O yüzden düşüldüğünde bunu görünür şekilde söylüyoruz.
+ */
+export const engineStatus = {
+  /** Saxon (XSLT 2.0/3.0) kullanılıyor mu? */
+  saxon: true,
+  /** Düşüldüyse sebebi (kullanıcıya gösterilir). */
+  reason: '',
+};
+
+/** Rust tarafının "motorun kendisi çalışmıyor" işareti (bkz. xslt.rs). */
+const ENGINE_UNAVAILABLE = 'XSLT_ENGINE_UNAVAILABLE';
+
 /** Saxon hata metninden satır/sütun ayıkla ("... on line 59 column 40"). */
 function parseSaxonPosition(message: string): { line?: number; column?: number } {
   const m = message.match(/on line (\d+)(?:\s+column (\d+))?/i);
@@ -62,11 +79,21 @@ export async function transformXml(xmlText: string, xsltText: string): Promise<s
       return await invoke<string>('xslt_transform', { xslt: xsltText, xml: xmlText });
     } catch (err) {
       const message = typeof err === 'string' ? err : ((err as Error)?.message ?? String(err));
-      // Motor yoksa/başlatılamazsa tarayıcı işlemcisine düş; gerçek bir XSLT
-      // hatasıysa (şablon/veri hatalı) olduğu gibi bildir.
-      if (/bulunamadı|başlatılamadı|not found|sidecar/i.test(message)) {
+
+      // MOTORUN KENDİSİ mi çalışmıyor, yoksa ŞABLON mu hatalı?
+      //
+      // Bu ayrım kritik: şablon hatasında geri düşmek, kullanıcının hatasını
+      // gizleyip sessizce yanlış çıktı üretmek olurdu. Rust tarafı motor
+      // kaynaklı hataları ENGINE_UNAVAILABLE ile işaretler (bulunamadı,
+      // başlatılamadı, veri yazılamadan öldü, tek kelime etmeden çıktı...).
+      // Eski sürümde bu ayrım metin eşleştirmeyle yapılıyordu ve Windows'taki
+      // "Boru sonlandı (os error 109)" hiçbir kalıba uymadığından uygulama
+      // geri düşmek yerine sert hata veriyordu — kullanıcı hiçbir şey yapamıyordu.
+      if (message.includes(ENGINE_UNAVAILABLE) || /bulunamadı|başlatılamadı|not found|sidecar/i.test(message)) {
         saxonAvailable = false;
-        console.warn('XSLT 2.0 motoru (Saxon sidecar) yok — tarayıcı XSLT 1.0 işlemcisine düşülüyor.', message);
+        engineStatus.saxon = false;
+        engineStatus.reason = message.replace(`${ENGINE_UNAVAILABLE}: `, '').trim();
+        console.warn('Saxon (XSLT 2.0/3.0) motoru kullanılamıyor — tarayıcı XSLT 1.0 işlemcisine düşülüyor.', message);
       } else {
         const { line, column } = parseSaxonPosition(message);
         throw new XsltError(message, line, column, 'transform');
