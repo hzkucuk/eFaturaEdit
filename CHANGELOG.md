@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.25.1] — 2026-07-12 — Linux ARM64 Paketlemesi Onarıldı
+
+### Düzeltilen
+- **Linux ARM64 paketi üretilemiyordu:** `failed to bundle project: xdg-open binary not found`.
+  ARM64 runner imajında `xdg-utils` kurulu değil (x64'te hazır geliyor) ve AppImage paketlemesi
+  `xdg-open`'e ihtiyaç duyuyor. Bağımlılık listesine eklendi.
+- GraalVM ve Saxon sidecar ARM64'te sorunsuz derlendi — asıl risk zaten atlatılmıştı.
+
+---
+
 ## [2.25.0] — 2026-07-12 — Linux ARM64 Paketleri
 
 ### Eklenen

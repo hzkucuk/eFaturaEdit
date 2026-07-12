@@ -50,7 +50,11 @@ jobs:
             libappindicator3-dev \
             librsvg2-dev \
             patchelf \
-            libgtk-3-dev
+            libgtk-3-dev \
+            xdg-utils
+          # xdg-utils: ARM64 runner imajında YOK (x64'te hazır geliyor) ve
+          # AppImage paketlemesi `xdg-open`e ihtiyaç duyuyor — yoksa
+          # "failed to bundle project: xdg-open binary not found" ile çöker.
 
       # WiX, MSI dizesini code page 1252 (Latin-1) ile yazar; Türkçe'nin
       # ş/Ş/ı/İ/ğ/Ğ harfleri bu kod sayfasında YOKTUR. fileAssociations
