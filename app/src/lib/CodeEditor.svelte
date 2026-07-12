@@ -41,6 +41,7 @@
   } from '@codemirror/autocomplete';
   import { search, searchKeymap } from '@codemirror/search';
   import { settings } from '$lib/settings.svelte';
+  import { getLocale } from '$lib/i18n.svelte';
 
   /**
    * CodeMirror arama panelinin Türkçe çevirileri.
@@ -209,8 +210,9 @@
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, ...completionKeymap, indentWithTab]),
         buildLanguage(),
 
-        // Türkçe UI çevirileri
-        EditorState.phrases.of(TR_PHRASES),
+        // Arama paneli sözleri: tr → Türkçe; diğer diller → CodeMirror'ın
+        // İngilizce varsayılanları. Editör oluşturulurken seçilir.
+        ...(getLocale() === 'tr' ? [EditorState.phrases.of(TR_PHRASES)] : []),
 
         lineNumCompartment.of(settings.showLineNumbers ? lineNumbers() : []),
         wrapCompartment.of(settings.wordWrap ? EditorView.lineWrapping : []),

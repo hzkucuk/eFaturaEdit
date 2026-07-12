@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { settings, themeKind } from '$lib/settings.svelte';
-  import { setLocale, detectSystemLocale } from '$lib/i18n.svelte';
+  import { setLocale, detectSystemLocale, validateLocales } from '$lib/i18n.svelte';
   import { browser } from '$app/environment';
 
   let { children } = $props();
@@ -26,6 +26,16 @@
   $effect(() => {
     if (!browser) return;
     setLocale(settings.language ?? detectSystemLocale());
+  });
+
+  // Sözlük tutarlılığı: şablona geçince kaybedilen derleme-zamanı denetiminin
+  // yerine geçer. Sorun sessiz kalmaz — konsola düşer (dosya günlüğüne de gider).
+  $effect(() => {
+    if (!browser) return;
+    const issues = validateLocales();
+    for (const i of issues) {
+      console.warn(`[i18n] ${i.locale} ${i.section}.${i.key}: ${i.problem} — ${i.detail}`);
+    }
   });
 </script>
 

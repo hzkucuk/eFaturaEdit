@@ -41,7 +41,7 @@
   import type { Completion } from '@codemirror/autocomplete';
 
   // ─── UI state ────────────────────────────────────────────────────────
-  let statusMsg = $state('Hazır.');
+  let statusMsg = $state('');
   let statusIsError = $state(false);
   let activeCategory = $state<string>('HTML Öğeleri');
   let snippetFilter = $state('');
@@ -218,7 +218,7 @@
 
   // ─── Actions: load ──────────────────────────────────────────────────
   async function loadDefaultSample() {
-    await loadSampleByPath('/samples/default.xslt', '/samples/default.xml', 'Varsayılan örnek');
+    await loadSampleByPath('/samples/default.xslt', '/samples/default.xml', 'default');
   }
 
   async function loadSample(fileName: string, displayName: string) {
@@ -339,7 +339,7 @@
 
   async function onDeleteSnippet(s: Snippet, e: MouseEvent) {
     e.stopPropagation();
-    const confirmed = await ask(`"${s.displayName}" snippet'ini silmek istediğine emin misin?`, {
+    const confirmed = await ask(f(m.snip.deleteConfirm, { name: s.displayName }), {
       title: 'Snippet Sil',
       kind: 'warning',
     });
@@ -502,7 +502,7 @@
       }
 
       // XSLT geldi ama veri yoksa → varsayılan UBL-TR verisiyle eşle.
-      if (xsltFile && (await ensureXmlData())) loaded.push('varsayılan XML verisi');
+      if (xsltFile && (await ensureXmlData())) loaded.push(m.misc.defaultXmlLabel);
 
       const note = skipped.length > 0 ? f(m.misc.skippedNote, { files: skipped.join(', ') }) : '';
       status(f(m.status.opened, { what: loaded.join(' · ') + note }));
@@ -875,7 +875,7 @@
       cssCaptureTimer = setTimeout(() => {
         if (cssCaptureResolve) {
           cssCaptureResolve = null;
-          reject(new Error('Önizleme yanıt vermedi (zaman aşımı).'));
+          reject(new Error(m.misc.previewTimeout));
         }
       }, 2000);
     });
@@ -883,7 +883,7 @@
 
   async function captureStyleFromPreview() {
     if (!editorState.previewHtml) {
-      status('Önce bir önizleme oluşturun.', true);
+      status(m.misc.previewFirst, true);
       return;
     }
     if (!styleBlockRegex.test(editorState.xsltText)) {

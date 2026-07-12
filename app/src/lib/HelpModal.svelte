@@ -10,6 +10,7 @@
     {/if}
 -->
 <script lang="ts">
+  import { m, f } from '$lib/i18n.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { HELP_SECTIONS, searchHelpSections, type HelpSection } from '$lib/help-content';
 
@@ -49,8 +50,8 @@
 <div class="help-overlay" role="presentation" onclick={(e) => e.target === e.currentTarget && onclose()}>
   <div class="help-modal" role="dialog" aria-label="Yardım">
     <header class="help-header">
-      <h2>📚 Yardım ve Dokümantasyon</h2>
-      <button class="help-close" onclick={onclose} title="Kapat (Esc)">✕</button>
+      <h2>📚 {m.help.title}</h2>
+      <button class="help-close" onclick={onclose} title={m.help.closeTitle}>✕</button>
     </header>
 
     <div class="help-body">
@@ -58,7 +59,7 @@
         <input
           type="text"
           class="help-search"
-          placeholder="🔎 Yardımda ara..."
+          placeholder={m.help.searchPlaceholder}
           bind:value={searchTerm}
         />
         <nav class="help-nav">

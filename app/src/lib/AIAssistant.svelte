@@ -33,6 +33,7 @@
     type AiTarget,
   } from '$lib/ai-suggestion';
   import { transformXml } from '$lib/xslt';
+  import { m, f } from '$lib/i18n.svelte';
 
   interface Props {
     xsltPath: string | null;
@@ -131,10 +132,10 @@
           { id, name: file.name || 'dosya.txt', kind: 'text', mediaType: 'text/plain', text },
         ];
       } else {
-        aiRuntime.error = `Desteklenmeyen dosya türü: ${file.name}. Görsel, PDF veya metin (xslt/xml/css/txt) ekleyin.`;
+        aiRuntime.error = f(m.ai.unsupportedFile, { name: file.name });
       }
     } catch (err) {
-      aiRuntime.error = `Dosya okunamadı: ${(err as Error).message ?? String(err)}`;
+      aiRuntime.error = f(m.ai.fileReadFailed, { msg: (err as Error).message ?? String(err) });
     }
   }
 
@@ -184,7 +185,7 @@
   );
   const activeModel = $derived(settings.aiProviders[settings.aiProvider].model || '(model seçilmedi)');
   const modelBadgeTitle = $derived(
-    `Kullanılan model — Ayarlar → AI Asistan bölümünden değiştirebilirsiniz.\nSağlayıcı: ${activeProviderLabel}\nModel: ${activeModel}`,
+    f(m.ai.modelBadgeTitle, { provider: activeProviderLabel, model: activeModel }),
   );
 
   const history = $derived(active.history);
@@ -298,8 +299,8 @@ Kurallar:
   );
 
   function suggestionSummary(s: AiSuggestion): string {
-    if (s.kind === 'full') return `${s.target.toUpperCase()} — tüm dosya (${s.code.split('\n').length} satır)`;
-    return `${s.target.toUpperCase()} — ${s.edits.length} değişiklik`;
+    if (s.kind === 'full') return f(m.ai.fullFile, { target: s.target.toUpperCase(), lines: s.code.split('\n').length });
+    return f(m.ai.editsLabel, { target: s.target.toUpperCase(), n: s.edits.length });
   }
 
   // Gömülü base64 veri URI'ları (logo/görsel) dosyanın çoğunu kaplar ama model
@@ -323,7 +324,7 @@ Kurallar:
     if (/429|Too Many Requests|quota|rate.?limit/i.test(raw)) {
       const retry = raw.match(/retry in ([\d.]+)s/i)?.[1];
       const secs = retry ? ` ~${Math.ceil(Number(retry))} sn` : '';
-      return `Kota/hız limiti aşıldı — sağlayıcının dakikalık ücretsiz sınırı doldu.${secs ? ` Yaklaşık${secs} bekleyip mesajı yeniden Gönder'e basın.` : ' Biraz bekleyip mesajı yeniden Gönder\'e basın.'} (Mesajınız korundu.) Detay: ${raw}`;
+      return f(m.ai.quota, { wait: secs ? f(m.ai.quotaWait, { secs }) : m.ai.quotaWaitGeneric, raw });
     }
     return raw;
   }
@@ -354,7 +355,7 @@ Kurallar:
   async function callAi(messages: ApiMessage[], cachedContext = ''): Promise<string> {
     const cfg = settings.aiProviders[settings.aiProvider];
     if (settings.aiProvider !== 'ollama' && !cfg.apiKey.trim()) {
-      throw new Error('Önce Ayarlar → AI Asistan bölümünden API anahtarınızı girin.');
+      throw new Error(m.ai.needApiKey);
     }
     return await invoke<string>('ai_chat', {
       request: {
@@ -501,10 +502,10 @@ Kurallar:
               'Henüz hiçbir düzenleme vermedin. Görevi gerçekleştirmek için dosyadan birebir ' +
               'kopyalanmış SEARCH içeren somut bul/değiştir (SEARCH/REPLACE) düzenlemeleri ver. ' +
               'Açıklama değil, düzenleme bekliyorum.';
-            pushNote(`🔄 Tur ${iter}: ${prose || '(düzenleme verilmedi)'}\n↳ Somut düzenleme istendi, tekrar deneniyor…`);
+            pushNote(f(m.ai.turnNote, { i: iter, prose: prose || m.ai.noEditsYet }) + '\n' + m.ai.askedConcrete);
             continue;
           }
-          pushNote(`🔄 Tur ${iter}: ${prose || 'Tamamlandı.'}`);
+          pushNote(f(m.ai.turnNote, { i: iter, prose: prose || m.ai.doneWord }));
           break;
         }
 
@@ -526,15 +527,15 @@ Kurallar:
         // Doğrula: eşleşmeyen düzenleme var mı, dönüşüm hatasız mı?
         if (unmatchedCount > 0) {
           feedback = `${unmatchedCount} SEARCH bloğu dosyada birebir bulunamadı ve atlandı. Güncel içeriğe göre birebir eşleşen SEARCH ver.`;
-          pushNote(`🔄 Tur ${iter}: ${prose || 'Düzenleme önerildi.'}\n↳ ⚠️ ${unmatchedCount} düzenleme eşleşmedi, tekrar deneniyor…`);
+          pushNote(f(m.ai.turnNote, { i: iter, prose: prose || m.ai.editProposed }) + '\n' + f(m.ai.unmatchedRetry, { n: unmatchedCount }));
           continue;
         }
         try {
           await transformXml(workXml, workXslt);
-          pushNote(`🔄 Tur ${iter}: ${prose || 'Düzenleme uygulandı.'}\n↳ ✓ Dönüşüm doğrulandı.`);
+          pushNote(f(m.ai.turnNote, { i: iter, prose: prose || m.ai.editApplied }) + '\n' + m.ai.verified);
         } catch (e) {
           feedback = `Dönüşüm hatası: ${(e as Error).message ?? String(e)}. Bu hatayı gider.`;
-          pushNote(`🔄 Tur ${iter}: ${prose || 'Düzenleme önerildi.'}\n↳ ⚠️ Dönüşüm hatası, düzeltiliyor…`);
+          pushNote(f(m.ai.turnNote, { i: iter, prose: prose || m.ai.editProposed }) + '\n' + m.ai.transformErrRetry);
           continue;
         }
 
@@ -547,7 +548,7 @@ Kurallar:
         pushNote('✅ Ajan tamamlandı — sonucu onaylamak için "Editöre Uygula"ya basın.');
         onApply({ kind: 'full', target, code: target === 'xslt' ? workXslt : workXml });
       } else {
-        pushNote('Uygulanacak bir değişiklik üretilmedi.');
+        pushNote(m.ai.nothingProduced);
       }
     } catch (err) {
       aiRuntime.error = friendlyError((err as Error).message ?? String(err));
@@ -567,7 +568,7 @@ Kurallar:
 <div class="ai-panel">
   <header class="ai-header">
     <div class="ai-title-row">
-      <h2>🤖 AI Asistan</h2>
+      <h2>{m.ai.title}</h2>
       <span class="ai-model-badge" title={modelBadgeTitle}>{activeProviderLabel} · {activeModel}</span>
     </div>
     <div class="ai-session-bar">
@@ -577,10 +578,10 @@ Kurallar:
         value={active.id}
         onchange={(e) => selectSession((e.currentTarget as HTMLSelectElement).value)}
         disabled={aiRuntime.sending}
-        title={aiRuntime.sending ? 'Yanıt beklenirken sohbet değiştirilemez' : 'Önceki sohbetler'}
+        title={aiRuntime.sending ? m.ai.busyNoSwitch : m.ai.prevChats}
       >
         {#if !activeIsSaved}
-          <option value={active.id}>Yeni sohbet</option>
+          <option value={active.id}>{m.ai.newChat}</option>
         {/if}
         {#each savedSessions as s}
           <option value={s.id}>{sessionLabel(s)}</option>
@@ -590,12 +591,12 @@ Kurallar:
         class="ai-session-btn"
         onclick={startNewSession}
         disabled={aiRuntime.sending}
-        title={aiRuntime.sending ? 'Yanıt beklenirken yeni sohbet açılamaz' : 'Yeni sohbet'}
+        title={aiRuntime.sending ? m.ai.busyNoNew : m.ai.newChat}
       >＋</button>
       <button
         class="ai-session-btn"
         onclick={removeActiveSession}
-        title={aiRuntime.sending ? 'Yanıt beklenirken silinemez' : 'Bu sohbeti sil'}
+        title={aiRuntime.sending ? m.ai.busyNoDelete : m.ai.deleteChat}
         disabled={!activeIsSaved || aiRuntime.sending}
       >🗑</button>
     </div>
@@ -603,12 +604,11 @@ Kurallar:
 
   {#if showNotice}
     <div class="ai-notice">
-      ⚠️ Bu sohbet "{basename(active.xsltPath)}" için başlatıldı; şu an açık dosya
-      farklı. Yeni dosya için "＋ Yeni sohbet" açabilirsiniz.
+      ⚠️ {f(m.ai.fileNotice, { file: basename(active.xsltPath) })}
       <button
         class="ai-notice-close"
         onclick={() => (noticeDismissedFor = active.id)}
-        title="Kapat">✕</button
+        title={m.ai.close}>✕</button
       >
     </div>
   {/if}
@@ -616,8 +616,7 @@ Kurallar:
   <div class="ai-messages" bind:this={messagesEl}>
     {#if history.length === 0}
       <p class="ai-empty">
-        XSLT/XML hakkında bir şey sorun — örn. "bu tabloya toplam satırı ekle"
-        veya "bu XPath ifadesindeki hatayı bul".
+        {m.ai.empty}
       </p>
     {/if}
     {#each enrichedHistory as entry}
@@ -633,7 +632,7 @@ Kurallar:
             {#if sg.kind === 'edits'}
               {#each sg.edits as ed, i}
                 <div class="ai-edit">
-                  <div class="ai-edit-label">Değişiklik {i + 1}</div>
+                  <div class="ai-edit-label">{f(m.aiApply.editN, { i: i + 1 })}</div>
                   <pre class="ai-edit-search">{ed.search}</pre>
                   <pre class="ai-edit-replace">{ed.replace}</pre>
                 </div>
@@ -643,7 +642,7 @@ Kurallar:
             {/if}
           </details>
           <button class="ai-apply" onclick={() => onApply(sg)}>
-            ✓ Editöre Uygula ({sg.kind === 'edits' ? `${sg.edits.length} değişiklik` : sg.target.toUpperCase()})
+            {f(m.ai.applyToEditor, { what: sg.kind === 'edits' ? f(m.ai.editsCount, { n: sg.edits.length }) : sg.target.toUpperCase() })}
           </button>
         {/if}
       </div>
@@ -651,7 +650,7 @@ Kurallar:
     {#if aiRuntime.sending}
       <div class="ai-msg">
         <div class="ai-msg-role">AI</div>
-        <div class="ai-msg-content ai-thinking">Düşünüyor…</div>
+        <div class="ai-msg-content ai-thinking">{m.ai.thinking}</div>
       </div>
     {/if}
   </div>
@@ -675,10 +674,10 @@ Kurallar:
               <button
                 class="ai-chip-embed"
                 onclick={() => onEmbedImage(a.previewUrl!, a.name)}
-                title="Görseli base64 olarak editöre göm (imleç konumuna)"
-              >⬇ göm</button>
+                title={m.ai.embedTitle}
+              >{m.ai.embed}</button>
             {/if}
-            <button class="ai-chip-x" onclick={() => removeAttachment(a.id)} title="Kaldır">✕</button>
+            <button class="ai-chip-x" onclick={() => removeAttachment(a.id)} title={m.ai.remove}>✕</button>
           </div>
         {/each}
       </div>
@@ -687,7 +686,7 @@ Kurallar:
       bind:value={input}
       onkeydown={onKeydown}
       onpaste={onPaste}
-      placeholder="Bir şey sorun… (Cmd/Ctrl+Enter ile gönder, görsel yapıştırılabilir)"
+      placeholder={m.ai.placeholder}
       rows="3"
     ></textarea>
     <input
@@ -699,23 +698,23 @@ Kurallar:
       onchange={onFileInput}
     />
     <div class="ai-toggles">
-      <label class="ai-context-toggle" title="Dosya içeriği bağlam olarak modele gönderilir.">
+      <label class="ai-context-toggle" title={m.ai.contextToggleTitle}>
         <input type="checkbox" bind:checked={includeContext} />
-        Dosyayı bağlam gönder
+        {m.ai.contextToggle}
       </label>
       <label
         class="ai-context-toggle"
-        title="Ajan modu: model düzenlemeyi uygular, dönüşümü doğrular ve hata varsa kendi kendine düzeltir (birden çok API turu, daha yüksek maliyet)."
+        title={m.ai.agentToggleTitle}
       >
         <input type="checkbox" bind:checked={agentMode} />
-        🔄 Ajan modu (kendi kendine düzelt)
+        {m.ai.agentToggle}
       </label>
     </div>
     <div class="ai-input-actions">
-      <button class="ai-attach-btn" onclick={() => fileInputEl?.click()} title="Görsel, PDF veya metin dosyası ekle">📎</button>
-      <span class="ai-mode-hint">{agentMode ? `En çok ${AGENT_MAX_ITERS} tur` : ''}</span>
+      <button class="ai-attach-btn" onclick={() => fileInputEl?.click()} title={m.ai.attachTitle}>📎</button>
+      <span class="ai-mode-hint">{agentMode ? f(m.ai.maxTurns, { n: AGENT_MAX_ITERS }) : ''}</span>
       <button class="ai-send" onclick={send} disabled={aiRuntime.sending || (!input.trim() && attachments.length === 0)}>
-        {aiRuntime.sending ? '…' : agentMode ? '🔄 Çalıştır' : 'Gönder'}
+        {aiRuntime.sending ? '…' : agentMode ? m.ai.run : m.ai.send}
       </button>
     </div>
   </div>

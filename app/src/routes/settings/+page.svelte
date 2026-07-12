@@ -223,6 +223,9 @@
           {/each}
         </select>
         <span class="hint lang-hint">{m.settings.languageHint}</span>
+        <button class="link-btn" onclick={() => goto('/translations')}>
+          ✏️ {m.settings.editTranslations}
+        </button>
       </div>
 
       <div class="row">
