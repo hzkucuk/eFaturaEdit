@@ -25,7 +25,14 @@ jobs:
           # bekliyordu (runner hiç atanmıyor). Yerini `macos-15-intel` aldı.
           - platform: macos-15-intel # Intel (x86_64)
             args: ''
-          - platform: ubuntu-22.04 # geniş glibc uyumu için 22.04
+          - platform: ubuntu-22.04 # x86_64 — geniş glibc uyumu için 22.04
+            args: ''
+          # Linux ARM64: Apple Silicon üzerindeki VM'ler (VMware/Parallels/UTM)
+          # yalnızca ARM64 misafir çalıştırır; x86_64 paketlerimiz orada ÇALIŞMAZ.
+          # Ayrıca ARM sunucular, Raspberry Pi ve Asahi Linux da bunu kullanır.
+          # (GraalVM native-image Linux/AArch64'ü DESTEKLER — Windows/ARM64'ü
+          # desteklemiyordu; bu yüzden orada sidecar üretemiyoruz.)
+          - platform: ubuntu-22.04-arm # aarch64
             args: ''
           - platform: windows-latest
             args: ''
@@ -35,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Linux bağımlılıkları
-        if: matrix.platform == 'ubuntu-22.04'
+        if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -125,7 +132,7 @@ jobs:
             echo ''
             echo '---'
             echo ''
-            echo '**Kurulum:** Windows `.msi` / `.exe` · macOS `.dmg` (Apple Silicon ve Intel ayrı) · Linux `.deb` / `.rpm` / `.AppImage`'
+            echo '**Kurulum:** Windows `.msi` / `.exe` · macOS `.dmg` (Apple Silicon + Intel) · Linux `.deb` / `.rpm` / `.AppImage` (x86_64 + **arm64**)'
             echo ''
             echo 'Tam XSLT 1.0/2.0/3.0 desteği (Saxon-HE motoru dahili).'
             echo ''

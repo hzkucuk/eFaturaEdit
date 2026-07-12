@@ -172,11 +172,12 @@ dosya sistemine, ayarlara veya başka bir işleve doğrudan erişemez.
 1. 6 versiyon noktasını güncelle + `CHANGELOG.md` girdisi ekle.
 2. `npm run check` (0 hata) + `cargo build` → commit + `git push origin master`.
 3. `git tag vX.Y.Z` → `git push origin vX.Y.Z`.
-4. `v*` etiketi `.github/workflows/release.yml`'i tetikler; **4 runner** (macOS arm64, macOS Intel,
-   Linux, Windows) derler ve tek bir public Release'e ekler.
+4. `v*` etiketi `.github/workflows/release.yml`'i tetikler; **5 runner** (macOS arm64, macOS Intel,
+   Linux x86_64, **Linux arm64**, Windows) derler ve tek bir public Release'e ekler.
 5. **BİTİNCE DOĞRULA:**
    - `gh release view vX.Y.Z --json assets` → 4 platformun paketleri var mı?
-   - `curl -sL .../releases/latest/download/latest.json` → **11 platform girdisi** var mı?
+   - `curl -sL .../releases/latest/download/latest.json` → **15 platform girdisi** var mı?
+     (macOS ×2 · Windows ×3 · Linux x86_64 ×4 · Linux arm64 ×4 + 2 takma ad)
      Eksikse o platformdaki kullanıcılar güncellemeyi **hiç görmez** (sessiz başarısızlık).
 
 ### Release tuzakları
@@ -192,7 +193,7 @@ dosya sistemine, ayarlara veya başka bir işleve doğrudan erişemez.
   **İzin sorunu değildir** (token'da `Contents: write` vardır). Çözüm:
   1. `gh release create vX.Y.Z --title ... --notes "<CHANGELOG bölümü>"` ile elle oluştur.
   2. `gh run rerun <id> --failed` → varlıklar mevcut release'e yüklenir.
-  3. `latest.json`'daki 11 platformu **doğrula**.
+  3. `latest.json`'daki platformları **doğrula**.
 - 🔑 **Updater imza anahtarı — KAYBEDİLEMEZ.** Özel anahtar GitHub Secret'larında
   (`TAURI_SIGNING_PRIVATE_KEY` + `..._PASSWORD`), yedeği `~/.tauri/efaturaedit.key`(+`.password`).
   **Kaybolursa kurulu uygulamalara bir daha güncelleme gönderilemez.** Açık anahtarı değiştirmek de
@@ -200,7 +201,9 @@ dosya sistemine, ayarlara veya başka bir işleve doğrudan erişemez.
 - Release **taslak (draft) bırakılmamalı** — `latest` onu göstermez, güncelleme akışı sessizce durur.
 - Etiket zaten varsa `git tag -d` + `git push origin :vX.Y.Z` ile silinebilir — **ama** o etiketin
   release'i yayımlanmış/derleniyorsa **silme**, bir sonraki yamayı yeni sürüm olarak çıkar.
-- Bu Mac'te 4 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** CI ile.
+- **Linux derlemesi `ubuntu-22.04`'te yapılır** (daha yenisi değil): eski glibc'de derlenen ikili yeni
+  dağıtımlarda çalışır, tersi çalışmaz.
+- Bu Mac'te 5 platform yerel derlenemez (cross-compile yok) — dağıtım **daima** CI ile.
 
 ## Git & Commit
 - Format: `[tip]: kısa açıklama` — `feat`, `fix`, `refactor`, `docs`, `chore`, `style`, `test`.

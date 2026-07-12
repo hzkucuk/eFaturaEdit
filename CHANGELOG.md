@@ -3,6 +3,36 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.25.0] — 2026-07-12 — Linux ARM64 Paketleri
+
+### Eklenen
+- **Linux ARM64 (aarch64) paketleri** — `.deb` / `.rpm` / `.AppImage`. Release matrisine
+  `ubuntu-22.04-arm` runner'ı eklendi (public depolarda ücretsiz).
+  - **Neden:** Apple Silicon üzerindeki sanal makineler (VMware Fusion, Parallels, UTM) **yalnızca
+    ARM64 misafir** çalıştırır; x86_64 paketlerimiz orada **çalışmaz**. Bu, Windows'ta yediğimiz
+    mimari tuzağının aynısıydı — bu kez kurulum yapılmadan önce yakalandı.
+  - Ayrıca ARM sunucular, Raspberry Pi ve Asahi Linux kullanıcılarını da kapsar.
+  - GraalVM native-image **Linux/AArch64'ü destekler** (Windows/ARM64'ü desteklemiyor), dolayısıyla
+    Saxon sidecar'ı bu platformda **yerel** olarak derleniyor — tam XSLT 2.0/3.0.
+- `latest.json` artık **15 platform** girdisi taşıyor (11 → 15); otomatik güncelleme ARM64 Linux'ta da
+  çalışır (AppImage üzerinden).
+
+### Not
+- **Derleme yine `ubuntu-22.04`'te yapılır** (26.04 mevcut olsa da). Eski glibc'de derlenen ikili yeni
+  dağıtımlarda çalışır; tersi çalışmaz. Test için istediğin Ubuntu sürümünü kullanabilirsin.
+
+### Geliştirici
+- VS Code Java classpath'i (`.vscode/settings.json`): `sidecar/` tek dosyalık bir Java programı,
+  Maven/Gradle projesi yok — IDE `net.sf.saxon.*` importlarını çözemiyor ve **13 sahte hata**
+  gösteriyordu. Derlemeyi etkilemiyordu; artık gürültü de yok.
+
+### Belgelendirme
+- **`LICENSE.tr.md`** — MIT lisansının Türkçe açıklaması + "kısaca ne demek?" özeti + üçüncü taraf
+  bileşen lisansları (Saxon-HE **MPL 2.0**). Çeviri **bağlayıcı değildir**; bağlayıcı olan İngilizce
+  `LICENSE` dosyasıdır — bu yüzden orijinal metne dokunulmadı.
+
+---
+
 ## [2.24.1] — 2026-07-12 — "Günlük Klasörünü Aç" Çalışmıyordu
 
 ### Düzeltilen
