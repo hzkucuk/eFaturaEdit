@@ -3,6 +3,16 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.27.4] — 2026-07-13 — Örnek Faturadan XAdES İmza Bloğu da Kaldırıldı
+
+### Değiştirilen
+- **Örnek fatura (`default.xml`) 14 KB → 8 KB.** `ext:UBLExtensions` altındaki **XAdES dijital
+  imza bloğu** (`ds:Signature`, 5,9 KB kriptografik veri) kaldırıldı — tasarım editöründe
+  hiçbir işlevi yok. Doğrulandı: Saxon çıktısının **sha256'sı değişmiyor** (542.530 bayt HTML,
+  birebir aynı). Örnek fatura başlangıçtaki 172 KB'ın artık **%5'i**.
+- `cac:Signature` **korundu** (imzalayan taraf adı/VKN/web sitesi): kriptografik blob değil,
+  tasarımda basılabilecek gerçek UBL verisi.
+
 ## [2.27.3] — 2026-07-13 — Kod Katlama Kısayolları + Örnek Faturadan 159 KB Ölü Yük Kalktı
 
 ### Eklenen
