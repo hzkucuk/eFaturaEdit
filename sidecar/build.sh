@@ -85,6 +85,11 @@ esac
 # IncludeLocales/AddAllCharsets: format-dateTime gibi XSLT 2.0 fonksiyonları
 # locale verisi ister; native-image varsayılan olarak yalnızca en içerir.
 # Türkçe belgeler için tr de gerekir.
+# IncludeResourceBundles (Xerces msg): XML bozuk olduğunda Xerces, hata metnini
+# bir resource bundle'dan okur. Bu paketler ikiliye konmazsa parser hatayı
+# BİLDİRİRKEN çöker ve kullanıcı "Could not load any resource bundle by
+# ...impl.msg.XMLMessages" gibi SEBEPLE İLGİSİZ bir mesaj görür — gerçek hata
+# ("satır 42'de kapanmayan etiket") tamamen kaybolur. Kaldırma.
 "$NATIVE_IMAGE" \
   -cp "$CP${SEP}$OUT_DIR" \
   -o "$TARGET" \
@@ -94,6 +99,11 @@ esac
   -H:+ReportExceptionStackTraces \
   -H:IncludeLocales=en,tr \
   -H:+AddAllCharsets \
+  -H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages \
+  -H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.SAXMessages \
+  -H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.DOMMessages \
+  -H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLSchemaMessages \
+  -H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.DatatypeMessages \
   -J-Duser.language=en \
   -J-Duser.country=US \
   -J-Xmx4g \

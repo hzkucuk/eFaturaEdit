@@ -31,12 +31,48 @@ export class XsltError extends Error {
   }
 }
 
-/** XML/XSLT metnini ayrıştır, syntax hatası varsa fırlat. */
+/**
+ * Ayrıştırıcıya verilmeden önceki normalize: BOM + `<?xml` bildiriminden ÖNCEKİ
+ * boşluk/yeni satır temizlenir.
+ *
+ * NEDEN: Bildirimden önce tek bir yeni satır bile Xerces (Saxon) için ÖLÜMCÜL
+ * hatadır — ama WebKit'in `DOMParser`'ı bunu hoş görür. Yani tarayıcı "belge
+ * sağlam" derken Saxon çöker; hata da (resource bundle eksikliği yüzünden)
+ * anlamsız bir mesaja dönüşürdü. AI'ın kod bloğundan çıkarılan "tam dosya"
+ * önerileri tam olarak böyle başlıyordu. Ölçüldü: sidecar exit=1.
+ *
+ * Dönen `lineOffset`, kırpılan satır sayısıdır — Saxon'un bildirdiği satır
+ * numarasına geri eklenir, yoksa imleç yanlış satıra atlar.
+ */
+function normalizeDocument(text: string): { text: string; lineOffset: number } {
+  const noBom = text.replace(/^﻿/, '');
+  const lead = noBom.match(/^\s+/)?.[0] ?? '';
+  if (!lead) return { text: noBom, lineOffset: 0 };
+  return { text: noBom.slice(lead.length), lineOffset: (lead.match(/\n/g) ?? []).length };
+}
+
+/**
+ * XML/XSLT metnini ayrıştır, syntax hatası varsa fırlat.
+ *
+ * Baştaki BOM/boşluk `normalizeDocument` ile temizlenir; aksi halde BOM'lu
+ * geçerli belgeler hatalı görünür (DOMParser BOM'u "prolog öncesi içerik" sayar).
+ */
 export function validateXml(text: string, source: 'xml' | 'xslt'): void {
-  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  const { text: clean, lineOffset } = normalizeDocument(text);
+  const doc = new DOMParser().parseFromString(clean, 'application/xml');
   const err = extractParseError(doc);
   if (err) {
-    throw new XsltError(err.message, err.line, err.column, source);
+    throw new XsltError(err.message, err.line ? err.line + lineOffset : err.line, err.column, source);
+  }
+}
+
+/** Belge iyi-biçimli mi? (Fırlatmaz — "uygulamadan önce kontrol" için.) */
+export function isWellFormed(text: string): boolean {
+  try {
+    validateXml(text, 'xml');
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -74,9 +110,22 @@ function parseSaxonPosition(message: string): { line?: number; column?: number }
  * XSLT 1.0 işlemcisine düşülür.
  */
 export async function transformXml(xmlText: string, xsltText: string): Promise<string> {
+  // Saxon'a göndermeden ÖNCE iyi-biçimlilik denetimi + normalize. Sebep: bozuk
+  // belge Saxon'a ulaşınca Xerces hatayı bildirmek için bir resource bundle
+  // yüklemeye çalışır; native-image'da bu paketler yoksa parser hatayı
+  // BİLDİRİRKEN çöker ve kullanıcı sebeple ilgisiz bir mesaj görür.
+  // Buradaki denetim anında çalışır, satır/sütun verir → imleç hatalı satıra gider.
+  validateXml(xmlText, 'xml');
+  validateXml(xsltText, 'xslt');
+
+  // `<?xml` öncesi boşluk WebKit'e göre sorunsuz ama Xerces'e göre ölümcül —
+  // kırpılmış metni gönder (kullanıcının dosyası değişmez, yalnızca istek).
+  const xml = normalizeDocument(xmlText);
+  const xslt = normalizeDocument(xsltText);
+
   if (saxonAvailable) {
     try {
-      return await invoke<string>('xslt_transform', { xslt: xsltText, xml: xmlText });
+      return await invoke<string>('xslt_transform', { xslt: xslt.text, xml: xml.text });
     } catch (err) {
       const message = typeof err === 'string' ? err : ((err as Error)?.message ?? String(err));
 
@@ -96,7 +145,9 @@ export async function transformXml(xmlText: string, xsltText: string): Promise<s
         console.warn('Saxon (XSLT 2.0/3.0) motoru kullanılamıyor — tarayıcı XSLT 1.0 işlemcisine düşülüyor.', message);
       } else {
         const { line, column } = parseSaxonPosition(message);
-        throw new XsltError(message, line, column, 'transform');
+        // Saxon, kırpılmış metne göre satır bildirir; kırpılan satırları geri ekle
+        // ki imleç kullanıcının GERÇEK dosyasında doğru satıra gitsin.
+        throw new XsltError(message, line ? line + xslt.lineOffset : line, column, 'transform');
       }
     }
   }

@@ -43,12 +43,34 @@
     xmlPath: string | null;
     xsltText: string;
     xmlText: string;
+    /**
+     * Ekranda duran son dönüşüm hatası (varsa). Mesaja iliştirilir → model hatayı
+     * AJAN MODU KAPALIYKEN de görür. Öncesinde kullanıcı hata metnini elle
+     * kopyalamak zorundaydı; ajan modu ise hatayı yalnızca kendi turları içinde
+     * görebiliyordu.
+     */
+    transformError?: string;
     onApply: (suggestion: AiSuggestion) => void;
     /** Bir görseli base64 data URI olarak editöre (imleç konumuna) göm. */
     onEmbedImage: (dataUrl: string, name: string) => void;
   }
 
-  let { xsltPath, xmlPath, xsltText, xmlText, onApply, onEmbedImage }: Props = $props();
+  let {
+    xsltPath,
+    xmlPath,
+    xsltText,
+    xmlText,
+    transformError = '',
+    onApply,
+    onEmbedImage,
+  }: Props = $props();
+
+  /** Hata bloğu: mesaja eklenir (bağlama DEĞİL — bağlam kararlı önek, cache'i bozmasın). */
+  function errorNote(): string {
+    return transformError
+      ? `\n\n[Uygulamadaki güncel dönüşüm hatası — bunu gider]\n${transformError}`
+      : '';
+  }
 
   // API'ye gönderilen geçmiş bu kadar son mesajla sınırlanır — büyük XSLT
   // dosyalarında bağlamın (context) sınırsız büyüyüp 1M token limitini
@@ -314,6 +336,13 @@ Kurallar:
 - Uygulama bu düzenlemeleri dosyanın DOĞRU YERİNE kendisi uygular; senin konumu tarif etmene gerek yok, sadece birebir eşleşen metni ver.
 - SADECE sıfırdan YENİ bir dosya oluştururken tek bir \`\`\`xslt/\`\`\`xml bloğunda tüm belgeyi (kök öğeden kapanışa) ver.
 - Kod/düzenleme bloklarını MUTLAKA \`\`\` ile kapat. Açıklamaları blok dışında, kısa ve öz yaz.
+- **ASLA "tüm dosyayı" yeniden yazma** (mevcut bir dosyayı düzenlerken). Bu belgeler 150–600 KB'tır;
+  tam dosya çıktısı token sınırına takılıp YARIDA KESİLİR ve kullanıcının belgesini bozar. Her zaman
+  hedefli SEARCH/REPLACE blokları ver — kaç yer değişecekse o kadar blok.
+- Kod bloğunun başında (ör. \`\`\`xml satırından sonra) **boş satır bırakma**: \`<?xml ...?>\` bildirimi
+  belgenin ilk karakteri olmalıdır; öncesinde boşluk/yeni satır olması XML'i GEÇERSİZ kılar.
+- Mesajda "[Uygulamadaki güncel dönüşüm hatası]" başlıklı bir blok varsa, bu ekrandaki CANLI hatadır:
+  önce onu gider, çözümünü kısaca açıkla.
 - NOT: Sana verilen içerikte gömülü görsellerin base64 verisi "[BASE64_VERİSİ_KIRPILDI]" ile kısaltılmıştır. Bu yer tutucuyu SEARCH bloğuna KOYMA; düzenlemelerini onun çevresindeki gerçek etiket/stil (ör. genişlik, hizalama) üzerinden yap.
 - Kullanıcı bazen görsel (tasarım örneği/mockup), PDF ya da referans dosya ekleyebilir. Bunları tasarımı yönlendirmek için kullan; yine yalnızca XSLT/XML düzenlemesi üret. Bir görseli faturaya gömmen istenirse base64 veriyi sen üretemezsin (uygulama bunu ayrıca yapar); sen yalnızca ilgili <img>/stil düzenlemesini öner.`;
 
@@ -473,7 +502,9 @@ Kurallar:
 
       messages[li] = {
         role: 'user',
-        content: text,
+        // Ekrandaki dönüşüm hatası mesaja iliştirilir → ajan modu kapalıyken de
+        // model hatayı görür ve doğrudan giderebilir.
+        content: text + errorNote(),
         ...(mediaAttachments.length ? { attachments: mediaAttachments } : {}),
       };
 
@@ -528,6 +559,9 @@ Kurallar:
         // (düzenleme uygulanınca) cache doğal olarak yenilenir.
         const taskMsg =
           `Görev: ${text}\n\n` +
+          // İlk turda ekranda duran hata da verilir; sonraki turlarda döngünün
+          // kendi geri bildirimi (feedback) geçerlidir.
+          (iter === 1 ? errorNote().trim() + (transformError ? '\n\n' : '') : '') +
           (feedback ? `Önceki turun sonucu: ${feedback}\n\n` : '') +
           `Sana verilen GÜNCEL dosya içeriğine göre gereken bul/değiştir düzenlemelerini ver. ` +
           `Görev tamamlandıysa ve başka değişiklik gerekmiyorsa yalnızca "TAMAM" yaz.`;

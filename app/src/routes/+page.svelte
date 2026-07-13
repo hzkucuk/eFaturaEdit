@@ -10,7 +10,7 @@
   import { xsltSnippets } from '$lib/data/xslt-snippets';
   import { xpathSnippets } from '$lib/data/xpath-snippets';
   import type { Snippet } from '$lib/data/types';
-  import { transformXml, validateXml, XsltError, engineStatus } from '$lib/xslt';
+  import { transformXml, validateXml, isWellFormed, XsltError, engineStatus } from '$lib/xslt';
   import { settings, updatePanelSize, updateSetting, themeKind, loadApiKeys } from '$lib/settings.svelte';
   import { editorState } from '$lib/editor-state.svelte';
   import { openFile, saveFile, saveFileAs, reopenFile } from '$lib/fileio';
@@ -732,6 +732,8 @@
       // SESSİZ geçmek tehlikeli: 1.0 işlemcisi `format-dateTime`, `tokenize`,
       // `for-each-group` gibi 2.0 komutlarını hata vermeden yok sayar —
       // kullanıcı şablonunun çalıştığını sanır, oysa çıktı yanlıştır.
+      lastTransformError = ''; // başarılı dönüşüm → AI'a taşınacak hata kalmadı
+
       if (!engineStatus.saxon) {
         if (!engineWarning) {
           log.error(`[motor] Saxon kullanilamiyor, XSLT 1.0'a dusuldu: ${engineStatus.reason}`);
@@ -747,10 +749,14 @@
         editor?.goToLine(err.line, err.column ?? 1);
         editorState.previewHtml = `<pre style="color:#c00;padding:1rem;font-family:monospace;">Hata (${err.source} satır ${err.line}):\n\n${escapeHtml(err.message)}</pre>`;
         status(f(m.misc.transformErrAt, { source: err.source ?? 'transform', line: err.line, msg: err.message }), true);
+        // AI'a taşı: ajan modu KAPALIYKEN de model hatayı görebilsin (yoksa
+        // kullanıcı hatayı elle kopyalamak zorunda kalıyordu).
+        lastTransformError = `${err.source ?? 'transform'} — satır ${err.line}${err.column ? ', sütun ' + err.column : ''}: ${err.message}`;
       } else {
         const msg = (err as Error).message ?? String(err);
         editorState.previewHtml = `<pre style="color:#c00;padding:1rem;font-family:monospace;">${escapeHtml(msg)}</pre>`;
         status(f(m.misc.transformErr, { msg }), true);
+        lastTransformError = msg;
       }
     }
   }
@@ -933,6 +939,21 @@
       aiApplyNewText = result;
       aiApplyUnmatched = unmatched;
     }
+
+    // BOZUK ÖNERİ UYGULANMAZ. "Tam dosya" önerisi token sınırında kesilirse
+    // (gerçek vaka: 172 KB fatura, 17 KB'lık yarım yanıtla ezildi) sonuç
+    // iyi-biçimli olmaz. Uygula sonrası dosya OTOMATİK KAYDEDİLDİĞİ için bu,
+    // doğrudan veri kaybıdır — modalı hiç açma, hatayı söyle.
+    if (!isWellFormed(aiApplyNewText)) {
+      aiApplyOpen = false;
+      status(
+        '⛔ AI önerisi geçerli bir XML/XSLT belgesi üretmiyor (yanıt kesilmiş olabilir) — ' +
+          'uygulanmadı. Daha küçük bir değişiklik isteyin.',
+        true,
+      );
+      return;
+    }
+
     aiApplyShowFull = false;
     aiApplyOpen = true;
     void buildAiApplyPreview();
@@ -1529,6 +1550,12 @@ window.addEventListener('message', function(e) {
    * kalmalı, çünkü kullanıcı 2.0 komutlarının SESSİZCE yok sayıldığını bilmeli.
    */
   let engineWarning = $state('');
+  /**
+   * Son dönüşüm hatası (varsa). AI asistanına iletilir: ajan modu KAPALIYKEN de
+   * model hatayı görsün — aksi halde kullanıcı hata metnini elle kopyalamak
+   * zorunda kalıyor. Başarılı dönüşümde temizlenir.
+   */
+  let lastTransformError = $state('');
 
   let unlistenClose: (() => void) | null = null;
   let unlistenDrop: (() => void) | null = null;
@@ -1872,6 +1899,7 @@ window.addEventListener('message', function(e) {
           xmlPath={editorState.xmlPath}
           xsltText={editorState.xsltText}
           xmlText={editorState.xmlText}
+          transformError={lastTransformError}
           onApply={requestAiApply}
           onEmbedImage={embedImageInXslt}
         />

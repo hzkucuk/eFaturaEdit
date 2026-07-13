@@ -69,6 +69,28 @@ fn send_error(e: reqwest::Error) -> String {
     }
 }
 
+/// Yanıt token sınırında kesildiğinde verilecek hata. **Kesik yanıt asla
+/// kullanıcıya öneri olarak sunulmaz:** "tam dosya" önerisi yarım gelirse ve
+/// uygulanırsa kullanıcının belgesi bozuk içerikle EZİLİR (gerçek vaka: 172 KB
+/// fatura XML'i, 17 KB'lık kesik yanıtla değiştirildi ve Saxon'da çöktü).
+fn truncated_error(max_tokens: u32) -> String {
+    format!(
+        "Yanıt {max_tokens} token sınırına takılıp KESİLDİ; yarım kalan içerik \
+         dosyanızı bozacağı için uygulanmadı. Daha küçük bir değişiklik isteyin \
+         (ör. tüm dosya yerine tek bir bölüm) veya isteği parçalara bölün."
+    )
+}
+
+/// Boş yanıt da başarı sayılmaz — sessizce "hiçbir şey olmadı" görüntüsü verir.
+fn empty_error(finish_reason: &str) -> String {
+    let hint = if finish_reason.is_empty() {
+        String::new()
+    } else {
+        format!(" (bitiş sebebi: {finish_reason})")
+    };
+    format!("Sağlayıcı boş yanıt döndürdü{hint}. Lütfen tekrar deneyin.")
+}
+
 /// Başarısız HTTP yanıtını okunur hataya çevirir. Sağlayıcılar hata gövdesini
 /// farklı şekillerde sarar (`error.message`, `message`, `detail`, düz metin);
 /// hiçbiri tutmazsa gövdeyi ham haliyle göster — "bilinmeyen hata" deme.
@@ -401,16 +423,23 @@ async fn call_anthropic(req: &AiChatRequest) -> Result<String, String> {
 
     let json: Value = serde_json::from_str(&body)
         .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
-    if json["stop_reason"].as_str() == Some("refusal") {
+    let stop = json["stop_reason"].as_str().unwrap_or("");
+    if stop == "refusal" {
         return Err("İstek Claude tarafından güvenlik nedeniyle reddedildi.".into());
     }
+    if stop == "max_tokens" {
+        return Err(truncated_error(16384));
+    }
 
-    json["content"]
+    let text = json["content"]
         .as_array()
         .and_then(|blocks| blocks.iter().find(|b| b["type"].as_str() == Some("text")))
         .and_then(|b| b["text"].as_str())
-        .map(str::to_string)
-        .ok_or_else(|| "Yanıtta metin bulunamadı.".into())
+        .ok_or_else(|| String::from("Yanıtta metin bulunamadı."))?;
+    if text.trim().is_empty() {
+        return Err(empty_error(stop));
+    }
+    Ok(text.to_string())
 }
 
 async fn call_gemini(req: &AiChatRequest) -> Result<String, String> {
@@ -489,10 +518,18 @@ async fn call_gemini(req: &AiChatRequest) -> Result<String, String> {
     let json: Value = serde_json::from_str(&body)
         .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
 
-    json["candidates"][0]["content"]["parts"][0]["text"]
+    let finish = json["candidates"][0]["finishReason"].as_str().unwrap_or("");
+    if finish == "MAX_TOKENS" {
+        return Err(truncated_error(16384));
+    }
+
+    let text = json["candidates"][0]["content"]["parts"][0]["text"]
         .as_str()
-        .map(str::to_string)
-        .ok_or_else(|| "Yanıtta metin bulunamadı.".into())
+        .ok_or_else(|| String::from("Yanıtta metin bulunamadı."))?;
+    if text.trim().is_empty() {
+        return Err(empty_error(finish));
+    }
+    Ok(text.to_string())
 }
 
 /// OpenAI Chat Completions formatı — OpenAI, Ollama (yerel) ve NVIDIA NIM
@@ -531,7 +568,7 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
     }));
     // DeepSeek chat completions max_tokens için 8192 üst sınırı koyar;
     // 16384 göndermek 400 invalid_request_error döndürür.
-    let max_tokens = if req.provider == "deepseek" { 8192 } else { 16384 };
+    let max_tokens: u32 = if req.provider == "deepseek" { 8192 } else { 16384 };
     let mut body = json!({ "model": req.model, "messages": messages });
     // OpenAI reasoning modelleri (o-serisi, gpt-5) `max_tokens`'ı reddeder;
     // halefi `max_completion_tokens` tüm güncel OpenAI modellerinde geçerli.
@@ -576,8 +613,19 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
     let json: Value = serde_json::from_str(&body)
         .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
 
-    json["choices"][0]["message"]["content"]
+    // Yanıt token sınırında KESİLDİ mi? Kesik bir "tam dosya" önerisi uygulanırsa
+    // kullanıcının XML/XSLT'si yarım içerikle EZİLİR (gerçek vaka: 172 KB fatura,
+    // 17 KB'lık kesik yanıtla değiştirildi). Kesik yanıt asla döndürülmez.
+    let finish = json["choices"][0]["finish_reason"].as_str().unwrap_or("");
+    if finish == "length" {
+        return Err(truncated_error(max_tokens));
+    }
+
+    let text = json["choices"][0]["message"]["content"]
         .as_str()
-        .map(str::to_string)
-        .ok_or_else(|| "Yanıtta metin bulunamadı.".into())
+        .ok_or_else(|| String::from("Yanıtta metin bulunamadı."))?;
+    if text.trim().is_empty() {
+        return Err(empty_error(finish));
+    }
+    Ok(text.to_string())
 }

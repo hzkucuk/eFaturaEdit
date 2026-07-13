@@ -3,6 +3,44 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.27.2] — 2026-07-13 — Kesik AI Yanıtı Artık Dosyayı Bozmuyor + Gerçek XML Hataları
+
+### Düzeltilen
+- **KRİTİK — kesik AI yanıtı kullanıcının belgesini eziyordu.** "Faturaya kalem ekle" gibi
+  bir istekte model tüm XML'i yeniden yazmaya kalkıyor, yanıt `max_tokens` sınırında
+  **yarıda kesiliyor**, uygulama bunu başarı sayıp **172 KB'lık faturanın üzerine 17 KB'lık
+  yarım belgeyi yazıyor ve otomatik kaydediyordu.** Artık:
+  - Rust tarafı `finish_reason=length` (Anthropic `max_tokens`, Gemini `MAX_TOKENS`) durumunu
+    yakalar ve **kesik içeriği hiç döndürmez** — ne yapılacağını söyleyen bir hata verir.
+  - **Boş yanıt** da başarı sayılmaz (sağlayıcı 0 baytlık yanıt döndürebiliyor).
+  - AI önerisi **uygulanmadan önce** iyi-biçimlilik denetiminden geçer; bozuksa onay modalı
+    hiç açılmaz. (Uygula → otomatik kaydet zinciri olduğundan bu doğrudan veri kaybıydı.)
+  - Sistem promptu artık mevcut dosyanın **tam yeniden yazımını yasaklıyor** (150–600 KB'lık
+    belgeler token sınırına sığmaz) ve kod bloğu başında boş satır bırakmayı yasaklıyor.
+- **`<?xml` bildiriminden önceki boşluk XML'i geçersiz kılıyordu.** WebKit'in `DOMParser`'ı
+  baştaki yeni satırı hoş görür, Xerces (Saxon) ise **ölümcül hata** sayar — AI'ın kod
+  bloğundan çıkarılan belgeler tam olarak böyle başlıyordu. Artık Saxon'a gönderilmeden önce
+  kırpılıyor (kullanıcının dosyası değişmez); Saxon'un bildirdiği satır numarası da telafi edilir.
+
+### Eklenen
+- **AI artık ekrandaki dönüşüm hatasını görüyor — ajan modu KAPALIYKEN de.** Hata,
+  `[Uygulamadaki güncel dönüşüm hatası]` başlığıyla mesaja iliştirilir; kullanıcının hata
+  metnini elle kopyalamasına gerek kalmaz. Başarılı dönüşümde temizlenir.
+
+### Ayrıca düzeltilen
+- **Bozuk XML/XSLT'de sebeple ilgisiz hata.** Geçersiz bir belge Saxon'a ulaştığında
+  Xerces, hata metnini bir *resource bundle*'dan okumaya çalışıyor; GraalVM native-image
+  bu paketleri ikiliye koymadığı için parser **hatayı bildirirken çöküyordu**. Kullanıcı
+  `Could not load any resource bundle by ...impl.msg.XMLMessages` görüyor, gerçek hata
+  ("satır 42'de kapanmayan etiket") tamamen kayboluyordu. İki katmanda düzeltildi:
+  - **Ön yüz:** `transformXml` artık Saxon'a göndermeden önce XML **ve** XSLT'yi
+    iyi-biçimlilik açısından denetler; bozuksa **satır/sütun içeren Türkçe hata** verir ve
+    imleç hatalı satıra gider. (BOM'lu dosyalar için `validateXml` baştaki U+FEFF'i temizler —
+    aksi halde geçerli belgeler hatalı görünürdü.)
+  - **Sidecar:** `-H:IncludeResourceBundles` ile Xerces mesaj paketleri (XMLMessages,
+    SAXMessages, DOMMessages, XMLSchemaMessages, DatatypeMessages) native-image'a eklendi;
+    ön yüzden sızan durumlarda (DTD/entity hataları) Saxon da gerçek mesajı basabiliyor.
+
 ## [2.27.1] — 2026-07-13 — AI: Sonsuz "Düşünüyor…" Düzeltmesi + Durdur Düğmesi + XML Veri Düzenleme
 
 ### Düzeltilen

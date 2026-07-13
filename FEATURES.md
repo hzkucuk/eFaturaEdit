@@ -43,6 +43,12 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   hata çıkarsa hatayı modele geri besleyip kendini düzelttirir.
 - **Onay modalı:** Sol tarafta diff, sağ tarafta **canlı sonuç önizlemesi** (% olarak ölçeklenebilir).
   "Uygula" dendiğinde dosya **otomatik kaydedilir** (AI'ın kaydedilmemiş kopya üzerinde çalışmasını önler).
+- **Bozuk/kesik öneri uygulanmaz (v2.27.2):** Yanıt token sınırında kesilirse (`finish_reason=length`)
+  içerik hiç sunulmaz; boş yanıt da başarı sayılmaz. Öneri uygulanmadan önce **iyi-biçimlilik denetimi**
+  yapılır — bozuksa onay modalı açılmaz. (Uygula → otomatik kaydet zinciri olduğundan, kesik bir
+  "tam dosya" önerisi belgeyi doğrudan bozardı; gerçek vakada 172 KB fatura 17 KB'a düşmüştü.)
+- **Hata farkındalığı (v2.27.2):** Ekrandaki dönüşüm hatası mesaja iliştirilir — model hatayı
+  **ajan modu kapalıyken de** görür ve doğrudan giderir.
 - **Ekler:** Dosya seçici + panodan yapıştırma. Görsel/PDF → çok-kipli (multimodal) gönderim;
   metin dosyaları → önbelleklenen bağlam. Görseller `⬇ göm` ile base64 data-URI olarak editöre gömülebilir.
 - **4 sağlayıcı:** Anthropic (Claude), Google (Gemini), OpenAI-uyumlu (OpenAI, NVIDIA, yerel),
