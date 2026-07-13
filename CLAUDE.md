@@ -60,6 +60,29 @@ gerçek koşullarla** kur.
 **Kural:** Derleme zincirine giden her dizede dikkat. Locale'i sabitle (`-J-Duser.language=en`).
 `ç ö ü â é` sorun değil; **`ş Ş ı İ ğ Ğ`** tehlikeli.
 
+### 5b. Timeout'suz ve log'suz ağ çağrısı = sonsuz "Düşünüyor…" (v2.27.1, 2026-07-13)
+`ai.rs` **hiç timeout kullanmıyordu** (`reqwest::Client::new()` varsayılanı = sınırsız bekleme) ve
+dosyada **tek satır log yoktu**. NVIDIA NIM istekleri kabul edip yanıt vermeyince uygulama
+**sonsuza kadar** bekledi; kullanıcı 2 saat "Düşünüyor…" gördü, hata bile almadı. Günlükte hiçbir iz
+olmadığı için teşhis de kördü — sebebi ancak `ai.rs`'e log ekleyip **ölçerek** bulabildik.
+
+**Kural:** Yeni bir dış çağrı (HTTP/süreç) eklerken **timeout + log olmadan commit'leme.**
+`Client::builder().connect_timeout(...).timeout(...)` — çıplak `Client::new()` yasak.
+Loglanacaklar: sağlayıcı/hedef, girdi boyutu, süre, sonuç, **gerçek hata gövdesi** (`error.message`
+tutmazsa gövdeyi ham yaz — "bilinmeyen hata" deme) ve `reqwest` **kaynak zinciri** (`e.source()`;
+üst mesaj "error sending request" der, sebebi gizler). Anahtar asla loglanmaz; Gemini anahtarı
+URL'de taşıdığı için **tam URL yazma**, yalnızca şema+host.
+
+### 5c. `<datalist>` önerileri filtreler — model listesi "eksik" sanıldı
+Model seçici `<input list="...">` + `<datalist>` idi. Native datalist, önerileri **kutuda yazan metne
+göre süzer**: seçili model yazılıyken diğerleri (ör. `deepseek-v4-pro`) hiç görünmedi. Liste hep
+doğruydu, **arayüz gizliyordu.** Kullanıcı "model gelmiyor" diye bildirdi; API'yi loglayınca 2 model
+döndüğü görüldü.
+
+**Kural:** Kullanıcının **tüm seçenekleri görmesi** gereken yerde `<datalist>` kullanma — gerçek
+`<select>` kullan. Serbest metin de gerekiyorsa ikisini bir arada sun (✎ ile mod değiştir).
+Ayrıca: kayıtlı değer listede yoksa listenin başına ekle, yoksa seçim **sessizce** başkasına kayar.
+
 ### 6. Mimari / CPU varsayımları
 GraalVM native-image x64'te varsayılan olarak **AVX2** gibi modern komutları hedefler. Böyle bir ikili
 Windows-on-ARM emülasyonunda (Prism) ve eski CPU'larda **ilk komutta, hata bile veremeden ölür**.
