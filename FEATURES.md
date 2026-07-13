@@ -109,7 +109,10 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
 
 - **3 panel düzen:** Sol snippet paneli, orta XSLT+XML editörleri, sağ canlı önizleme —
   hepsi fare ile yeniden boyutlandırılabilir (`Splitter`, sınır kısıtı yok).
-- **CodeMirror 6:** Syntax highlight, satır numarası, kod katlama, Türkçe arama paneli (Cmd/Ctrl+F), undo/redo.
+- **CodeMirror 6:** Syntax highlight, satır numarası, Türkçe arama paneli (Cmd/Ctrl+F), undo/redo.
+- **Kod katlama (v2.27.3):** Satır numarası yanındaki oklarla fare ile; klavyeyle `Cmd/Ctrl+Alt+[`
+  katlar, `+]` açar, `+Shift+[` / `+Shift+]` hepsini katlar/açar. Her editör başlığında **⊟ / ⊞**
+  düğmeleri — UBL-TR belgeleri derin iç içe olduğundan "tümünü katla" yapıyı bir bakışta gösterir.
 - **12 tema:** Açık/koyu varyantlar; tema **belge kökünde** (`html.dark`) uygulanır — modallar,
   ayrı rotalar ve kapsamlı bileşenler dahil **tüm alanlara** yansır.
 - **Dosya işlemleri:** Aç / Kaydet / Farklı Kaydet (native dialog), `Cmd/Ctrl+S` ile XSLT+XML birlikte
@@ -133,6 +136,11 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
 - **Yardım:** F1 ile açılan, sidebar navigasyonlu, aranabilir tam dokümantasyon + tooltip'ler.
 - **Hakkında:** Sürüm, lisans (MIT) ve üçüncü taraf lisans bilgileri (Saxon-HE MPL 2.0 dahil).
 - **Örnek fatura kataloğu:** 6 kategori × 17 GİB resmi UBL-TR senaryosu.
+- **Varsayılan örnek yalın (v2.27.3–v2.27.4):** `default.xml` 172 KB → **8 KB**. Gerçek UBL-TR
+  faturaları kendi tasarımını (XSLT) ve XAdES imzasını **base64 gömülü** taşır; bu editörde ikisi
+  de gereksizdir. Doğrulandı: kaldırıldıktan sonra Saxon çıktısının **sha256'sı aynı** — görünüm
+  değişmiyor. AI'a giden bağlamda da `cbc:EmbeddedDocumentBinaryObject` içeriği kırpılır (gerçek
+  müşteri faturalarında da her istekte ~150 KB token yakıyordu).
 
 ### 🌍 Çoklu Dil (i18n) — 5 Dil + Çeviri Düzenleyici (v2.26.0)
 
