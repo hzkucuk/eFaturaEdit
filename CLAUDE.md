@@ -60,6 +60,24 @@ gerçek koşullarla** kur.
 **Kural:** Derleme zincirine giden her dizede dikkat. Locale'i sabitle (`-J-Duser.language=en`).
 `ç ö ü â é` sorun değil; **`ş Ş ı İ ğ Ğ`** tehlikeli.
 
+### 5a. Kesik AI yanıtı kullanıcının dosyasını EZDİ (v2.27.2, 2026-07-13) — veri kaybı
+"Faturaya kalem ekle" denince model **tüm XML'i** yeniden yazmaya kalktı; yanıt `max_tokens`
+sınırında **yarıda kesildi**; uygulama bunu **başarı sayıp** 172 KB'lık faturanın üzerine 17 KB'lık
+yarım belgeyi yazdı ve **otomatik kaydetti**. Ardından Saxon bozuk XML'i ayrıştıramadı ama hata
+mesajını basacak resource bundle olmadığı için sebeple ilgisiz bir Java hatası verdi.
+
+**Kural:** Model çıktısını dosyaya uygulayan her yolda **üç kapı** olmalı:
+1. **Kesildi mi?** `finish_reason=length` (Anthropic `max_tokens`, Gemini `MAX_TOKENS`) → içeriği
+   **hiç sunma**. Boş yanıt da başarı değildir.
+2. **Geçerli mi?** Uygulamadan (ve otomatik kaydetmeden) önce **iyi-biçimlilik denetimi**; bozuksa
+   onay modalını bile açma.
+3. **Promptta yasakla:** 150–600 KB'lık belgelerde "tüm dosyayı yeniden yaz" fiziksel olarak
+   token sınırına sığmaz — yalnızca hedefli SEARCH/REPLACE iste.
+
+Ayrıca **ölçülmüş tuhaflık:** `<?xml` bildiriminden **önce tek bir yeni satır** → WebKit `DOMParser`
+**kabul eder**, Xerces/Saxon **ölümcül hata** sayar. AI kod bloğundan çıkan belgeler böyle başlıyordu;
+tarayıcı "sağlam" derken sidecar çöküyordu. Saxon'a göndermeden **kırp** (`normalizeDocument`).
+
 ### 5b. Timeout'suz ve log'suz ağ çağrısı = sonsuz "Düşünüyor…" (v2.27.1, 2026-07-13)
 `ai.rs` **hiç timeout kullanmıyordu** (`reqwest::Client::new()` varsayılanı = sınırsız bekleme) ve
 dosyada **tek satır log yoktu**. NVIDIA NIM istekleri kabul edip yanıt vermeyince uygulama
