@@ -160,8 +160,9 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
 
 ### 📦 Dağıtım
 
-- **GitHub Releases:** Her sürüm 4 platform için otomatik derlenip yayımlanır —
-  macOS arm64 (`macos-14`), macOS Intel (`macos-13`), Linux (`ubuntu-22.04`), Windows.
+- **GitHub Releases:** Her sürüm **5 runner** üzerinde otomatik derlenip yayımlanır —
+  macOS arm64 (`macos-14`), macOS Intel (`macos-15-intel`), Linux x86_64 (`ubuntu-22.04`),
+  Linux arm64 (`ubuntu-22.04-arm`), Windows (`windows-latest`).
   Saxon sidecar her runner'da GraalVM ile o platforma özgü olarak derlenir.
   Kaynak: [`.github/workflows/release.yml`](.github/workflows/release.yml)
 - **`eFaturaEdit.DataExport` tool'u:** Core POCO'larını TypeScript-uyumlu JSON'a dönüştürür
