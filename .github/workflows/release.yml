@@ -176,3 +176,76 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+  # ───────────────────────────────────────────────────────────────────────
+  # YAYIN DOĞRULAMA — bu iş olmadan eksik bir sürüm SESSİZCE yayınlanabilir.
+  #
+  # v2.27.3'te tam olarak bu oldu: macos-14 işi GitHub'ın geçici bir altyapı
+  # hatasıyla ("Failed to resolve action download info") daha derlemeye
+  # başlamadan düştü; diğer dört iş yeşil geçti, release YAYINLANDI ve
+  # latest.json 15 yerine 13 platformla çıktı. Apple Silicon kullanıcıları
+  # güncellemeyi hiç görmedi, hata da almadı. Elle bakılmasaydı fark
+  # edilmeyecekti (bu projede aynı sınıf hata dört sürüm boyunca gizlenmişti).
+  #
+  # Kural: bir işin bittiğini varsayma, ÇIKTISINI SAY.
+  # ───────────────────────────────────────────────────────────────────────
+  verify:
+    needs: release
+    if: always() # release düşse de çalış — asıl amaç düşüşü GÖRÜNÜR kılmak
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Matris işleri başarılı mı?
+        if: needs.release.result != 'success'
+        run: |
+          echo "::error::Derleme matrisi '${{ needs.release.result }}' ile bitti — en az bir platform üretilmedi."
+          echo "Release yayınlanmış olabilir ama EKSİKTİR. Düşen işi yeniden çalıştırın:"
+          echo "  gh run rerun <run-id> --failed"
+          exit 1
+
+      - name: latest.json — 15 platform, hepsi imzalı mı?
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern latest.json --output latest.json
+
+          python3 - <<'PY'
+          import json, os, sys
+
+          # macOS ×2 · Windows ×3 · Linux x86_64 ×4 · Linux arm64 ×4 + 2 takma ad
+          EXPECTED = 15
+
+          d = json.load(open('latest.json'))
+          platforms = d.get('platforms', {})
+          unsigned = [k for k, v in platforms.items() if not v.get('signature')]
+
+          print(f"sürüm   : {d.get('version')}")
+          print(f"platform: {len(platforms)} (beklenen {EXPECTED})")
+          for k in sorted(platforms):
+              print(f"  - {k}")
+
+          fail = False
+          if len(platforms) != EXPECTED:
+              print(f"::error::latest.json {len(platforms)} platform içeriyor, {EXPECTED} bekleniyordu. "
+                    "Eksik platformdaki kullanıcılar güncellemeyi HİÇ GÖRMEZ.")
+              fail = True
+          if unsigned:
+              print(f"::error::İmzasız platform girdileri: {unsigned}. Updater imzasız güncellemeyi reddeder.")
+              fail = True
+
+          sys.exit(1 if fail else 0)
+          PY
+
+      - name: Release taslak (draft) olarak kalmasın
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          draft=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
+          if [ "$draft" != "false" ]; then
+            echo "::error::Release taslak halde — 'latest' onu göstermez, güncelleme akışı sessizce durur."
+            exit 1
+          fi
+          echo "✓ Yayın tam: 15 imzalı platform, taslak değil."
