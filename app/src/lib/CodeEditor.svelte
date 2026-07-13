@@ -18,13 +18,23 @@
   import { onMount, onDestroy } from 'svelte';
   import { EditorState, Compartment, EditorSelection } from '@codemirror/state';
   import { EditorView, lineNumbers, keymap, highlightActiveLine, drawSelection } from '@codemirror/view';
-  import { defaultKeymap, indentWithTab, history, historyKeymap } from '@codemirror/commands';
+  import {
+    defaultKeymap,
+    indentWithTab,
+    history,
+    historyKeymap,
+    selectAll,
+    undo as undoCmd,
+    redo as redoCmd,
+  } from '@codemirror/commands';
   import {
     bracketMatching,
     foldGutter,
     foldKeymap,
     foldAll,
     unfoldAll,
+    foldCode,
+    unfoldCode,
     indentOnInput,
     indentUnit,
     HighlightStyle,
@@ -42,9 +52,12 @@
     type CompletionResult,
     type Completion,
   } from '@codemirror/autocomplete';
-  import { search, searchKeymap } from '@codemirror/search';
+  import { search, searchKeymap, openSearchPanel, gotoLine } from '@codemirror/search';
+  import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
   import { settings } from '$lib/settings.svelte';
-  import { getLocale } from '$lib/i18n.svelte';
+  import { getLocale, m, f } from '$lib/i18n.svelte';
+  import ContextMenu from '$lib/ContextMenu.svelte';
+  import type { Snippet as SnippetItem } from '$lib/data/types';
 
   /**
    * CodeMirror arama panelinin Türkçe çevirileri.
@@ -91,6 +104,12 @@
     readonly?: boolean;
     /** Autocomplete için tam öneri listesi (opsiyonel). */
     completions?: Completion[];
+    /** Sağ tık menüsündeki "Snippet ekle" alt menüsü. Boşsa bölüm görünmez. */
+    snippets?: SnippetItem[];
+    /** Menüden snippet seçilince. Verilmezse snippet doğrudan imlece eklenir. */
+    onsnippet?: (snippet: SnippetItem) => void;
+    /** Pano hatası gibi kullanıcıya gösterilmesi gereken durumlar. */
+    onerror?: (message: string) => void;
   }
 
   let {
@@ -98,11 +117,146 @@
     language = 'xml',
     readonly = false,
     completions = [],
+    snippets = [],
+    onsnippet,
+    onerror,
   }: Props = $props();
 
   let containerEl: HTMLDivElement;
   let view: EditorView | null = null;
   let suppressUpdate = false;
+
+  // ─── Sağ tık menüsü ────────────────────────────────────────────────
+  // Kısayol etiketleri @codemirror keymap'lerinden BİREBİR alınmıştır —
+  // tahmin edilmemiştir. Özellikle foldAll/unfoldAll'ın mac varyantı YOKTUR:
+  // macOS'ta da Ctrl+Alt+[ / ]'dir (tek blok katlama ise Cmd+Alt+[).
+  const isMac =
+    typeof navigator !== 'undefined' && /mac/i.test(navigator.platform || navigator.userAgent);
+  const sc = (mac: string, other: string) => (isMac ? mac : other);
+
+  let menu = $state<{ x: number; y: number } | null>(null);
+  let menuHasSelection = $state(false);
+  let openCategory = $state<string | null>(null);
+
+  /** Snippet'ler menüde kategoriye göre gruplanır (255 snippet düz listede işe yaramaz). */
+  const snippetCategories = $derived.by(() => {
+    const groups = new Map<string, SnippetItem[]>();
+    for (const s of snippets) {
+      const list = groups.get(s.category);
+      if (list) list.push(s);
+      else groups.set(s.category, [s]);
+    }
+    return [...groups.entries()];
+  });
+
+  function onContextMenu(e: MouseEvent) {
+    if (!view) return;
+    e.preventDefault();
+    // Seçim dışına sağ tıklandıysa imleci oraya taşı (masaüstü editör davranışı).
+    const pos = view.posAtCoords({ x: e.clientX, y: e.clientY });
+    const sel = view.state.selection.main;
+    if (pos != null && (pos < sel.from || pos > sel.to)) {
+      view.dispatch({ selection: EditorSelection.cursor(pos) });
+    }
+    menuHasSelection = !view.state.selection.main.empty;
+    openCategory = null;
+    menu = { x: e.clientX, y: e.clientY };
+  }
+
+  function closeMenu() {
+    menu = null;
+    openCategory = null;
+  }
+
+  /** Menü eylemi: menüyü kapat, editöre odağı geri ver, komutu çalıştır. */
+  function run(action: (v: EditorView) => void) {
+    const v = view;
+    closeMenu();
+    if (!v) return;
+    v.focus();
+    action(v);
+  }
+
+  function selectedText(v: EditorView): string {
+    const { from, to } = v.state.selection.main;
+    return v.state.sliceDoc(from, to);
+  }
+
+  async function doCopy(cut: boolean) {
+    const v = view;
+    closeMenu();
+    if (!v) return;
+    const text = selectedText(v);
+    if (!text) return;
+    try {
+      await writeText(text);
+    } catch (err) {
+      // Sessizce yutma — pano erişimi kullanıcının göreceği bir hatadır.
+      onerror?.(f(m.ctx.clipboardErr, { msg: (err as Error).message ?? String(err) }));
+      return;
+    }
+    if (cut && !readonly) {
+      const { from, to } = v.state.selection.main;
+      v.dispatch({ changes: { from, to, insert: '' } });
+    }
+    v.focus();
+  }
+
+  async function doPaste() {
+    const v = view;
+    closeMenu();
+    if (!v || readonly) return;
+    try {
+      const text = await readText();
+      if (text) insertAtCursor(text);
+      else v.focus();
+    } catch (err) {
+      onerror?.(f(m.ctx.clipboardErr, { msg: (err as Error).message ?? String(err) }));
+    }
+  }
+
+  function pickSnippet(s: SnippetItem) {
+    closeMenu();
+    if (onsnippet) onsnippet(s);
+    else insertAtCursor(s.xsltCode);
+  }
+
+  /**
+   * Snippet alt menüsünü ekran sınırları içine yerleştirir.
+   *
+   * `position: absolute; left: 100%` yetmiyordu: menü ekranın altına yakınsa
+   * (CSS Stilleri gibi son kategoriler) flyout aşağı doğru açılıp ekrandan
+   * taşıyordu. Burada viewport'a göre ölçülür — sağda yer yoksa SOLA, aşağıda
+   * yer yoksa YUKARI kayar; sığmıyorsa kendi içinde kaydırılır.
+   */
+  function placeFlyout(node: HTMLDivElement) {
+    const PAD = 6;
+    const row = node.parentElement;
+    if (!row) return;
+
+    const anchor = row.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Önce yüksekliği viewport'a sığdır, SONRA ölç (sıra önemli: kırpılmış
+    // yükseklik ölçülmezse konum yanlış çıkar).
+    node.style.maxHeight = `${Math.min(360, vh - 2 * PAD)}px`;
+    const rect = node.getBoundingClientRect();
+
+    let x = anchor.right;
+    if (x + rect.width > vw - PAD) {
+      const flipped = anchor.left - rect.width;
+      x = flipped >= PAD ? flipped : Math.max(PAD, vw - PAD - rect.width);
+    }
+
+    let y = anchor.top - 4;
+    if (y + rect.height > vh - PAD) y = vh - PAD - rect.height;
+    y = Math.max(PAD, y);
+
+    node.style.left = `${x}px`;
+    node.style.top = `${y}px`;
+    node.style.visibility = 'visible';
+  }
 
   const themeCompartment = new Compartment();
   const wrapCompartment = new Compartment();
@@ -426,7 +580,83 @@
   }
 </script>
 
-<div class="editor-host" bind:this={containerEl}></div>
+<!-- CodeMirror kendi erişilebilir textbox'ını bu host'un içine kurar; sağ tık
+     menüsü Escape ile kapanır ve tüm eylemleri klavye kısayollarıyla da erişilebilir. -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="editor-host" bind:this={containerEl} oncontextmenu={onContextMenu}></div>
+
+{#if menu}
+  <ContextMenu x={menu.x} y={menu.y} onclose={closeMenu}>
+    <button onclick={() => doCopy(true)} disabled={!menuHasSelection || readonly}>
+      <span>{m.ctx.cut}</span><kbd>{sc('⌘X', 'Ctrl+X')}</kbd>
+    </button>
+    <button onclick={() => doCopy(false)} disabled={!menuHasSelection}>
+      <span>{m.ctx.copy}</span><kbd>{sc('⌘C', 'Ctrl+C')}</kbd>
+    </button>
+    <button onclick={doPaste} disabled={readonly}>
+      <span>{m.ctx.paste}</span><kbd>{sc('⌘V', 'Ctrl+V')}</kbd>
+    </button>
+    <button onclick={() => run(selectAll)}>
+      <span>{m.ctx.selectAll}</span><kbd>{sc('⌘A', 'Ctrl+A')}</kbd>
+    </button>
+
+    <div class="divider"></div>
+    <button onclick={() => run(openSearchPanel)}>
+      <span>{m.ctx.find}</span><kbd>{sc('⌘F', 'Ctrl+F')}</kbd>
+    </button>
+    <button onclick={() => run(gotoLine)}>
+      <span>{m.ctx.gotoLine}</span><kbd>{sc('⌘⌥G', 'Ctrl+Alt+G')}</kbd>
+    </button>
+
+    <div class="divider"></div>
+    <button onclick={() => run(foldCode)}>
+      <span>{m.ctx.foldBlock}</span><kbd>{sc('⌘⌥[', 'Ctrl+Shift+[')}</kbd>
+    </button>
+    <button onclick={() => run(unfoldCode)}>
+      <span>{m.ctx.unfoldBlock}</span><kbd>{sc('⌘⌥]', 'Ctrl+Shift+]')}</kbd>
+    </button>
+    <button onclick={() => run(foldAll)}>
+      <span>{m.ctx.foldAll}</span><kbd>Ctrl+Alt+[</kbd>
+    </button>
+    <button onclick={() => run(unfoldAll)}>
+      <span>{m.ctx.unfoldAll}</span><kbd>Ctrl+Alt+]</kbd>
+    </button>
+
+    <div class="divider"></div>
+    <button onclick={() => run(undoCmd)} disabled={readonly}>
+      <span>{m.ctx.undo}</span><kbd>{sc('⌘Z', 'Ctrl+Z')}</kbd>
+    </button>
+    <button onclick={() => run(redoCmd)} disabled={readonly}>
+      <span>{m.ctx.redo}</span><kbd>{sc('⇧⌘Z', 'Ctrl+Y')}</kbd>
+    </button>
+
+    {#if snippetCategories.length > 0 && !readonly}
+      <div class="divider"></div>
+      {#each snippetCategories as [category, items] (category)}
+        <div
+          class="ctx-sub"
+          role="menuitem"
+          tabindex="-1"
+          onmouseenter={() => (openCategory = category)}
+          onmouseleave={() => (openCategory = null)}
+        >
+          <button class="ctx-sub-head">
+            <span>{category}</span><kbd class="ctx-arrow">▸</kbd>
+          </button>
+          {#if openCategory === category}
+            <div class="ctx-flyout" use:placeFlyout>
+              {#each items as s (s.key)}
+                <button onclick={() => pickSnippet(s)} title={s.description}>
+                  <span>{s.iconText} {s.displayName}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/each}
+    {/if}
+  </ContextMenu>
+{/if}
 
 <style>
   .editor-host {
@@ -519,6 +749,74 @@
     color: #b91c1c;
   }
 
+  /* "Satıra git" paneli — CodeMirror bunu showDialog() ile kurar: sınıfı
+     .cm-dialog'dur (.cm-gotoLine diye bir şey YOKTUR) ve kendi teması label'a
+     font-size: 80% verir. Arama paneliyle aynı ölçüye getiriyoruz. */
+  :global(.cm-editor .cm-panel.cm-dialog) {
+    padding: 8px 34px 8px 12px;
+    background: #f5f6f8;
+    border-top: 1px solid #cbd0d6;
+    font-size: 13px;
+  }
+  :global(.cm-editor .cm-panel.cm-dialog form) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  :global(.cm-editor .cm-panel.cm-dialog label) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px; /* CodeMirror'ın %80'ini ezer */
+    color: #4b5563;
+  }
+  :global(.cm-editor .cm-panel.cm-dialog input.cm-textfield) {
+    padding: 5px 10px;
+    font-size: 13px;
+    min-width: 220px;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    background: #fff;
+    color: #1a1a1a;
+    font-family: ui-monospace, Menlo, monospace;
+  }
+  :global(.cm-editor .cm-panel.cm-dialog input.cm-textfield:focus) {
+    outline: none;
+    border-color: #0a5cff;
+    box-shadow: 0 0 0 2px rgba(10, 92, 255, 0.15);
+  }
+  :global(.cm-editor .cm-panel.cm-dialog button.cm-button) {
+    padding: 5px 12px;
+    font-size: 12px;
+    background: #fff;
+    color: #1a1a1a;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    background-image: none;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+  }
+  :global(.cm-editor .cm-panel.cm-dialog button.cm-button:hover) {
+    background: #eef4ff;
+    border-color: #0a5cff;
+  }
+  :global(.cm-editor .cm-panel.cm-dialog .cm-dialog-close) {
+    top: 6px;
+    right: 8px;
+    font-size: 16px;
+    padding: 2px 8px;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+  }
+  :global(.cm-editor .cm-panel.cm-dialog .cm-dialog-close:hover) {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
   /* Autocomplete popup — daha büyük ve okunabilir */
   :global(.cm-editor .cm-tooltip.cm-tooltip-autocomplete) {
     background: #fff;
@@ -540,5 +838,55 @@
     border-left: 3px solid #0a5cff;
     font-size: 12px;
     max-width: 400px;
+  }
+
+  /* ─── Sağ tık menüsü ───────────────────────────────────────────────
+     ContextMenu.svelte buton/disabled/dark stillerini zaten veriyor;
+     burada yalnızca kısayol etiketi ve snippet alt menüsü eklenir. */
+  :global(.context-menu button) {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    white-space: nowrap;
+  }
+  :global(.context-menu kbd) {
+    font-family: inherit;
+    font-size: 11px;
+    color: #8b8f96;
+    letter-spacing: 0.02em;
+  }
+  :global(.context-menu button:disabled kbd) {
+    color: #c3c6cb;
+  }
+  :global(.app.dark .context-menu kbd) {
+    color: #9aa0a6;
+  }
+
+  .ctx-sub {
+    position: relative;
+  }
+  .ctx-arrow {
+    color: #8b8f96;
+  }
+  /* Konum placeFlyout() içinde viewport'a göre hesaplanır. Ölçülmeden önce
+     görünmesin diye visibility: hidden — yoksa bir kare yanlış yerde parlar. */
+  .ctx-flyout {
+    position: fixed;
+    left: 0;
+    top: 0;
+    visibility: hidden;
+    min-width: 240px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+    padding: 4px 0;
+    z-index: 10001;
+  }
+  :global(.app.dark) .ctx-flyout {
+    background: #2d2d30;
+    border-color: #555;
   }
 </style>

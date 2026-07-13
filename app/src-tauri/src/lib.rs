@@ -109,6 +109,10 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        // Editörün sağ tık menüsündeki Kes/Kopyala/Yapıştır için. Tarayıcının
+        // navigator.clipboard.readText()'i masaüstü webview'da izin isteyip
+        // sessizce boş dönebiliyor — pano OS üzerinden okunur.
+        .plugin(tauri_plugin_clipboard_manager::init())
         .manage(PendingOpen::default())
         .invoke_handler(tauri::generate_handler![
             greet,

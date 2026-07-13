@@ -1,6 +1,6 @@
 [package]
 name = "efatura-edit"
-version = "2.27.4"
+version = "2.27.5"
 description = "E-Fatura Dizayn Editörü — Tauri + SvelteKit + Saxon-JS"
 authors = ["Zafer Bilgisayar"]
 edition = "2021"
@@ -35,4 +35,5 @@ tauri-plugin-updater = "2.10.1"
 tauri-plugin-process = "2.3.1"
 tauri-plugin-log = "2.8.0"
 log = "0.4.33"
+tauri-plugin-clipboard-manager = "2"
 

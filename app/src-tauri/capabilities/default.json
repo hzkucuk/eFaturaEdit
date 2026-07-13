@@ -33,6 +33,8 @@
     "updater:default",
     "process:allow-restart",
     "log:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text",
     "core:path:default",
     "core:window:allow-close",
     "core:window:allow-destroy",

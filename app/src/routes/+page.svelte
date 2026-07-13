@@ -1946,6 +1946,9 @@ window.addEventListener('message', function(e) {
             bind:value={editorState.xsltText}
             language="xml"
             completions={xsltCompletions}
+            snippets={allSnippets}
+            onsnippet={insertSnippet}
+            onerror={(msg) => status(msg, true)}
           />
         {/if}
       </div>
@@ -1972,7 +1975,13 @@ window.addEventListener('message', function(e) {
             <p class="hint-lg">{m.welcome.xmlHint}</p>
           </div>
         {:else}
-          <CodeEditor bind:this={xmlEditor} bind:value={editorState.xmlText} language="xml" />
+          <!-- XML veri editörüne snippet verilmez: snippet'ler XSLT şablon kodudur. -->
+          <CodeEditor
+            bind:this={xmlEditor}
+            bind:value={editorState.xmlText}
+            language="xml"
+            onerror={(msg) => status(msg, true)}
+          />
         {/if}
       </div>
     </section>

@@ -40,6 +40,7 @@ eFaturaEditSolution.sln
 |---|---|
 | @tauri-apps/api, @tauri-apps/cli | Tauri v2 JS API + CLI |
 | @tauri-apps/plugin-dialog, plugin-fs, plugin-opener | Dosya dialog/okuma-yazma/harici açma |
+| @tauri-apps/plugin-clipboard-manager | Editör sağ tık menüsünde Kes/Kopyala/Yapıştır (pano OS üzerinden) |
 | @sveltejs/kit, adapter-static, svelte, vite | SvelteKit frontend |
 | codemirror + @codemirror/{view,state,commands,language,lang-xml,lang-html,autocomplete,search,theme-one-dark} | Kod editörü |
 | thememirror, @lezer/highlight | Editör temaları + syntax highlight |

@@ -110,9 +110,15 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
 - **3 panel düzen:** Sol snippet paneli, orta XSLT+XML editörleri, sağ canlı önizleme —
   hepsi fare ile yeniden boyutlandırılabilir (`Splitter`, sınır kısıtı yok).
 - **CodeMirror 6:** Syntax highlight, satır numarası, Türkçe arama paneli (Cmd/Ctrl+F), undo/redo.
-- **Kod katlama (v2.27.3):** Satır numarası yanındaki oklarla fare ile; klavyeyle `Cmd/Ctrl+Alt+[`
-  katlar, `+]` açar, `+Shift+[` / `+Shift+]` hepsini katlar/açar. Her editör başlığında **⊟ / ⊞**
+- **Kod katlama (v2.27.3):** Satır numarası yanındaki oklarla fare ile; klavyeyle **tümünü**
+  katla/aç `Ctrl+Alt+[` / `Ctrl+Alt+]` (macOS'ta da `Ctrl` — `Cmd` değil), **tek blok** macOS'ta
+  `Cmd+Alt+[` / `]`, diğer sistemlerde `Ctrl+Shift+[` / `]`. Her editör başlığında **⊟ / ⊞**
   düğmeleri — UBL-TR belgeleri derin iç içe olduğundan "tümünü katla" yapıyı bir bakışta gösterir.
+- **Sağ tık menüsü (v2.27.5):** Editörde sağ tık → Kes / Kopyala / Yapıştır · Tümünü seç ·
+  Ara ve değiştir · Satıra git · Katla/aç · Geri al / Yinele — **kısayollar menüde yazılı**.
+  XSLT editöründe ayrıca **snippet'ler kategori alt menüsünden** imlece eklenir. Pano, Tauri'nin
+  `clipboard-manager` eklentisiyle OS üzerinden okunur (webview'ın `readText()`'i sessizce boş
+  dönebiliyor); hata olursa durum çubuğunda **görünür** şekilde bildirilir.
 - **12 tema:** Açık/koyu varyantlar; tema **belge kökünde** (`html.dark`) uygulanır — modallar,
   ayrı rotalar ve kapsamlı bileşenler dahil **tüm alanlara** yansır.
 - **Dosya işlemleri:** Aç / Kaydet / Farklı Kaydet (native dialog), `Cmd/Ctrl+S` ile XSLT+XML birlikte

@@ -78,6 +78,10 @@
     padding: 4px 0;
     z-index: 10000;
     font-size: 13px;
+    /* Editörün sağ tık menüsü uzun (kısayollar + snippet kategorileri):
+       küçük pencerede ekrandan taşmasın. */
+    max-height: calc(100vh - 8px);
+    overflow-y: auto;
   }
   :global(.context-menu button) {
     display: block;

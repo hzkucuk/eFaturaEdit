@@ -3,6 +3,32 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.27.5] — 2026-07-13 — Editörde Sağ Tık Menüsü (Snippet'ler + Kısayollar)
+
+### Eklenen
+- **Editörlerde sağ tık menüsü.** Kes / Kopyala / Yapıştır · Tümünü seç · Ara ve değiştir ·
+  Satıra git · Bloğu katla/aç · Tümünü katla/aç · Geri al / Yinele — **her birinin kısayolu
+  yanında yazılı** (menünün asıl işi buydu: işlevler zaten vardı ama keşfedilemiyordu).
+  Seçim yokken Kes/Kopyala, salt-okunur editörde Yapıştır **kapalı** görünür.
+- **Snippet'ler sağ tık menüsünde.** XSLT editöründe, kategorilere ayrılmış alt menüden
+  imlecin bulunduğu yere snippet eklenir. (XML veri editöründe **yok** — snippet'ler XSLT
+  şablon kodudur.) Sol paneldeki liste ve sürükle-bırak aynen duruyor.
+- Seçim dışına sağ tıklayınca imleç oraya taşınır (masaüstü editör davranışı).
+
+### Düzeltilen
+- **v2.27.3'te belgelenen katlama kısayolları yanlıştı.** `@codemirror/language` kaynağından
+  doğrulandı: `foldAll`/`unfoldAll` için **mac varyantı yoktur** — macOS'ta da `Ctrl+Alt+[` /
+  `Ctrl+Alt+]`'dir; tek blok katlama macOS'ta `Cmd+Alt+[`, diğerlerinde `Ctrl+Shift+[`.
+  "`+Shift+[` hepsini katlar" diye bir kısayol **hiç yoktu**. CHANGELOG, FEATURES ve 5 dildeki
+  düğme tooltip'leri düzeltildi.
+
+### Teknik
+- **Yeni bağımlılık:** `@tauri-apps/plugin-clipboard-manager` + `tauri-plugin-clipboard-manager`.
+  Pano OS üzerinden okunur/yazılır; tarayıcının `navigator.clipboard.readText()`'i masaüstü
+  webview'da izin isteyip **sessizce boş dönebiliyor** — bu projede sessiz geri düşüş yasak.
+  `capabilities/default.json`: `clipboard-manager:allow-read-text` + `allow-write-text`.
+- Pano hatası yutulmaz; kullanıcıya durum çubuğunda gösterilir.
+
 ## [2.27.4] — 2026-07-13 — Örnek Faturadan XAdES İmza Bloğu da Kaldırıldı
 
 ### Değiştirilen
@@ -18,7 +44,9 @@ Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 ### Eklenen
 - **Katlama (fold) kısayolları ve düğmeleri.** Fold gutter (satır numarası yanındaki oklar)
   vardı ama `foldKeymap` keymap'e hiç eklenmemişti — klavye kısayolları çalışmıyordu.
-  Artık `Cmd/Ctrl+Alt+[` katlar, `+]` açar, `+Shift+[` / `+Shift+]` hepsini katlar/açar.
+  Artık `Ctrl+Alt+[` / `Ctrl+Alt+]` hepsini katlar/açar; tek blok macOS'ta `Cmd+Alt+[`,
+  diğer sistemlerde `Ctrl+Shift+[`. (Kısayollar ilk yayında **yanlış belgelenmişti**;
+  v2.27.5'te kaynaktan doğrulanıp düzeltildi.)
   Ayrıca her editör başlığında **⊟ / ⊞** düğmeleri (tümünü katla / tümünü aç). 5 dilde.
 
 ### Değiştirilen
