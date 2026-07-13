@@ -114,6 +114,13 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   katla/aç `Ctrl+Alt+[` / `Ctrl+Alt+]` (macOS'ta da `Ctrl` — `Cmd` değil), **tek blok** macOS'ta
   `Cmd+Alt+[` / `]`, diğer sistemlerde `Ctrl+Shift+[` / `]`. Her editör başlığında **⊟ / ⊞**
   düğmeleri — UBL-TR belgeleri derin iç içe olduğundan "tümünü katla" yapıyı bir bakışta gösterir.
+- **XPath test konsolu (v2.28.0):** XML panelindeki **ƒx** düğmesi veya `Cmd/Ctrl+Shift+X`.
+  İfadeyi yaz → Enter → yüklü faturaya karşı anında çalışır; kaç düğüm eşleşti ve değerleri ne
+  görünür. `↑`/`↓` geçmiş, `Esc` kapatır. Şablonu kurcalayıp dönüştürmeden "bu alan neden boş
+  geliyor?" sorusunu yanıtlar. Önekler belgenin **kökünden** okunur ve `xpath-default-namespace`
+  otomatik bildirilir — UBL kökü varsayılan namespace'te olduğundan bu olmadan `/Invoice/cbc:ID`
+  hiçbir şey eşleştirmezdi. Saxon yoksa tarayıcının XPath 1.0'ına düşer ve bunu **`⚠️ XPath 1.0`
+  rozetiyle söyler** (sessiz geri düşüş yok).
 - **Sağ tık menüsü (v2.27.5):** Editörde sağ tık → Kes / Kopyala / Yapıştır · Tümünü seç ·
   Ara ve değiştir · Satıra git · Katla/aç · Geri al / Yinele — **kısayollar menüde yazılı**.
   XSLT editöründe ayrıca **snippet'ler kategori alt menüsünden** imlece eklenir. Pano, Tauri'nin

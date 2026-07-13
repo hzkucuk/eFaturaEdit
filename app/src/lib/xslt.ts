@@ -94,7 +94,7 @@ export const engineStatus = {
 };
 
 /** Rust tarafının "motorun kendisi çalışmıyor" işareti (bkz. xslt.rs). */
-const ENGINE_UNAVAILABLE = 'XSLT_ENGINE_UNAVAILABLE';
+export const ENGINE_UNAVAILABLE = 'XSLT_ENGINE_UNAVAILABLE';
 
 /** Saxon hata metninden satır/sütun ayıkla ("... on line 59 column 40"). */
 function parseSaxonPosition(message: string): { line?: number; column?: number } {

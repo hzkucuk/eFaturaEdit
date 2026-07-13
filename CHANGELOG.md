@@ -3,6 +3,44 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.28.0] — 2026-07-13 — XPath Test Konsolu
+
+### Eklenen
+- **XPath test konsolu.** XML panelindeki **ƒx** düğmesi (veya `Cmd/Ctrl+Shift+X`) ile açılır:
+  ifadeyi yaz, Enter'a bas, yüklü faturaya karşı **anında** çalışsın — kaç düğüm eşleşti,
+  değerleri ne. `↑`/`↓` ile geçmiş, `Esc` ile kapanır.
+
+  **Neden:** Şablon yazarken en çok zaman kaybettiren şey, bir alanın önizlemede boş gelmesi ve
+  **sebebinin görünmemesi** — XPath mi yanlış, önek mi kaçtı, veri mi yok? Tek yol "XSLT'yi
+  kurcala → dönüştür → bak" döngüsüydü.
+
+- **`xpath-default-namespace` otomatik.** UBL faturalarının kökü varsayılan namespace'tedir; bu
+  bildirilmeseydi `/Invoice/cbc:ID` gibi **en doğal görünen** ifade hiçbir şey eşleştirmez ve
+  kullanıcı sebebini anlayamazdı. Önekler belgenin **kökünden** okunur (sabit listeden
+  uydurulmaz — farklı önek kullanan belgede ifade sessizce boş dönerdi).
+
+### Teknik
+- **Sidecar'a dokunulmadı.** Tel protokolü (`[len][XSLT][len][XML]`) değiştirip GraalVM
+  native-image'ı 5 platformda yeniden derlemek yerine, XPath minik bir XSLT sarmalayıcısına
+  gömülüp **mevcut dönüşüm hattından** geçiriliyor. Saxon'un XPath 2.0/3.0'ı bedavaya geliyor.
+- **Geri düşüş görünür.** Saxon yoksa `transformXml` sessizce tarayıcının XSLT 1.0'ına düşer ve
+  2.0 sarmalayıcısı orada **hata vermeden yanlış** sonuç verebilirdi. Bu yüzden Saxon doğrudan
+  çağrılır; düşülürse sonuçta **`⚠️ XPath 1.0` rozeti** basılır.
+- Saxon'un hata mesajı **olduğu gibi** gösterilir ("Expected an expression, but reached the end
+  of the input") — "bilinmeyen hata" demek teşhisi kör eder.
+- Sidecar'ın çıktıya eklediği `<!DOCTYPE html>` kırpılır (ölçüldü; şu an ayrıştırıcı kabul
+  ediyor ama buna bel bağlanmıyor).
+
+**Sidecar'a karşı doğrulandı:** `//cbc:PayableAmount` → 35.40 · `count(//cac:InvoiceLine)` → 1 ·
+`/Invoice/cbc:ID` → EFS2016000007422 · eşleşmeyen ifade → 0 · bozuk ifade → Saxon'un gerçek mesajı.
+
+### CI
+- **Release workflow artık eksik platformla yayınlarsa koşuyu kırmızıya boyuyor.** v2.27.3'te
+  macos-14 işi GitHub'ın geçici altyapı hatasıyla düştü, diğer dördü yeşil geçti, release
+  **yayınlandı** ve `latest.json` 15 yerine **13 platformla** çıktı — Apple Silicon kullanıcıları
+  güncellemeyi hiç görmedi, hata da almadı. Yeni `verify` işi platformları **sayar**, imzaları
+  denetler ve taslak kalmış release'i yakalar.
+
 ## [2.27.5] — 2026-07-13 — Editörde Sağ Tık Menüsü (Snippet'ler + Kısayollar)
 
 ### Eklenen

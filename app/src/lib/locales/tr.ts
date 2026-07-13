@@ -62,6 +62,20 @@ export const tr = {
     xmlHint: 'Örnek yükledikten sonra sağdaki önizleme otomatik oluşur.',
   },
 
+  xpath: {
+    title: 'XPath test konsolu (Cmd/Ctrl+Shift+X)',
+    placeholder: 'Örn: //cbc:PayableAmount  ·  count(//cac:InvoiceLine)',
+    run: 'Çalıştır',
+    running: 'Çalışıyor…',
+    matches: '{n} eşleşme',
+    noMatch: 'Hiçbir şey eşleşmedi. Önek (cac:/cbc:) ve yol doğru mu?',
+    truncated: '(ilk {n} gösteriliyor)',
+    hint: 'Bir XPath yazıp Enter’a bas. ↑/↓ ile geçmiş.',
+    badXml: 'XML iyi-biçimli değil: {msg}',
+    browserEngine: '⚠️ XPath 1.0',
+    browserEngineTitle:
+      'Saxon çalışmadığı için ifade tarayıcının XPath 1.0 motoruyla değerlendirildi. 2.0 fonksiyonları (tokenize, format-dateTime, subsequence) ve öneksiz adlar burada ÇALIŞMAZ.',
+  },
   ctx: {
     cut: 'Kes',
     copy: 'Kopyala',

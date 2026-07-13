@@ -60,6 +60,20 @@ export const pl: Messages = {
     xmlHint: 'Podgląd po prawej stronie tworzy się automatycznie po wczytaniu przykładu.',
   },
 
+  xpath: {
+    title: 'Konsola testowa XPath (Cmd/Ctrl+Shift+X)',
+    placeholder: 'np. //cbc:PayableAmount  ·  count(//cac:InvoiceLine)',
+    run: 'Uruchom',
+    running: 'Trwa…',
+    matches: 'dopasowań: {n}',
+    noMatch: 'Nic nie pasuje. Czy prefiks (cac:/cbc:) i ścieżka są poprawne?',
+    truncated: '(pokazano pierwsze {n})',
+    hint: 'Wpisz XPath i naciśnij Enter. ↑/↓ — historia.',
+    badXml: 'XML nie jest poprawnie sformułowany: {msg}',
+    browserEngine: '⚠️ XPath 1.0',
+    browserEngineTitle:
+      'Saxon nie działa, więc wyrażenie obliczył silnik XPath 1.0 przeglądarki. Funkcje 2.0 (tokenize, format-dateTime, subsequence) i nazwy bez prefiksu tutaj NIE DZIAŁAJĄ.',
+  },
   ctx: {
     cut: 'Wytnij',
     copy: 'Kopiuj',

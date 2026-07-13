@@ -61,6 +61,20 @@ export const en: Messages = {
     xmlHint: 'The preview on the right is generated automatically once a sample is loaded.',
   },
 
+  xpath: {
+    title: 'XPath test console (Cmd/Ctrl+Shift+X)',
+    placeholder: 'e.g. //cbc:PayableAmount  ·  count(//cac:InvoiceLine)',
+    run: 'Run',
+    running: 'Running…',
+    matches: '{n} matches',
+    noMatch: 'Nothing matched. Are the prefix (cac:/cbc:) and the path correct?',
+    truncated: '(showing first {n})',
+    hint: 'Type an XPath and press Enter. ↑/↓ for history.',
+    badXml: 'The XML is not well-formed: {msg}',
+    browserEngine: '⚠️ XPath 1.0',
+    browserEngineTitle:
+      "Saxon is not running, so the expression was evaluated by the browser's XPath 1.0 engine. 2.0 functions (tokenize, format-dateTime, subsequence) and unprefixed names DO NOT work here.",
+  },
   ctx: {
     cut: 'Cut',
     copy: 'Copy',

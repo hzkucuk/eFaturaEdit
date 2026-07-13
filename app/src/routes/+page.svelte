@@ -28,6 +28,7 @@
   import { ask } from '@tauri-apps/plugin-dialog';
   import SnippetEditor from '$lib/SnippetEditor.svelte';
   import CodeEditor from '$lib/CodeEditor.svelte';
+  import XPathConsole from '$lib/XPathConsole.svelte';
   import Splitter from '$lib/Splitter.svelte';
   import ContextMenu from '$lib/ContextMenu.svelte';
   import HelpModal from '$lib/HelpModal.svelte';
@@ -97,6 +98,8 @@
   // Editor referansları (bind:this)
   let xsltEditor = $state<CodeEditor>();
   let xmlEditor = $state<CodeEditor>();
+  /** XPath test konsolu açık mı (XML panelinin altında). */
+  let xpathOpen = $state(false);
   let previewFrame = $state<HTMLIFrameElement>();
 
   // Preview sağ tık menüsü
@@ -1265,7 +1268,11 @@ window.addEventListener('message', function(e) {
   // ─── Global keyboard shortcuts ──────────────────────────────────────
   function onGlobalKeydown(e: KeyboardEvent) {
     const meta = e.metaKey || e.ctrlKey;
-    if (meta && e.key === 's') {
+    if (meta && e.shiftKey && (e.key === 'x' || e.key === 'X')) {
+      // XPath konsolu — şablon yüklü değilken anlamsız.
+      e.preventDefault();
+      if (!showWelcome) xpathOpen = !xpathOpen;
+    } else if (meta && e.key === 's') {
       e.preventDefault();
       saveAll();
     } else if (meta && e.key === 'r' && !e.shiftKey) {
@@ -1965,23 +1972,33 @@ window.addEventListener('message', function(e) {
         <span class="ph-meta">{editorState.xmlText.length.toLocaleString()} {m.common.characters}</span>
         {#if editorState.xmlDirty}<span class="dirty-mark" title={m.common.unsavedChanges}>●</span>{/if}
         {#if !showWelcome}
+          <button
+            class="ph-fold"
+            class:active={xpathOpen}
+            onclick={() => (xpathOpen = !xpathOpen)}
+            title={m.xpath.title}>ƒx</button>
           <button class="ph-fold" onclick={() => xmlEditor?.collapseAll()} title={m.panels.collapseAllTitle}>⊟</button>
           <button class="ph-fold" onclick={() => xmlEditor?.expandAll()} title={m.panels.expandAllTitle}>⊞</button>
         {/if}
       </div>
-      <div class="editor-slot" data-editor-kind="xml">
+      <div class="editor-slot xml-slot" data-editor-kind="xml">
         {#if showWelcome}
           <div class="welcome sub">
             <p class="hint-lg">{m.welcome.xmlHint}</p>
           </div>
         {:else}
           <!-- XML veri editörüne snippet verilmez: snippet'ler XSLT şablon kodudur. -->
-          <CodeEditor
-            bind:this={xmlEditor}
-            bind:value={editorState.xmlText}
-            language="xml"
-            onerror={(msg) => status(msg, true)}
-          />
+          <div class="ed-fill">
+            <CodeEditor
+              bind:this={xmlEditor}
+              bind:value={editorState.xmlText}
+              language="xml"
+              onerror={(msg) => status(msg, true)}
+            />
+          </div>
+          {#if xpathOpen}
+            <XPathConsole xmlText={editorState.xmlText} onclose={() => (xpathOpen = false)} />
+          {/if}
         {/if}
       </div>
     </section>
@@ -2733,6 +2750,9 @@ window.addEventListener('message', function(e) {
   .editors { display: grid; background: #fff; overflow: hidden; }
   .app.dark .editors { background: #1e1e1e; }
   .editor-slot { overflow: hidden; position: relative; }
+  /* XPath konsolu açılınca editör + konsol dikey paylaşır. */
+  .xml-slot { display: flex; flex-direction: column; }
+  .ed-fill { flex: 1; min-height: 0; }
 
   /* Welcome */
   .welcome {
@@ -3130,6 +3150,7 @@ window.addEventListener('message', function(e) {
     padding: 0 2px;
   }
   .ph-fold:hover { opacity: 1; }
+  .ph-fold.active { opacity: 1; color: #0a5cff; font-weight: 700; }
 
   /* Drag ghost — mouse'un yanında hareket eden görsel */
   .drag-ghost {

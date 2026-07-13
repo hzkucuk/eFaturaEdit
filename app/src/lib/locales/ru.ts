@@ -60,6 +60,20 @@ export const ru: Messages = {
     xmlHint: 'Предпросмотр справа создаётся автоматически после загрузки примера.',
   },
 
+  xpath: {
+    title: 'Консоль тестирования XPath (Cmd/Ctrl+Shift+X)',
+    placeholder: 'напр. //cbc:PayableAmount  ·  count(//cac:InvoiceLine)',
+    run: 'Выполнить',
+    running: 'Выполняется…',
+    matches: 'совпадений: {n}',
+    noMatch: 'Ничего не найдено. Верны ли префикс (cac:/cbc:) и путь?',
+    truncated: '(показаны первые {n})',
+    hint: 'Введите XPath и нажмите Enter. ↑/↓ — история.',
+    badXml: 'XML некорректно сформирован: {msg}',
+    browserEngine: '⚠️ XPath 1.0',
+    browserEngineTitle:
+      'Saxon не запущен, поэтому выражение вычислено движком XPath 1.0 браузера. Функции 2.0 (tokenize, format-dateTime, subsequence) и имена без префикса здесь НЕ РАБОТАЮТ.',
+  },
   ctx: {
     cut: 'Вырезать',
     copy: 'Копировать',
