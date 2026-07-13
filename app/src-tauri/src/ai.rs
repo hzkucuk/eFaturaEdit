@@ -10,6 +10,96 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::time::{Duration, Instant};
+
+/// Bağlantı kurma üst sınırı. Ulaşılamayan uç noktada hızlıca hata ver.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
+/// Yanıt üst sınırı. Sağlayıcı isteği kuyruğa alıp yanıt vermezse (NVIDIA NIM
+/// büyük modellerde kuyruklar), timeout olmadan istek SONSUZA KADAR bekler ve
+/// kullanıcı ekranda sonsuz "Düşünüyor…" görür — hata bile almaz. Uzun
+/// reasoning yanıtlarına yetecek kadar geniş, asılı kalmaya yetmeyecek kadar dar.
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(180);
+
+/// Tüm AI çağrıları bu istemciden geçer — timeout'suz `Client::new()` kullanma.
+fn http_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .connect_timeout(CONNECT_TIMEOUT)
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .map_err(|e| format!("HTTP istemcisi kurulamadı: {e}"))
+}
+
+/// Günlüğe yazılabilir uç nokta: yalnızca şema+host. Gemini anahtarı sorgu
+/// dizesinde taşır — URL'i olduğu gibi loglamak anahtarı sızdırır.
+fn safe_endpoint(base_url: &str) -> String {
+    match reqwest::Url::parse(base_url) {
+        Ok(u) => format!("{}://{}", u.scheme(), u.host_str().unwrap_or("?")),
+        Err(_) => "<geçersiz URL>".into(),
+    }
+}
+
+/// `reqwest::Error`'un üst mesajı sebebi göstermez ("error sending request for
+/// url ...") — gerçek sebep kaynak zincirindedir (DNS, TLS, kapanan bağlantı).
+/// Zinciri düzleştir; aksi halde teşhis yine körlemesine olur.
+fn error_chain(e: &dyn std::error::Error) -> String {
+    let mut parts = vec![e.to_string()];
+    let mut src = e.source();
+    while let Some(s) = src {
+        parts.push(s.to_string());
+        src = s.source();
+    }
+    parts.join(" ← ")
+}
+
+/// Ağ hatasını kullanıcının anlayacağı Türkçeye çevirir. Ham `reqwest` metni
+/// ("operation timed out") sebebi göstermez; timeout'u bağlantı hatasından ayır.
+fn send_error(e: reqwest::Error) -> String {
+    let detail = error_chain(&e);
+    if e.is_timeout() {
+        format!(
+            "Sağlayıcı {} saniyede yanıt vermedi — model muhtemelen yanıt üretmiyor \
+             (kuyrukta veya bu hesaba servis edilmiyor). Ayarlar → AI'dan başka bir \
+             model seçip yeniden deneyin. ({detail})",
+            REQUEST_TIMEOUT.as_secs()
+        )
+    } else if e.is_connect() {
+        format!("Sağlayıcıya bağlanılamadı: {detail}")
+    } else {
+        format!("İstek gönderilemedi: {detail}")
+    }
+}
+
+/// Başarısız HTTP yanıtını okunur hataya çevirir. Sağlayıcılar hata gövdesini
+/// farklı şekillerde sarar (`error.message`, `message`, `detail`, düz metin);
+/// hiçbiri tutmazsa gövdeyi ham haliyle göster — "bilinmeyen hata" deme.
+fn api_error(what: &str, status: reqwest::StatusCode, body: &str) -> String {
+    let parsed: Option<Value> = serde_json::from_str(body).ok();
+    let msg = parsed
+        .as_ref()
+        .and_then(|j| {
+            j["error"]["message"]
+                .as_str()
+                .or_else(|| j["message"].as_str())
+                .or_else(|| j["detail"].as_str())
+                .or_else(|| j["title"].as_str())
+        })
+        .map(str::to_string)
+        .unwrap_or_else(|| {
+            let t = body.trim();
+            if t.is_empty() {
+                "(sağlayıcı boş gövde döndürdü)".into()
+            } else {
+                t.chars().take(300).collect()
+            }
+        });
+    if status == reqwest::StatusCode::NOT_FOUND {
+        return format!(
+            "{what} ({status}): {msg} — Bu model bu uç noktada servis edilmiyor. \
+             Ayarlar → AI'dan başka bir model seçin."
+        );
+    }
+    format!("{what} ({status}): {msg}")
+}
 
 /// Bir mesaja iliştirilen görsel/PDF eki. `data` = base64 (prefix'siz).
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -57,11 +147,34 @@ pub struct AiChatRequest {
 
 #[tauri::command]
 pub async fn ai_chat(request: AiChatRequest) -> Result<String, String> {
-    match request.provider.as_str() {
+    // Dış ağ çağrısı: girdi boyutları, süre ve sonuç MUTLAKA loglanır. Anahtar
+    // asla loglanmaz. Bu izler olmadan "yanıt gelmiyor" şikâyeti kör teşhistir.
+    let attachments: usize = request.messages.iter().map(|m| m.attachments.len()).sum();
+    log::info!(
+        "[ai] istek — {} · {} · {} · bağlam {} bayt · {} mesaj · {} ek · thinking={} · temp={:?}",
+        request.provider,
+        request.model,
+        safe_endpoint(&request.base_url),
+        request.cached_context.len(),
+        request.messages.len(),
+        attachments,
+        request.thinking,
+        request.temperature,
+    );
+
+    let started = Instant::now();
+    let result = match request.provider.as_str() {
         "anthropic" => call_anthropic(&request).await,
         "gemini" => call_gemini(&request).await,
         _ => call_openai_compatible(&request).await, // openai, ollama, nvidia, deepseek
+    };
+    let ms = started.elapsed().as_millis();
+
+    match &result {
+        Ok(text) => log::info!("[ai] yanıt tamam — {} bayt, {ms} ms", text.len()),
+        Err(e) => log::error!("[ai] çağrı başarısız ({ms} ms): {e}"),
     }
+    result
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -73,15 +186,28 @@ pub struct AiListModelsRequest {
 
 #[tauri::command]
 pub async fn ai_list_models(request: AiListModelsRequest) -> Result<Vec<String>, String> {
-    match request.provider.as_str() {
+    let result = match request.provider.as_str() {
         "anthropic" => list_anthropic_models(&request).await,
         "gemini" => list_gemini_models(&request).await,
         _ => list_openai_compatible_models(&request).await, // openai, ollama, nvidia, deepseek
+    };
+    // "Listede model eksik" şikâyeti ancak sağlayıcının NE döndürdüğü bilinirse
+    // teşhis edilebilir — listeyi olduğu gibi logla (anahtar loglanmaz).
+    match &result {
+        Ok(models) => log::info!(
+            "[ai] model listesi — {} · {} · {} model: {}",
+            request.provider,
+            safe_endpoint(&request.base_url),
+            models.len(),
+            models.join(", ")
+        ),
+        Err(e) => log::error!("[ai] model listesi alınamadı ({}): {e}", request.provider),
     }
+    result
 }
 
 async fn list_anthropic_models(req: &AiListModelsRequest) -> Result<Vec<String>, String> {
-    let client = reqwest::Client::new();
+    let client = http_client()?;
     let url = format!("{}/models", req.base_url.trim_end_matches('/'));
     let resp = client
         .get(&url)
@@ -89,20 +215,23 @@ async fn list_anthropic_models(req: &AiListModelsRequest) -> Result<Vec<String>,
         .header("anthropic-version", "2023-06-01")
         .send()
         .await
-        .map_err(|e| format!("İstek gönderilemedi: {e}"))?;
+        .map_err(send_error)?;
 
     let status = resp.status();
-    let json: Value = resp
-        .json()
+    // Gövdeyi ÖNCE ham metin olarak al: hata gövdesi her zaman JSON değil
+    // (HTML hata sayfası, düz metin). Doğrudan json() edersek gerçek sebep
+    // "Yanıt okunamadı" arkasında kaybolur.
+    let body = resp
+        .text()
         .await
-        .map_err(|e| format!("Yanıt okunamadı: {e}"))?;
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
 
     if !status.is_success() {
-        return Err(format!(
-            "Model listesi alınamadı ({status}): {}",
-            json["error"]["message"].as_str().unwrap_or("bilinmeyen hata")
-        ));
+        return Err(api_error("Model listesi alınamadı", status, &body));
     }
+
+    let json: Value = serde_json::from_str(&body)
+        .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
 
     Ok(json["data"]
         .as_array()
@@ -111,26 +240,29 @@ async fn list_anthropic_models(req: &AiListModelsRequest) -> Result<Vec<String>,
 }
 
 async fn list_gemini_models(req: &AiListModelsRequest) -> Result<Vec<String>, String> {
-    let client = reqwest::Client::new();
+    let client = http_client()?;
     let url = format!("{}/models?key={}", req.base_url.trim_end_matches('/'), req.api_key);
     let resp = client
         .get(&url)
         .send()
         .await
-        .map_err(|e| format!("İstek gönderilemedi: {e}"))?;
+        .map_err(send_error)?;
 
     let status = resp.status();
-    let json: Value = resp
-        .json()
+    // Gövdeyi ÖNCE ham metin olarak al: hata gövdesi her zaman JSON değil
+    // (HTML hata sayfası, düz metin). Doğrudan json() edersek gerçek sebep
+    // "Yanıt okunamadı" arkasında kaybolur.
+    let body = resp
+        .text()
         .await
-        .map_err(|e| format!("Yanıt okunamadı: {e}"))?;
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
 
     if !status.is_success() {
-        return Err(format!(
-            "Model listesi alınamadı ({status}): {}",
-            json["error"]["message"].as_str().unwrap_or("bilinmeyen hata")
-        ));
+        return Err(api_error("Model listesi alınamadı", status, &body));
     }
+
+    let json: Value = serde_json::from_str(&body)
+        .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
 
     Ok(json["models"]
         .as_array()
@@ -149,7 +281,7 @@ async fn list_gemini_models(req: &AiListModelsRequest) -> Result<Vec<String>, St
 }
 
 async fn list_openai_compatible_models(req: &AiListModelsRequest) -> Result<Vec<String>, String> {
-    let client = reqwest::Client::new();
+    let client = http_client()?;
     let url = format!("{}/models", req.base_url.trim_end_matches('/'));
     let mut builder = client.get(&url);
     if !req.api_key.is_empty() {
@@ -159,20 +291,23 @@ async fn list_openai_compatible_models(req: &AiListModelsRequest) -> Result<Vec<
     let resp = builder
         .send()
         .await
-        .map_err(|e| format!("İstek gönderilemedi: {e}"))?;
+        .map_err(send_error)?;
 
     let status = resp.status();
-    let json: Value = resp
-        .json()
+    // Gövdeyi ÖNCE ham metin olarak al: hata gövdesi her zaman JSON değil
+    // (HTML hata sayfası, düz metin). Doğrudan json() edersek gerçek sebep
+    // "Yanıt okunamadı" arkasında kaybolur.
+    let body = resp
+        .text()
         .await
-        .map_err(|e| format!("Yanıt okunamadı: {e}"))?;
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
 
     if !status.is_success() {
-        return Err(format!(
-            "Model listesi alınamadı ({status}): {}",
-            json["error"]["message"].as_str().unwrap_or("bilinmeyen hata")
-        ));
+        return Err(api_error("Model listesi alınamadı", status, &body));
     }
+
+    let json: Value = serde_json::from_str(&body)
+        .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
 
     Ok(json["data"]
         .as_array()
@@ -181,7 +316,7 @@ async fn list_openai_compatible_models(req: &AiListModelsRequest) -> Result<Vec<
 }
 
 async fn call_anthropic(req: &AiChatRequest) -> Result<String, String> {
-    let client = reqwest::Client::new();
+    let client = http_client()?;
     let url = format!("{}/messages", req.base_url.trim_end_matches('/'));
     let messages: Vec<Value> = req
         .messages
@@ -249,20 +384,23 @@ async fn call_anthropic(req: &AiChatRequest) -> Result<String, String> {
         .json(&body)
         .send()
         .await
-        .map_err(|e| format!("İstek gönderilemedi: {e}"))?;
+        .map_err(send_error)?;
 
     let status = resp.status();
-    let json: Value = resp
-        .json()
+    // Gövdeyi ÖNCE ham metin olarak al: hata gövdesi her zaman JSON değil
+    // (HTML hata sayfası, düz metin). Doğrudan json() edersek gerçek sebep
+    // "Yanıt okunamadı" arkasında kaybolur.
+    let body = resp
+        .text()
         .await
-        .map_err(|e| format!("Yanıt okunamadı: {e}"))?;
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
 
     if !status.is_success() {
-        return Err(format!(
-            "Claude API hatası ({status}): {}",
-            json["error"]["message"].as_str().unwrap_or("bilinmeyen hata")
-        ));
+        return Err(api_error("Claude API hatası", status, &body));
     }
+
+    let json: Value = serde_json::from_str(&body)
+        .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
     if json["stop_reason"].as_str() == Some("refusal") {
         return Err("İstek Claude tarafından güvenlik nedeniyle reddedildi.".into());
     }
@@ -276,7 +414,7 @@ async fn call_anthropic(req: &AiChatRequest) -> Result<String, String> {
 }
 
 async fn call_gemini(req: &AiChatRequest) -> Result<String, String> {
-    let client = reqwest::Client::new();
+    let client = http_client()?;
     let url = format!(
         "{}/models/{}:generateContent?key={}",
         req.base_url.trim_end_matches('/'),
@@ -333,20 +471,23 @@ async fn call_gemini(req: &AiChatRequest) -> Result<String, String> {
         .json(&body)
         .send()
         .await
-        .map_err(|e| format!("İstek gönderilemedi: {e}"))?;
+        .map_err(send_error)?;
 
     let status = resp.status();
-    let json: Value = resp
-        .json()
+    // Gövdeyi ÖNCE ham metin olarak al: hata gövdesi her zaman JSON değil
+    // (HTML hata sayfası, düz metin). Doğrudan json() edersek gerçek sebep
+    // "Yanıt okunamadı" arkasında kaybolur.
+    let body = resp
+        .text()
         .await
-        .map_err(|e| format!("Yanıt okunamadı: {e}"))?;
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
 
     if !status.is_success() {
-        return Err(format!(
-            "Gemini API hatası ({status}): {}",
-            json["error"]["message"].as_str().unwrap_or("bilinmeyen hata")
-        ));
+        return Err(api_error("Gemini API hatası", status, &body));
     }
+
+    let json: Value = serde_json::from_str(&body)
+        .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
 
     json["candidates"][0]["content"]["parts"][0]["text"]
         .as_str()
@@ -357,7 +498,7 @@ async fn call_gemini(req: &AiChatRequest) -> Result<String, String> {
 /// OpenAI Chat Completions formatı — OpenAI, Ollama (yerel) ve NVIDIA NIM
 /// hepsi bu formatı kullanıyor, yalnızca base_url/model/api_key değişiyor.
 async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
-    let client = reqwest::Client::new();
+    let client = http_client()?;
     let url = format!("{}/chat/completions", req.base_url.trim_end_matches('/'));
 
     // Dosya bağlamı ilk (system) mesaja eklenir → promptun öneki sabit kalır ve
@@ -417,20 +558,23 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
     let resp = builder
         .send()
         .await
-        .map_err(|e| format!("İstek gönderilemedi: {e}"))?;
+        .map_err(send_error)?;
 
     let status = resp.status();
-    let json: Value = resp
-        .json()
+    // Gövdeyi ÖNCE ham metin olarak al: hata gövdesi her zaman JSON değil
+    // (HTML hata sayfası, düz metin). Doğrudan json() edersek gerçek sebep
+    // "Yanıt okunamadı" arkasında kaybolur.
+    let body = resp
+        .text()
         .await
-        .map_err(|e| format!("Yanıt okunamadı: {e}"))?;
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
 
     if !status.is_success() {
-        return Err(format!(
-            "API hatası ({status}): {}",
-            json["error"]["message"].as_str().unwrap_or("bilinmeyen hata")
-        ));
+        return Err(api_error("API hatası", status, &body));
     }
+
+    let json: Value = serde_json::from_str(&body)
+        .map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
 
     json["choices"][0]["message"]["content"]
         .as_str()

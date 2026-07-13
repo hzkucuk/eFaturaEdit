@@ -77,11 +77,38 @@ export const aiRuntime = $state<{
   /** Model şu an yanıt üretiyor mu? (sayfa geçişinde de doğru kalmalı) */
   sending: boolean;
   error: string;
+  /**
+   * Uçuştaki isteğin kimliği. İptal, `invoke`'u gerçekten durduramaz (Tauri
+   * komutu Rust tarafında koşmaya devam eder); bunun yerine kimliği artırırız →
+   * geç gelen yanıt "artık benim değil" diye YOK SAYILIR. Kullanıcı beklemekten
+   * kurtulur, geç yanıt da sohbete sızmaz.
+   */
+  requestId: number;
 }>({
   active: null,
   sending: false,
   error: '',
+  requestId: 0,
 });
+
+/** Yeni bir uçuş başlat; dönen kimlik yanıt geldiğinde hâlâ geçerli mi diye bakılır. */
+export function beginAiRequest(): number {
+  aiRuntime.requestId += 1;
+  aiRuntime.sending = true;
+  return aiRuntime.requestId;
+}
+
+/** Uçuştaki istek hâlâ güncel mi? (İptal edildiyse veya yenisi başladıysa hayır.) */
+export function isCurrentAiRequest(id: number): boolean {
+  return aiRuntime.requestId === id;
+}
+
+/** Kullanıcı "Durdur" dedi: göstergeyi kapat, geç gelecek yanıtı geçersiz kıl. */
+export function cancelAiRequest(): void {
+  if (!aiRuntime.sending) return;
+  aiRuntime.requestId += 1;
+  aiRuntime.sending = false;
+}
 
 export function getActiveSession(): AiSession | null {
   return aiRuntime.active;

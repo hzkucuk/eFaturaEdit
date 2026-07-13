@@ -3,6 +3,44 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.27.1] — 2026-07-13 — AI: Sonsuz "Düşünüyor…" Düzeltmesi + Durdur Düğmesi + XML Veri Düzenleme
+
+### Düzeltilen
+- **Sonsuz "Düşünüyor…" (kritik).** AI çağrılarında **hiçbir timeout yoktu**
+  (`reqwest::Client::new()`); sağlayıcı isteği kuyruğa alıp yanıt vermezse uygulama
+  **sonsuza kadar** bekliyor, kullanıcı hata bile almıyordu. Artık bağlantı için 15 sn,
+  yanıt için 180 sn üst sınır var ve süre dolunca anlamlı Türkçe hata veriliyor.
+  (Gerçek vaka: NVIDIA NIM istekleri kabul edip yanıtsız bırakıyordu.)
+- **AI çağrıları artık günlüğe yazılıyor** — `ai.rs` daha önce **tek satır bile** log
+  yazmıyordu, bu yüzden "yanıt gelmiyor" şikâyeti kör teşhis demekti. Her çağrıda
+  sağlayıcı, model, uç nokta (yalnızca şema+host), bağlam boyutu, mesaj/ek sayısı,
+  süre ve sonuç loglanır. **API anahtarı loglanmaz** (Gemini anahtarı URL'de taşıdığı
+  için tam URL hiç yazılmaz). Model listesi çağrısı da loglanır.
+- **Gerçek hata sebebi gösteriliyor.** Hata gövdesi ham metin olarak okunup
+  `error.message` / `message` / `detail` alanlarından çözülüyor; hiçbiri yoksa gövdenin
+  kendisi yazılıyor — artık "bilinmeyen hata" denmiyor. Ağ hatalarında `reqwest`
+  kaynak zinciri (DNS/TLS/kapanan bağlantı) günlüğe düşer. 404'te "bu model bu uç
+  noktada servis edilmiyor, başka model seçin" yönlendirmesi verilir.
+- **Model listesinde yalnızca tek model görünüyordu.** Seçici `<input list="...">` +
+  `<datalist>` idi; native `datalist` önerileri kutudaki metne göre **filtreler**, bu yüzden
+  seçili model yazılıyken diğerleri (ör. `deepseek-v4-pro`) hiç görünmüyordu. Liste hep
+  doğru geliyordu — arayüz gizliyordu. Artık gerçek bir `<select>`: tüm modeller her zaman
+  görünür. **✎** düğmesiyle elle model adı yazılabilir (Ollama/yerel uçlar için).
+  Kayıtlı model listede yoksa listenin başına eklenir — seçim sessizce başka modele kaymaz.
+
+### Eklenen
+- **"■ Durdur" düğmesi.** Yanıt beklenirken "Gönder"in yerini alır; basınca gösterge
+  anında kapanır. `invoke` gerçekten iptal edilemediğinden her isteğe kimlik verilir →
+  **geç gelen yanıt sohbete sızmaz, yok sayılır.** Ajan modunda turlar arasında da
+  kontrol edilir (durdurulan ajan dosyaya düzenleme uygulayamaz). 5 dilde.
+- **AI artık XML belge verisini de düzenleyebiliyor.** Önceden sistem promptu yalnızca
+  XSLT tasarımına izin veriyor, "fatura kalemi ekle" gibi istekleri reddediyordu. Artık
+  kalem ekleme/çoğaltma, tutar/taraf/tarih değiştirme, test verisi üretme kapsam
+  içinde. İki koruma korunur: **XAdES imzasına dokunulmaz** (veri değişince imzanın
+  geçersizleştiği kullanıcıya bildirilir) ve **toplam zinciri güncellenir**
+  (satır tutarı → `LegalMonetaryTotal` → KDV → `PayableAmount`), UBL öğe sırası korunur.
+  Değişiklik yine yalnızca kullanıcı onayıyla uygulanır.
+
 ## [2.27.0] — 2026-07-12 — DeepSeek + Dinamik AI Parametreleri + UBL 2.1 Uluslararası Snippet'ler
 
 ### Eklenen

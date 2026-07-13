@@ -31,6 +31,11 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   e-İrsaliye) alanında kıdemli uzman olarak eğitilmiş sistem promptu — `cac:`/`cbc:`/`ext:`/`ubltr:`
   ad alanları, `ProfileID`/`InvoiceTypeCode` değerleri, kanonik XPath yolları. Kapsam kilidi:
   prompt dışına çıkmaz, prompt-injection'a direnir.
+- **İki hedef: tasarım + veri (v2.27.1):** XSLT'nin yanı sıra **XML belge verisini** de düzenler —
+  kalem ekleme/çoğaltma, tutar/taraf/tarih değiştirme, test verisi üretme. İki koruma zorunlu:
+  **XAdES imzasına dokunulmaz** (veri değişince imzanın geçersizleştiği bildirilir) ve **toplam
+  zinciri güncellenir** (satır tutarı → `LegalMonetaryTotal` → KDV → `PayableAmount`); UBL öğe
+  sırası korunur. Değişiklik yine yalnızca kullanıcı onayıyla uygulanır.
 - **Hedefli düzenleme (SEARCH/REPLACE):** Tüm dosyayı yeniden yazmaz; yalnızca değişen blokları
   döndürür. 3 aşamalı eşleştirme (birebir → boşluk-normalize → satır bazlı, girinti toleranslı).
   Eşleşmeyen düzenleme **körlemesine uygulanmaz**, kullanıcıya bildirilir.
@@ -52,6 +57,14 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   Anthropic'te `cache_control: ephemeral`, OpenAI'de otomatik önek önbelleği, Gemini'de örtük önbellek.
 - **Token disiplini:** Dosya yalnızca son mesaja eklenir (her turda değil), geçmiş 12 mesajla sınırlanır,
   base64 data-URI'ler bağlamdan çıkarılır (587 KB → 79 KB, %87 tasarruf).
+- **Durdur düğmesi + timeout (v2.27.1):** Yanıt beklenirken "Gönder"in yerini kırmızı **"■ Durdur"**
+  alır; basınca gösterge anında kapanır ve **geç gelen yanıt sohbete sızmaz** (her isteğe kimlik
+  verilir, iptalde kimlik geçersizleşir). Ajan modunda turlar arasında da kontrol edilir. Ayrıca
+  her AI çağrısında bağlantı için 15 sn / yanıt için 180 sn üst sınır vardır — sağlayıcı yanıt
+  vermezse uygulama **sonsuza kadar beklemez**, anlamlı hata verir.
+- **Ölçülebilir çağrılar (v2.27.1):** Her AI isteği günlüğe yazılır — sağlayıcı, model, uç nokta,
+  bağlam boyutu, süre, sonuç ve gerçek hata gövdesi. **API anahtarı loglanmaz.**
+  (Ayarlar → Hakkında → "Günlük klasörünü aç")
 
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 

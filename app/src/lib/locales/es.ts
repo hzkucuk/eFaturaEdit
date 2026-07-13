@@ -178,6 +178,7 @@ export const es: Messages = {
   },
 
   settings: {
+    aiModelCustomTitle: 'Elegir de la lista / escribir el nombre del modelo manualmente',
     title: 'Ajustes',
     resetAll: 'Restablecer valores predeterminados',
 
@@ -386,6 +387,9 @@ export const es: Messages = {
     fileNotice: 'Este chat se inició para "{file}"; ahora hay otro archivo abierto. Abre "＋ Nuevo chat" para el archivo nuevo.',
     empty: 'Pregunta algo sobre el XSLT/XML — p. ej. "añade una fila de totales a esta tabla" o "encuentra el error en este XPath".',
     thinking: 'Pensando…',
+    stop: '■ Detener',
+    stopTitle: 'Dejar de esperar la respuesta (una respuesta tardía se descarta)',
+    cancelledNote: '⏹ Solicitud detenida.',
     applyToEditor: '✓ Aplicar al editor ({what})',
     editsCount: '{n} cambio(s)',
     fullFile: '{target} — archivo completo ({lines} líneas)',

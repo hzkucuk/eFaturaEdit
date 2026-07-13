@@ -45,6 +45,19 @@
   let modelOptions = $state<string[]>([]);
   let modelsLoading = $state(false);
   let modelsError = $state('');
+  /** Elle model adı yazma modu (Ollama/yerel uçlar için; liste her zaman yeterli değil). */
+  let customModel = $state(false);
+
+  /**
+   * Listede gösterilecek modeller. Kayıtlı model listede yoksa (ör. sağlayıcı
+   * adı değiştirmiş, ya da kullanıcı elle yazmış) BAŞA eklenir — aksi halde
+   * <select> onu gösteremez ve seçim sessizce başka bir modele kayar.
+   */
+  const modelChoices = $derived(
+    currentAiConfig.model && !modelOptions.includes(currentAiConfig.model)
+      ? [currentAiConfig.model, ...modelOptions]
+      : modelOptions,
+  );
 
   // Google'ın ListModels uç noktası "-latest" takma adlarını (ör.
   // gemini-flash-latest) hiç listelemiyor, ama bu takma adlar sağlayıcı
@@ -381,28 +394,50 @@
 
       <div class="row">
         <label for="ai-model">Model</label>
-        <input
-          id="ai-model"
-          type="text"
-          list="ai-model-list"
-          placeholder="ör. claude-sonnet-5"
-          value={currentAiConfig.model}
-          oninput={(e) =>
-            updateAiProviderConfig(
-              settings.aiProvider,
-              'model',
-              (e.currentTarget as HTMLInputElement).value,
-            )}
-        />
+        {#if customModel || modelOptions.length === 0}
+          <input
+            id="ai-model"
+            type="text"
+            placeholder="ör. claude-sonnet-5"
+            value={currentAiConfig.model}
+            oninput={(e) =>
+              updateAiProviderConfig(
+                settings.aiProvider,
+                'model',
+                (e.currentTarget as HTMLInputElement).value,
+              )}
+          />
+        {:else}
+          <!-- Açılır liste; ÖNCEDEN <input list=datalist> idi ama native datalist
+               önerileri kutudaki metne göre FİLTRELER → seçili model yazılıyken
+               diğer modeller hiç görünmüyordu (kullanıcı "tek model geliyor" diye
+               bildirdi). Gerçek <select> hepsini her zaman gösterir. -->
+          <select
+            id="ai-model"
+            value={currentAiConfig.model}
+            onchange={(e) =>
+              updateAiProviderConfig(
+                settings.aiProvider,
+                'model',
+                (e.currentTarget as HTMLSelectElement).value,
+              )}
+          >
+            {#each modelChoices as choice}
+              <option value={choice}>{choice}</option>
+            {/each}
+          </select>
+        {/if}
+        <button
+          class="fetch-models"
+          onclick={() => (customModel = !customModel)}
+          title={m.settings.aiModelCustomTitle}
+        >
+          {customModel ? '☰' : '✎'}
+        </button>
         <button class="fetch-models" onclick={fetchModels} disabled={modelsLoading} title="Sağlayıcıdan kullanılabilir modelleri getir">
           {modelsLoading ? '…' : '🔄 Getir'}
         </button>
       </div>
-      <datalist id="ai-model-list">
-        {#each modelOptions as m}
-          <option value={m}></option>
-        {/each}
-      </datalist>
       {#if modelsError}
         <p class="model-error">{modelsError}</p>
       {/if}

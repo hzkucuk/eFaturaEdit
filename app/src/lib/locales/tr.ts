@@ -178,6 +178,7 @@ export const tr = {
   },
 
   settings: {
+    aiModelCustomTitle: 'Listeden seç / model adını elle yaz',
     title: 'Ayarlar',
     resetAll: 'Varsayılana Sıfırla',
 
@@ -386,6 +387,9 @@ export const tr = {
     fileNotice: 'Bu sohbet "{file}" için başlatıldı; şu an açık dosya farklı. Yeni dosya için "＋ Yeni sohbet" açabilirsiniz.',
     empty: 'XSLT/XML hakkında bir şey sorun — örn. "bu tabloya toplam satırı ekle" veya "bu XPath ifadesindeki hatayı bul".',
     thinking: 'Düşünüyor…',
+    stop: '■ Durdur',
+    stopTitle: 'Yanıt beklemeyi bırak (geç gelen yanıt yok sayılır)',
+    cancelledNote: '⏹ İstek durduruldu.',
     applyToEditor: '✓ Editöre Uygula ({what})',
     editsCount: '{n} değişiklik',
     fullFile: '{target} — tüm dosya ({lines} satır)',

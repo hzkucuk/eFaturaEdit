@@ -177,6 +177,7 @@ export const pl: Messages = {
   },
 
   settings: {
+    aiModelCustomTitle: 'Wybierz z listy / wpisz nazwę modelu ręcznie',
     title: 'Ustawienia',
     resetAll: 'Przywróć domyślne',
 
@@ -385,6 +386,9 @@ export const pl: Messages = {
     fileNotice: 'Ten czat rozpoczęto dla „{file}"; teraz otwarty jest inny plik. Otwórz „＋ Nowy czat" dla nowego pliku.',
     empty: 'Zapytaj o coś związanego z XSLT/XML — np. „dodaj wiersz sumy do tej tabeli" albo „znajdź błąd w tym XPath".',
     thinking: 'Myśli…',
+    stop: '■ Zatrzymaj',
+    stopTitle: 'Przestań czekać na odpowiedź (spóźniona odpowiedź zostanie odrzucona)',
+    cancelledNote: '⏹ Żądanie zatrzymane.',
     applyToEditor: '✓ Zastosuj w edytorze ({what})',
     editsCount: 'zmian: {n}',
     fullFile: '{target} — cały plik ({lines} wierszy)',
