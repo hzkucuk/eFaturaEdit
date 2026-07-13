@@ -365,9 +365,21 @@ Kurallar:
   // için işe yaramaz — token'ı boşa harcar. Bağlama koyarken kırpılır; GERÇEK
   // dosya değişmez (düzenlemeler asıl içeriğe uygulanır, base64 korunur).
   function stripHeavyData(s: string): string {
-    return s.replace(
-      /(data:[a-z0-9.+-]+\/[a-z0-9.+-]+;base64,)[A-Za-z0-9+/=\s]{120,}/gi,
-      '$1[BASE64_VERİSİ_KIRPILDI]',
+    return (
+      s
+        // Gömülü görseller (logo vb.) — data URI biçiminde.
+        .replace(
+          /(data:[a-z0-9.+-]+\/[a-z0-9.+-]+;base64,)[A-Za-z0-9+/=\s]{120,}/gi,
+          '$1[BASE64_VERİSİ_KIRPILDI]',
+        )
+        // UBL-TR faturaları kendi tasarımını (XSLT) ve eklerini
+        // `cbc:EmbeddedDocumentBinaryObject` içinde HAM base64 olarak taşır —
+        // tek başına 150+ KB olabilir. Model için tamamen değersiz ama her
+        // istekte token yakar (ölçüldü: 172 KB'lık faturanın 159 KB'ı buydu).
+        .replace(
+          /(<cbc:EmbeddedDocumentBinaryObject\b[^>]*>)[A-Za-z0-9+/=\s]{200,}(<\/cbc:EmbeddedDocumentBinaryObject>)/gi,
+          '$1[GÖMÜLÜ_BELGE_KIRPILDI]$2',
+        )
     );
   }
 

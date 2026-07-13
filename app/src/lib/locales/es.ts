@@ -61,6 +61,8 @@ export const es: Messages = {
   },
 
   panels: {
+    collapseAllTitle: 'Contraer todos los bloques (Cmd/Ctrl+Alt+Shift+[)',
+    expandAllTitle: 'Expandir todos los bloques (Cmd/Ctrl+Alt+Shift+])',
     snippets: 'Fragmentos',
     addSnippet: 'Añadir un fragmento',
     dragHint: 'Clic = insertar en el cursor · Arrastrar = soltar donde quieras',

@@ -61,6 +61,8 @@ export const pl: Messages = {
   },
 
   panels: {
+    collapseAllTitle: 'Zwiń wszystkie bloki (Cmd/Ctrl+Alt+Shift+[)',
+    expandAllTitle: 'Rozwiń wszystkie bloki (Cmd/Ctrl+Alt+Shift+])',
     snippets: 'Fragmenty',
     addSnippet: 'Dodaj nowy fragment',
     dragHint: 'Kliknij = wstaw w kursorze · Przeciągnij = upuść gdziekolwiek',

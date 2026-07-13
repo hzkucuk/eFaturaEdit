@@ -62,6 +62,8 @@ export const en: Messages = {
   },
 
   panels: {
+    collapseAllTitle: 'Collapse all blocks (Cmd/Ctrl+Alt+Shift+[)',
+    expandAllTitle: 'Expand all blocks (Cmd/Ctrl+Alt+Shift+])',
     snippets: 'Snippets',
     addSnippet: 'Add a new snippet',
     dragHint: 'Click = insert at cursor · Drag = drop anywhere',

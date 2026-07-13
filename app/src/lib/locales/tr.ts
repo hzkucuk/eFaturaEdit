@@ -63,6 +63,8 @@ export const tr = {
   },
 
   panels: {
+    collapseAllTitle: 'Tüm blokları katla (Cmd/Ctrl+Alt+Shift+[)',
+    expandAllTitle: 'Tüm blokları aç (Cmd/Ctrl+Alt+Shift+])',
     snippets: 'Snippet’ler',
     addSnippet: 'Yeni snippet ekle',
     dragHint: 'Tıkla = imlece ekle · Sürükle = istediğin yere bırak',

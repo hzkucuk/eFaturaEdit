@@ -3,6 +3,23 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.27.3] — 2026-07-13 — Kod Katlama Kısayolları + Örnek Faturadan 159 KB Ölü Yük Kalktı
+
+### Eklenen
+- **Katlama (fold) kısayolları ve düğmeleri.** Fold gutter (satır numarası yanındaki oklar)
+  vardı ama `foldKeymap` keymap'e hiç eklenmemişti — klavye kısayolları çalışmıyordu.
+  Artık `Cmd/Ctrl+Alt+[` katlar, `+]` açar, `+Shift+[` / `+Shift+]` hepsini katlar/açar.
+  Ayrıca her editör başlığında **⊟ / ⊞** düğmeleri (tümünü katla / tümünü aç). 5 dilde.
+
+### Değiştirilen
+- **Örnek fatura (`default.xml`) 172 KB → 14 KB (%91 küçüldü).** Dosyanın 159 KB'ı,
+  `cac:AdditionalDocumentReference` altında **base64 gömülü bir XSLT tasarımıydı**
+  (`DocumentType: XSLT`) — bu editörde tamamen gereksiz. Doğrulandı: kaldırıldıktan sonra
+  Saxon çıktısı **bayt bayt aynı** (542.530 bayt HTML), yani faturanın görünümü değişmiyor.
+- **AI bağlamı: gömülü belgeler kırpılıyor.** `cbc:EmbeddedDocumentBinaryObject` içindeki ham
+  base64 (gerçek UBL-TR faturaları kendi tasarımını böyle taşır) artık modele gönderilmiyor.
+  Önceden yalnızca `data:` URI'leri kırpılıyordu; ham base64 her istekte token yakıyordu.
+
 ## [2.27.2] — 2026-07-13 — Kesik AI Yanıtı Artık Dosyayı Bozmuyor + Gerçek XML Hataları
 
 ### Düzeltilen

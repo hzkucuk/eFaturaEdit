@@ -22,6 +22,9 @@
   import {
     bracketMatching,
     foldGutter,
+    foldKeymap,
+    foldAll,
+    unfoldAll,
     indentOnInput,
     indentUnit,
     HighlightStyle,
@@ -207,7 +210,17 @@
         foldGutter(),
         indentOnInput(),
         search(),
-        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, ...completionKeymap, indentWithTab]),
+        // foldKeymap: katlama kısayolları (Cmd/Ctrl+Alt+[ katla, +] aç,
+        // Cmd/Ctrl+Alt+Shift+[ hepsini katla). Fold gutter (fare ile ok) zaten
+        // vardı ama klavye kısayolları keymap'e hiç eklenmemişti.
+        keymap.of([
+          ...defaultKeymap,
+          ...historyKeymap,
+          ...searchKeymap,
+          ...completionKeymap,
+          ...foldKeymap,
+          indentWithTab,
+        ]),
         buildLanguage(),
 
         // Arama paneli sözleri: tr → Türkçe; diğer diller → CodeMirror'ın
@@ -377,6 +390,22 @@
       redo(view!);
       view!.focus();
     });
+  }
+
+  /** Tüm katlanabilir blokları katla (UBL-TR belgeleri derin iç içedir). */
+  export function collapseAll(): void {
+    if (view) {
+      foldAll(view);
+      view.focus();
+    }
+  }
+
+  /** Tüm katlı blokları aç. */
+  export function expandAll(): void {
+    if (view) {
+      unfoldAll(view);
+      view.focus();
+    }
   }
 
   export function goToLine(line: number, column = 1): void {

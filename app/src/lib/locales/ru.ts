@@ -61,6 +61,8 @@ export const ru: Messages = {
   },
 
   panels: {
+    collapseAllTitle: 'Свернуть все блоки (Cmd/Ctrl+Alt+Shift+[)',
+    expandAllTitle: 'Развернуть все блоки (Cmd/Ctrl+Alt+Shift+])',
     snippets: 'Сниппеты',
     addSnippet: 'Добавить сниппет',
     dragHint: 'Клик = вставить в курсор · Перетаскивание = отпустить где угодно',

@@ -1921,6 +1921,10 @@ window.addEventListener('message', function(e) {
         {/if}
         <span class="ph-meta">{editorState.xsltText.length.toLocaleString()} {m.common.characters}</span>
         {#if editorState.xsltDirty}<span class="dirty-mark" title={m.common.unsavedChanges}>●</span>{/if}
+        {#if !showWelcome}
+          <button class="ph-fold" onclick={() => xsltEditor?.collapseAll()} title={m.panels.collapseAllTitle}>⊟</button>
+          <button class="ph-fold" onclick={() => xsltEditor?.expandAll()} title={m.panels.expandAllTitle}>⊞</button>
+        {/if}
       </div>
       <div class="editor-slot" data-editor-kind="xslt">
         {#if showWelcome}
@@ -1957,6 +1961,10 @@ window.addEventListener('message', function(e) {
         {/if}
         <span class="ph-meta">{editorState.xmlText.length.toLocaleString()} {m.common.characters}</span>
         {#if editorState.xmlDirty}<span class="dirty-mark" title={m.common.unsavedChanges}>●</span>{/if}
+        {#if !showWelcome}
+          <button class="ph-fold" onclick={() => xmlEditor?.collapseAll()} title={m.panels.collapseAllTitle}>⊟</button>
+          <button class="ph-fold" onclick={() => xmlEditor?.expandAll()} title={m.panels.expandAllTitle}>⊞</button>
+        {/if}
       </div>
       <div class="editor-slot" data-editor-kind="xml">
         {#if showWelcome}
@@ -3100,6 +3108,19 @@ window.addEventListener('message', function(e) {
     background: #2d2d30; color: #a0a0a0; border-bottom-color: #3f3f46;
   }
   .dirty-mark { color: #f59e0b; font-size: 14px; line-height: 1; }
+
+  /* Katla/aç düğmeleri — fold gutter oklarına klavye/fare alternatifi. */
+  .ph-fold {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.55;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 0 2px;
+  }
+  .ph-fold:hover { opacity: 1; }
 
   /* Drag ghost — mouse'un yanında hareket eden görsel */
   .drag-ghost {
