@@ -3,6 +3,35 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.33.0] — 2026-07-14 — Önizleme Sağ Tık Menüsü: Arama, Kopyalama, Zoom, Görsel
+
+### Eklenen
+- **Önizlemede arama (⌘/Ctrl+F).** Eşleşmeler önizlemede sarı, geçerli eşleşme turuncu vurgulanır;
+  `3/17` sayacı, ↑/↓ ile gezinme, Enter/Shift+Enter, Esc ile kapatma. Kısayol **iframe'in içinden**
+  köprüyle geliyor — iframe'e odaklıyken basılan tuşlar ana pencereye ulaşmaz (ders 8).
+  Vurgular yalnızca önizlemede yaşar: arama kapanınca DOM **birebir eski hâline** döner, XSLT'ye
+  veya "HTML'i Kopyala" çıktısına **sızmaz**.
+- **Seçimi Kopyala / Metni Kopyala (düz metin) / Tümünü Seç.** Seçim iframe'in içinde yaşadığı için
+  postMessage köprüsünden taşınır; seçim yoksa menü maddesi soluk görünür.
+- **Yakınlaştır / Uzaklaştır / Sıfırla** — mevcut `previewZoom` ayarına bağlandı (yüzde de gösterilir).
+- **Görseli Kopyala / Görseli Kaydet…** — önizlemede bir görsele (logo, QR, imza) sağ tıklayınca çıkar.
+  Kopyalama görüntüyü canvas'ta ham RGBA'ya çözüp panoya yazar → **PNG, JPEG, WebP, SVG** hepsi
+  çalışır. Kaydetme **orijinal baytları** yazar (yeniden kodlanmaz, kalite düşmez).
+
+### Düzeltilen
+- **Yakınlaştırılmış önizlemede sağ tık menüsü yanlış yere açılıyordu.** Iframe `scale()` ile
+  ölçekleniyor; içeriden gelen koordinatlar zoom ile çarpılmadan kullanılıyordu.
+
+### Notlar
+- `Image.fromBytes()` **kullanılmadı**: yalnızca PNG/ICO destekliyor ve `image-png` Cargo özelliğini
+  istiyor (bu projede açık değil) — JPEG logoda sessizce çuvallardı.
+- Yeni native yetenekler için capability izinleri eklendi: `clipboard-manager:allow-write-image`
+  (görsel panoya) ve `fs:allow-write-file` (ikili dosya yazma). İzin eklenmeden bu işlevler
+  sessizce reddedilirdi.
+- Editörlerin sağ tık menüsünde kes/kopyala/yapıştır/ara zaten vardı; eksik olan önizleme menüsüydü.
+  **Yapıştır önizlemeye eklenmedi** — salt-okunur bir render olduğu için yapıştırılan içerik ilk
+  dönüşümde silinirdi (ölü menü maddesi bırakmamak için bilinçli tercih).
+
 ## [2.32.1] — 2026-07-14 — Metin-Only Modele Görsel: Sebebi Söyleyen Hata
 
 ### Düzeltilen

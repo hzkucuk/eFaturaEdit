@@ -182,6 +182,16 @@ fatura sidecar'a beslenip karşılaştırıldı, tek fark eklenen sayfa kabı `<
   XSLT editöründe ayrıca **snippet'ler kategori alt menüsünden** imlece eklenir. Pano, Tauri'nin
   `clipboard-manager` eklentisiyle OS üzerinden okunur (webview'ın `readText()`'i sessizce boş
   dönebiliyor); hata olursa durum çubuğunda **görünür** şekilde bildirilir.
+- **Önizleme sağ tık menüsü (v2.33.0):** Seçimi kopyala · Metni kopyala (düz metin) · Tümünü seç ·
+  **Önizlemede ara (⌘/Ctrl+F)** · Yazdır/PDF · HTML'i kopyala · Yakınlaştır/Uzaklaştır/Sıfırla ·
+  Yeniden dönüştür · Geliştirici araçları. Bir **görsele** (logo, QR, imza) sağ tıklarsan ayrıca
+  **Görseli Kopyala / Kaydet** çıkar — kopyalama canvas'ta ham RGBA'ya çözerek yapılır (PNG, JPEG,
+  WebP, SVG hepsi çalışır), kaydetme **orijinal baytları** yazar.
+  **Arama:** eşleşmeler önizlemede vurgulanır (`3/17` sayacı, ↑/↓ gezinme); vurgular yalnızca
+  önizlemede yaşar, kapanınca DOM **birebir eski hâline** döner — XSLT'ye veya "HTML'i Kopyala"
+  çıktısına sızmaz. Önizleme bir **iframe** olduğu için seçim, tıklanan görsel ve hatta **⌘F tuşu**
+  ana pencereye postMessage köprüsüyle taşınır (iframe olayları dışarı çıkmaz).
+  **Yapıştır bilerek yok:** önizleme salt-okunur bir render; yapıştırılan içerik ilk dönüşümde silinirdi.
 - **12 tema:** Açık/koyu varyantlar; tema **belge kökünde** (`html.dark`) uygulanır — modallar,
   ayrı rotalar ve kapsamlı bileşenler dahil **tüm alanlara** yansır.
 - **Dosya işlemleri:** Aç / Kaydet / Farklı Kaydet (native dialog), `Cmd/Ctrl+S` ile XSLT+XML birlikte

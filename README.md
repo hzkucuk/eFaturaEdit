@@ -10,7 +10,8 @@ görmenizi sağlar.
 - **CodeMirror 6 tabanlı XSLT/XML editörü** — syntax highlight, 11 tema, autocomplete (242 öneri), Türkçeleştirilmiş arama.
 - **149 hazır UBL-TR snippet'i** (e-Fatura, e-Arşiv, e-İrsaliye) + kullanıcı tanımlı snippet ekleme/düzenleme/silme.
 - **Sürükle-bırak** snippet ekleme (editöre veya doğrudan önizlemeye).
-- **Canlı önizleme** — responsive boyut/zoom, sağ tık menüsü, DevTools ile CSS düzenleyip tek tıkla XSLT'ye aktarma.
+- **Canlı önizleme** — responsive boyut/zoom, DevTools ile CSS düzenleyip tek tıkla XSLT'ye aktarma.
+- **Önizleme sağ tık menüsü (v2.33.0)** — **önizlemede ara (⌘/Ctrl+F, vurgulu, `3/17` sayacı)**, seçimi/metni kopyala, tümünü seç, yakınlaştır/uzaklaştır, yazdır/PDF. Logo veya QR gibi bir **görsele** sağ tıklayınca: görseli kopyala / kaydet.
 - **Çoklu dosya sekmesi** — her sekme bir XSLT+XML çifti ve kendi önizlemesi (`Cmd/Ctrl+T`, `Cmd/Ctrl+1…9`, `Ctrl+Tab`). Kaydedilmemiş çalışma asla ezilmez, çıkış koruması tüm sekmeleri kapsar.
 - **17 GİB resmi örnek senaryosu** + kullanıcı kendi örnek klasörünü yönetebilir.
 - **Otomatik dönüştür, otomatik kaydet, çıkışta kaydetme kontrolü.**

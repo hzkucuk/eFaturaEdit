@@ -116,7 +116,17 @@
   let previewFrame = $state<HTMLIFrameElement>();
 
   // Preview sağ tık menüsü
-  let previewMenu = $state<{ x: number; y: number } | null>(null);
+  /** Önizleme sağ tık menüsü. `selection`/`img` iframe'den köprüyle gelir (ders 8). */
+  let previewMenu = $state<{
+    x: number;
+    y: number;
+    selection: string;
+    img: { src: string; w: number; h: number } | null;
+  } | null>(null);
+
+  /** Önizlemede arama çubuğu. Eşleşmeler iframe içinde vurgulanır. */
+  let previewFind = $state({ open: false, query: '', count: 0, index: 0 });
+  let previewFindInput = $state<HTMLInputElement | null>(null);
 
   // Panel boyutları (localStorage persist)
   let snippetsWidth = $state(settings.panelSizes.snippetsWidth);
@@ -1014,6 +1024,161 @@
       .catch((err) => status(f(m.misc.copyFailed, { msg: err.message }), true));
   }
 
+  // ─── Önizleme: kopyala / seç / ara / görsel ────────────────────────────
+  // Seçim, metin ve tıklanan görsel IFRAME'İN içinde yaşar; hepsi postMessage
+  // köprüsünden geçer (ders 8: iframe olayları ana pencereye ulaşmaz).
+
+  function copyPreviewSelection(text: string) {
+    if (!text) return;
+    navigator.clipboard
+      .writeText(text)
+      .then(() => status(f(m.misc.selectionCopied, { n: text.length })))
+      .catch((err) => status(f(m.misc.copyFailed, { msg: err.message }), true));
+  }
+
+  /** iframe'den düz metin isteği — yanıt `preview-text` mesajıyla döner. */
+  let previewTextResolve: ((t: string) => void) | null = null;
+
+  function requestPreviewText(): Promise<string> {
+    return new Promise((resolve) => {
+      previewTextResolve = resolve;
+      previewFrame?.contentWindow?.postMessage({ type: 'preview-get-text' }, '*');
+      // Iframe yanıt vermezse (henüz yüklenmediyse) sonsuza kadar bekleme.
+      setTimeout(() => {
+        if (previewTextResolve === resolve) {
+          previewTextResolve = null;
+          resolve('');
+        }
+      }, 2000);
+    });
+  }
+
+  async function copyPreviewText() {
+    const text = await requestPreviewText();
+    if (!text) {
+      status(m.misc.previewEmpty, true);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      status(f(m.misc.textCopied, { n: text.length }));
+    } catch (err) {
+      status(f(m.misc.copyFailed, { msg: (err as Error).message }), true);
+    }
+  }
+
+  function selectAllPreview() {
+    previewFrame?.contentWindow?.postMessage({ type: 'preview-select-all' }, '*');
+  }
+
+  /**
+   * Görselin baytlarını getir. `data:` URI ise base64 çözülür; http(s) ise indirilir.
+   * Faturalardaki logo/QR neredeyse her zaman gömülü data URI'dır.
+   */
+  async function fetchImageBytes(src: string): Promise<{ bytes: Uint8Array; mime: string }> {
+    if (src.startsWith('data:')) {
+      const comma = src.indexOf(',');
+      const header = src.slice(5, comma);
+      const mime = header.split(';')[0] || 'image/png';
+      const raw = src.slice(comma + 1);
+      const bin = header.includes('base64') ? atob(raw) : decodeURIComponent(raw);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return { bytes, mime };
+    }
+    const resp = await fetch(src);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const buf = await resp.arrayBuffer();
+    return { bytes: new Uint8Array(buf), mime: resp.headers.get('content-type') ?? 'image/png' };
+  }
+
+  /**
+   * Görseli panoya kopyala.
+   *
+   * `Image.fromBytes()` KULLANILMAZ: yalnızca PNG/ICO destekler ve `image-png`
+   * Cargo özelliğini ister (bu projede açık değil) — JPEG logoda sessizce
+   * çuvallardı. Bunun yerine görsel canvas'ta çözülüp HAM RGBA'ya çevrilir;
+   * `Image.new(rgba, w, h)` webview'ın render edebildiği her formatta çalışır.
+   */
+  async function copyPreviewImage(img: { src: string; w: number; h: number }) {
+    try {
+      const el = new window.Image();
+      el.crossOrigin = 'anonymous';
+      await new Promise<void>((resolve, reject) => {
+        el.onload = () => resolve();
+        el.onerror = () => reject(new Error(m.misc.imgLoadFailed));
+        el.src = img.src;
+      });
+      const w = el.naturalWidth || img.w;
+      const h = el.naturalHeight || img.h;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('canvas 2d context alınamadı');
+      ctx.drawImage(el, 0, 0, w, h);
+      // Dış kaynaklı (http) görselde canvas "kirlenir" ve getImageData GÜVENLİK
+      // hatası verir. Sebebi söyle — sessizce boş kopyalama yapma.
+      const data = ctx.getImageData(0, 0, w, h).data;
+
+      const { Image: TauriImage } = await import('@tauri-apps/api/image');
+      const { writeImage } = await import('@tauri-apps/plugin-clipboard-manager');
+      const tImg = await TauriImage.new(new Uint8Array(data.buffer), w, h);
+      await writeImage(tImg);
+      status(f(m.misc.imgCopied, { w, h }));
+    } catch (err) {
+      status(f(m.misc.imgCopyFailed, { msg: (err as Error).message ?? String(err) }), true);
+    }
+  }
+
+  /** Görseli dosyaya kaydet — ORİJİNAL baytlarla (yeniden kodlanmaz, kalite düşmez). */
+  async function savePreviewImage(img: { src: string; w: number; h: number }) {
+    try {
+      const { bytes, mime } = await fetchImageBytes(img.src);
+      const ext = (mime.split('/')[1] ?? 'png').replace('+xml', '').replace('jpeg', 'jpg');
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const path = await save({
+        defaultPath: `gorsel-${Date.now()}.${ext}`,
+        filters: [{ name: 'Görsel', extensions: [ext] }],
+      });
+      if (!path) return;
+      const { writeFile } = await import('@tauri-apps/plugin-fs');
+      await writeFile(path, bytes);
+      status(f(m.misc.imgSaved, { path }));
+    } catch (err) {
+      status(f(m.misc.imgSaveFailed, { msg: (err as Error).message ?? String(err) }), true);
+    }
+  }
+
+  function openPreviewFind() {
+    previewFind.open = true;
+    // Kutu DOM'a girdikten sonra odaklan; açıkken tekrar ⌘F basılırsa metni seç.
+    setTimeout(() => {
+      previewFindInput?.focus();
+      previewFindInput?.select();
+    }, 0);
+  }
+
+  function closePreviewFind() {
+    previewFind.open = false;
+    previewFind.query = '';
+    previewFind.count = 0;
+    previewFind.index = 0;
+    // Vurguları temizle — yoksa <mark>'lar önizlemede asılı kalır.
+    previewFrame?.contentWindow?.postMessage({ type: 'preview-find-clear' }, '*');
+  }
+
+  function runPreviewFind() {
+    previewFrame?.contentWindow?.postMessage(
+      { type: 'preview-find', query: previewFind.query },
+      '*',
+    );
+  }
+
+  function navPreviewFind(dir: number) {
+    previewFrame?.contentWindow?.postMessage({ type: 'preview-find-nav', dir }, '*');
+  }
+
   async function openDevTools() {
     try {
       await invoke('open_devtools');
@@ -1233,7 +1398,35 @@
     const bridgeJs = `
 document.addEventListener('contextmenu', function(e) {
   e.preventDefault();
-  window.parent.postMessage({ type: 'preview-contextmenu', x: e.clientX, y: e.clientY }, '*');
+  /* Seçim ve tıklanan görsel IFRAME'İN İÇİNDE yaşar — ana pencere onlara
+     erişemez (ders 8). Menüyü kurarken lazım olacağı için sağ tık anında
+     birlikte gönderilir; menü maddeleri buna göre etkin/soluk olur. */
+  var sel = '';
+  try { sel = String(window.getSelection() || ''); } catch (err) {}
+  var img = null;
+  var t = e.target;
+  if (t && t.tagName === 'IMG' && t.src) {
+    img = { src: t.src, w: t.naturalWidth || t.width, h: t.naturalHeight || t.height };
+  }
+  window.parent.postMessage({
+    type: 'preview-contextmenu',
+    x: e.clientX, y: e.clientY,
+    selection: sel,
+    img: img,
+  }, '*');
+});
+/* Iframe'e odaklıyken basılan tuşlar da ana pencereye ULAŞMAZ — arama
+   kısayolu bu yüzden köprüden geçirilir. */
+document.addEventListener('keydown', function(e) {
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'F')) {
+    e.preventDefault();
+    window.parent.postMessage({ type: 'preview-find-open' }, '*');
+  } else if (e.key === 'Escape') {
+    window.parent.postMessage({ type: 'preview-find-close' }, '*');
+  } else if (e.key === 'Enter' && __find.marks.length) {
+    e.preventDefault();
+    __findNav(e.shiftKey ? -1 : 1);
+  }
 });
 /* Iframe içindeki tıklamalar ana pencereye ULAŞMAZ; bu yüzden sağ tık menüsü
    önizlemeye tıklayarak kapanmıyordu (menü window'a gelen click ile kapanıyor).
@@ -1251,6 +1444,117 @@ window.addEventListener('message', function(e) {
     } catch (err) { /* erişilemeyen (cross-origin) sheet — atla */ }
   }
   window.parent.postMessage({ type: 'css-captured', css: parts.join('\\n') }, '*');
+});
+
+/* ─── Önizlemede arama ───────────────────────────────────────────────────
+   Eşleşmeler metin düğümleri gezilerek <mark> ile sarılır. \`window.find()\`
+   KULLANILMAZ: standart değildir, seçimi kirletir ve kaç eşleşme olduğunu
+   söylemez. Buradaki yöntem deterministiktir ve sayıyı verir.
+   Vurgular yalnızca ÖNİZLEMEDE yaşar — XSLT'ye/HTML çıktısına yazılmaz;
+   arama kapanınca DOM eski haline döner.                                  */
+var __find = { marks: [], idx: -1 };
+
+function __findStyle() {
+  if (document.getElementById('__efind-style')) return;
+  var st = document.createElement('style');
+  st.id = '__efind-style';
+  st.textContent = '.__efind{background:#ffe58f;color:#1a1a1a}' +
+                   '.__efind.__efind-cur{background:#fa8c16;color:#fff}';
+  (document.head || document.documentElement).appendChild(st);
+}
+
+function __findClear() {
+  for (var i = 0; i < __find.marks.length; i++) {
+    var mk = __find.marks[i];
+    var p = mk.parentNode;
+    if (!p) continue;
+    p.replaceChild(document.createTextNode(mk.textContent), mk);
+    p.normalize();
+  }
+  __find.marks = [];
+  __find.idx = -1;
+}
+
+function __findNav(dir) {
+  if (!__find.marks.length) return;
+  var cur = __find.marks[__find.idx];
+  if (cur) cur.className = '__efind';
+  __find.idx = (__find.idx + dir + __find.marks.length) % __find.marks.length;
+  var next = __find.marks[__find.idx];
+  next.className = '__efind __efind-cur';
+  next.scrollIntoView({ block: 'center', inline: 'nearest' });
+  window.parent.postMessage({
+    type: 'preview-find-result', count: __find.marks.length, index: __find.idx + 1,
+  }, '*');
+}
+
+function __findRun(q) {
+  __findClear();
+  if (!q) {
+    window.parent.postMessage({ type: 'preview-find-result', count: 0, index: 0 }, '*');
+    return;
+  }
+  __findStyle();
+  var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: function(n) {
+      if (!n.nodeValue) return NodeFilter.FILTER_REJECT;
+      var p = n.parentNode;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      var tag = p.nodeName;
+      /* Script/style içeriği ekranda görünmez — aramaya girmemeli. */
+      if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT') return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  var nodes = [], n;
+  while ((n = walker.nextNode())) nodes.push(n);
+
+  var ql = q.toLowerCase();
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i], text = node.nodeValue, lower = text.toLowerCase();
+    var at = lower.indexOf(ql);
+    if (at < 0) continue;
+    var frag = document.createDocumentFragment(), last = 0;
+    while (at >= 0) {
+      if (at > last) frag.appendChild(document.createTextNode(text.slice(last, at)));
+      var mk = document.createElement('mark');
+      mk.className = '__efind';
+      mk.textContent = text.slice(at, at + q.length);
+      frag.appendChild(mk);
+      __find.marks.push(mk);
+      last = at + q.length;
+      at = lower.indexOf(ql, last);
+    }
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+  }
+
+  if (__find.marks.length) {
+    __find.idx = -1;
+    __findNav(1);
+  } else {
+    window.parent.postMessage({ type: 'preview-find-result', count: 0, index: 0 }, '*');
+  }
+}
+
+window.addEventListener('message', function(e) {
+  var d = e.data;
+  if (!d) return;
+  if (d.type === 'preview-find') { __findRun(d.query || ''); return; }
+  if (d.type === 'preview-find-nav') { __findNav(d.dir || 1); return; }
+  if (d.type === 'preview-find-clear') { __findClear(); return; }
+  if (d.type === 'preview-select-all') {
+    var r = document.createRange();
+    r.selectNodeContents(document.body);
+    var s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+    return;
+  }
+  if (d.type === 'preview-get-text') {
+    window.parent.postMessage({ type: 'preview-text', text: document.body.innerText || '' }, '*');
+    return;
+  }
 });
 
 /* ─── Görsel düzenleyici (WYSIWYG Faz 1) ────────────────────────────────
@@ -1713,12 +2017,37 @@ window.addEventListener('message', function(e) {
       return;
     }
 
+    if (e.data.type === 'preview-find-open') {
+      openPreviewFind();
+      return;
+    }
+    if (e.data.type === 'preview-find-close') {
+      closePreviewFind();
+      return;
+    }
+    if (e.data.type === 'preview-find-result') {
+      previewFind.count = e.data.count ?? 0;
+      previewFind.index = e.data.index ?? 0;
+      return;
+    }
+    if (e.data.type === 'preview-text') {
+      previewTextResolve?.(e.data.text ?? '');
+      previewTextResolve = null;
+      return;
+    }
+
     if (e.data.type !== 'preview-contextmenu') return;
     const rect = previewFrame?.getBoundingClientRect();
     if (!rect) return;
+    // Iframe `scale(previewZoom)` ile ölçekleniyor: içeriden gelen koordinatlar
+    // iframe'in KENDİ piksellerinde: ekran konumuna çevirmek için zoom'la çarp.
+    // (Aksi halde yakınlaştırılmış önizlemede menü tıklanan yerden uzağa düşer.)
+    const z = settings.previewZoom;
     previewMenu = {
-      x: rect.left + (e.data.x ?? 0),
-      y: rect.top + (e.data.y ?? 0),
+      x: rect.left + (e.data.x ?? 0) * z,
+      y: rect.top + (e.data.y ?? 0) * z,
+      selection: e.data.selection ?? '',
+      img: e.data.img ?? null,
     };
   }
 
@@ -2377,6 +2706,46 @@ window.addEventListener('message', function(e) {
         </div>
       {/if}
 
+      {#if previewFind.open}
+          <!-- Önizlemede arama. Eşleşmeler iframe içinde <mark> ile vurgulanır;
+               kapanınca DOM eski haline döner (XSLT/HTML çıktısı DEĞİŞMEZ). -->
+          <div class="preview-find">
+            <input
+              bind:this={previewFindInput}
+              bind:value={previewFind.query}
+              oninput={runPreviewFind}
+              onkeydown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); navPreviewFind(e.shiftKey ? -1 : 1); }
+                else if (e.key === 'Escape') { e.preventDefault(); closePreviewFind(); }
+              }}
+              placeholder={m.preview.findPlaceholder}
+              spellcheck="false"
+            />
+            <span class="find-count" class:none={previewFind.query !== '' && previewFind.count === 0}>
+              {#if previewFind.query === ''}
+                &nbsp;
+              {:else if previewFind.count === 0}
+                {m.preview.findNoMatch}
+              {:else}
+                {previewFind.index}/{previewFind.count}
+              {/if}
+            </span>
+            <button
+              class="find-btn"
+              disabled={previewFind.count === 0}
+              title={m.preview.findPrev}
+              onclick={() => navPreviewFind(-1)}>↑</button
+            >
+            <button
+              class="find-btn"
+              disabled={previewFind.count === 0}
+              title={m.preview.findNext}
+              onclick={() => navPreviewFind(1)}>↓</button
+            >
+            <button class="find-btn" title={m.preview.findClose} onclick={closePreviewFind}>✕</button>
+        </div>
+      {/if}
+
       <div class="preview-frame-wrap">
         <div
           class="preview-frame-container"
@@ -2484,10 +2853,40 @@ window.addEventListener('message', function(e) {
 
 <!-- ─── Preview sağ tık menü ──────────────────────────────────────── -->
 {#if previewMenu}
-  <ContextMenu x={previewMenu.x} y={previewMenu.y} onclose={() => (previewMenu = null)}>
+  {@const menu = previewMenu}
+  <ContextMenu x={menu.x} y={menu.y} onclose={() => (previewMenu = null)}>
     {#snippet children()}
+      {#if menu.img}
+        {@const img = menu.img}
+        <button onclick={() => { copyPreviewImage(img); previewMenu = null; }}>
+          {m.preview.menuCopyImage}
+        </button>
+        <button onclick={() => { savePreviewImage(img); previewMenu = null; }}>
+          {m.preview.menuSaveImage}
+        </button>
+        <div class="divider"></div>
+      {/if}
+      <button
+        disabled={!menu.selection}
+        onclick={() => { copyPreviewSelection(menu.selection); previewMenu = null; }}
+      >
+        {m.preview.menuCopySelection}
+      </button>
+      <button onclick={() => { copyPreviewText(); previewMenu = null; }}>{m.preview.menuCopyText}</button>
+      <button onclick={() => { selectAllPreview(); previewMenu = null; }}>{m.preview.menuSelectAll}</button>
+      <button onclick={() => { openPreviewFind(); previewMenu = null; }}>{m.preview.menuFind}</button>
+      <div class="divider"></div>
       <button onclick={() => { printPreview(); previewMenu = null; }}>{m.preview.menuPrint}</button>
       <button onclick={() => { copyPreviewHtml(); previewMenu = null; }}>{m.preview.menuCopyHtml}</button>
+      <div class="divider"></div>
+      <button onclick={() => { zoomPreview(0.1); previewMenu = null; }}>{m.preview.menuZoomIn}</button>
+      <button onclick={() => { zoomPreview(-0.1); previewMenu = null; }}>{m.preview.menuZoomOut}</button>
+      <button
+        disabled={settings.previewZoom === 1}
+        onclick={() => { resetZoom(); previewMenu = null; }}
+      >
+        {f(m.preview.menuZoomReset, { pct: Math.round(settings.previewZoom * 100) })}
+      </button>
       <div class="divider"></div>
       <button onclick={() => { runTransform(); previewMenu = null; }}>{m.preview.menuRetransform}</button>
       <button onclick={() => { openDevTools(); previewMenu = null; }}>{m.preview.menuDevtools}</button>
@@ -3258,6 +3657,64 @@ window.addEventListener('message', function(e) {
 
   .preview { position: relative; display: flex; flex-direction: column; background: #f0f2f5; overflow: hidden; }
   .app.dark .preview { background: #1a1a1a; }
+  /* Önizlemede arama çubuğu — iframe'in ÜSTÜNDE, akışta durur (kaydırınca
+     kaybolmasın). Iframe'in içindeki ⌘F köprüden buraya gelir (ders 8). */
+  .preview-find {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+  }
+  .preview-find input {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 8px;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .preview-find .find-count {
+    min-width: 62px;
+    text-align: right;
+    font-size: 12px;
+    color: #6b7280;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .preview-find .find-count.none {
+    color: #dc2626;
+  }
+  .preview-find .find-btn {
+    padding: 3px 8px;
+    border: 1px solid #cbd0d6;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .preview-find .find-btn:hover:not(:disabled) {
+    background: #eef4ff;
+  }
+  .preview-find .find-btn:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+  :global(.app.dark) .preview-find {
+    background: #252526;
+    border-bottom-color: #3f3f46;
+  }
+  :global(.app.dark) .preview-find input,
+  :global(.app.dark) .preview-find .find-btn {
+    background: #2d2d30;
+    border-color: #4b5563;
+    color: #e6e6e6;
+  }
+  :global(.app.dark) .preview-find .find-btn:hover:not(:disabled) {
+    background: #094771;
+  }
   .preview-frame-wrap {
     flex: 1;
     overflow: auto;
