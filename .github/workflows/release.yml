@@ -169,8 +169,17 @@ jobs:
         with:
           projectPath: ./app
           tagName: ${{ github.ref_name }}
-          # Updater'ın okuduğu manifest (latest.json) release'e eklensin.
-          includeUpdaterJson: true
+          # ⚠️ KAPALI OLMALI (v2.33.2). Açıkken HER matris işi latest.json'u
+          # release'e yüklüyordu: işler paralel koştuğu için biri diğerinin
+          # yazdığını EZİYOR (oku-değiştir-yaz yarışı). v2.33.1'de tam da bu oldu —
+          # latest.json 15 yerine 9 platformla çıktı; darwin-aarch64 (Apple Silicon)
+          # ve linux-aarch64 kayboldu. Ürünler release'te duruyordu ama updater
+          # onları görmüyordu: o platformlardaki kullanıcılar güncellemeyi HİÇ
+          # GÖRMEZ, hata da almaz. (Aynı yarış "ReleaseAsset already_exists"
+          # hatasını da üretti.)
+          # Manifest artık matris bittikten SONRA, tek elden `verify` işinde
+          # üretiliyor — yarışacak kimse kalmıyor.
+          includeUpdaterJson: false
           releaseName: 'e-Fatura Edit ${{ github.ref_name }}'
           releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: false
@@ -202,13 +211,99 @@ jobs:
           echo "  gh run rerun <run-id> --failed"
           exit 1
 
+      # ───────────────────────────────────────────────────────────────────
+      # Manifesti TEK ELDEN üret (v2.33.2). Eskiden bunu her matris işi
+      # yapıyordu ve birbirlerinin yazdığını eziyorlardı (bkz. includeUpdaterJson).
+      #
+      # Kaynak: release'teki GERÇEK varlıklar ve GERÇEK .sig dosyaları. İmza
+      # uydurulmaz, dosya adı tahmin edilmez — ne yüklendiyse o okunur.
+      # 15 girdinin tamamı kurulamıyorsa manifest YAZILMAZ ve iş kırmızıya döner:
+      # eksik bir manifest, "bazı kullanıcıya güncelleme var, bazısına sessizce
+      # yok" demektir — hiç manifest olmamasından beterdir.
+      # ───────────────────────────────────────────────────────────────────
+      - name: latest.json'u release varlıklarından üret (yarışsız)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          rm -rf manifest && mkdir manifest && cd manifest
+
+          # İmzalar release'ten indirilir (tauri her ürün için .sig üretti).
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.sig'
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body,publishedAt > meta.json
+
+          python3 - <<'PY'
+          import json, os, re, sys, pathlib
+
+          tag  = os.environ['TAG']
+          repo = os.environ['GITHUB_REPOSITORY']
+          base = f"https://github.com/{repo}/releases/download/{tag}"
+
+          # Ürün dosyası deseni → updater platform anahtar(lar)ı.
+          # (Takma adlar dahil 15 anahtar: macOS ×4, Linux ×8, Windows ×3.)
+          RULES = [
+              (r'_aarch64\.app\.tar\.gz$', ['darwin-aarch64', 'darwin-aarch64-app']),
+              (r'_x64\.app\.tar\.gz$',     ['darwin-x86_64',  'darwin-x86_64-app']),
+              (r'_aarch64\.AppImage$',     ['linux-aarch64',  'linux-aarch64-appimage']),
+              (r'_arm64\.deb$',            ['linux-aarch64-deb']),
+              (r'\.aarch64\.rpm$',         ['linux-aarch64-rpm']),
+              (r'_amd64\.AppImage$',       ['linux-x86_64',   'linux-x86_64-appimage']),
+              (r'_amd64\.deb$',            ['linux-x86_64-deb']),
+              (r'\.x86_64\.rpm$',          ['linux-x86_64-rpm']),
+              (r'_x64_en-US\.msi$',        ['windows-x86_64', 'windows-x86_64-msi']),
+              (r'_x64-setup\.exe$',        ['windows-x86_64-nsis']),
+          ]
+          EXPECTED = 15
+
+          platforms = {}
+          for sig in sorted(pathlib.Path('.').glob('*.sig')):
+              asset = sig.name[:-4]                      # ".sig" ekini at → ürün dosyası
+              signature = sig.read_text().strip()
+              if not signature:
+                  print(f"::error::İmza dosyası boş: {sig.name}")
+                  sys.exit(1)
+              for pattern, keys in RULES:
+                  if re.search(pattern, asset):
+                      for k in keys:
+                          platforms[k] = {"signature": signature, "url": f"{base}/{asset}"}
+                      break
+              else:
+                  print(f"  (eşleşmeyen varlık, atlandı: {asset})")
+
+          meta = json.load(open('meta.json'))
+          manifest = {
+              "version":   tag.lstrip('v'),
+              "notes":     meta.get('body') or f"e-Fatura Edit {tag}",
+              "pub_date":  meta.get('publishedAt'),
+              "platforms": platforms,
+          }
+
+          print(f"üretilen platform sayısı: {len(platforms)} (beklenen {EXPECTED})")
+          for k in sorted(platforms):
+              print(f"  - {k}")
+
+          if len(platforms) != EXPECTED:
+              missing = EXPECTED - len(platforms)
+              print(f"::error::latest.json {len(platforms)} platformla kurulabildi, {EXPECTED} bekleniyordu "
+                    f"({missing} eksik). Manifest YAZILMADI — eksik manifest, o platformdaki kullanıcılara "
+                    "güncellemeyi SESSİZCE göstermez. Düşen işi yeniden çalıştırın: gh run rerun <id> --failed")
+              sys.exit(1)
+
+          json.dump(manifest, open('latest.json', 'w'), indent=2, ensure_ascii=False)
+          PY
+
+          gh release upload "$TAG" latest.json --repo "$GITHUB_REPOSITORY" --clobber
+
+      # Yukarıda ürettik diye doğru olduğunu VARSAYMA — release'te CANLI duran
+      # dosyayı indirip say (ders 1: bir işin bittiğini varsayma, çıktısını doğrula).
       - name: latest.json — 15 platform, hepsi imzalı mı?
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern latest.json --output latest.json
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern latest.json --output latest.json --clobber
 
           python3 - <<'PY'
           import json, os, sys

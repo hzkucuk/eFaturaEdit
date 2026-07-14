@@ -323,6 +323,16 @@ dosya sistemine, ayarlara veya başka bir işleve doğrudan erişemez.
   (`TAURI_SIGNING_PRIVATE_KEY` + `..._PASSWORD`), yedeği `~/.tauri/efaturaedit.key`(+`.password`).
   **Kaybolursa kurulu uygulamalara bir daha güncelleme gönderilemez.** Açık anahtarı değiştirmek de
   aynı sonucu doğurur — eski kurulumlar yeni imzayı reddeder. **Asla rotate etme.**
+- ⚠️ **`latest.json` yarışı (v2.33.1'de vurdu).** `tauri-action`'ın `includeUpdaterJson: true` ayarı
+  **her matris işinde** manifesti release'e yükler; işler paralel koştuğu için biri diğerinin yazdığını
+  **ezer** (oku-değiştir-yaz yarışı). v2.33.1'de manifest 15 yerine **9 platformla** çıktı —
+  `darwin-aarch64` (Apple Silicon) ve `linux-aarch64` kayboldu. **Ürünler release'te duruyordu**, yalnızca
+  manifest onları göstermiyordu → o kullanıcılar güncellemeyi hiç görmez. Aynı yarış
+  `ReleaseAsset already_exists` hatasını da üretir (derleme hatası sanılır, değildir).
+  **Çözüm (v2.33.2):** `includeUpdaterJson: false` + manifest matris bittikten sonra **tek elden**
+  `verify` işinde, release'teki **gerçek `.sig` dosyalarından** üretilir. 15 girdi kurulamıyorsa
+  manifest **hiç yazılmaz** ve iş kırmızıya döner — eksik manifest, hiç manifest olmamasından beterdir.
+  **Bunu geri alma:** paralel matris + paylaşılan bir dosyaya yazma = yarış; tek yazar şart.
 - Release **taslak (draft) bırakılmamalı** — `latest` onu göstermez, güncelleme akışı sessizce durur.
 - Etiket zaten varsa `git tag -d` + `git push origin :vX.Y.Z` ile silinebilir — **ama** o etiketin
   release'i yayımlanmış/derleniyorsa **silme**, bir sonraki yamayı yeni sürüm olarak çıkar.

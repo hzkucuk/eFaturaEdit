@@ -3,6 +3,33 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.33.2] — 2026-07-14 — `latest.json` Yarışı: Apple Silicon Güncellemeyi Görmüyordu
+
+### Düzeltilen
+- **Otomatik güncelleme manifesti (`latest.json`) eksik yayınlanabiliyordu — sessizce.**
+  `tauri-action`'ın `includeUpdaterJson: true` ayarı **her matris işinde** manifesti release'e
+  yüklüyordu; beş iş paralel koştuğu için biri diğerinin yazdığını **eziyordu** (oku-değiştir-yaz
+  yarışı). v2.33.1'de manifest **15 yerine 9 platformla** çıktı: **`darwin-aarch64` (macOS Apple
+  Silicon)** ve **`linux-aarch64`** kayboldu. Ürünlerin hepsi release'te duruyordu — yalnızca
+  güncelleyicinin okuduğu manifest onları göstermiyordu. Sonuç: **o platformlardaki kullanıcılar
+  güncellemeyi hiç görmez, hata da almaz.** (Aynı yarış, Linux arm64 işinde
+  `ReleaseAsset already_exists` hatasını da üretti — derleme hatası sanılabilir, değildir.)
+- **Çözüm:** `includeUpdaterJson: false`. Manifest artık matris **bittikten sonra**, tek elden
+  `verify` işinde, release'teki **gerçek `.sig` dosyalarından** üretilip yükleniyor. Yazan tek bir
+  iş var → yarışacak kimse yok. İmza uydurulmuyor, dosya adı tahmin edilmiyor: ne yüklendiyse o okunuyor.
+- **Fail-closed:** 15 girdinin tamamı kurulamıyorsa manifest **hiç yazılmaz** ve iş kırmızıya döner.
+  Eksik manifest ("bazı kullanıcıya güncelleme var, bazısına sessizce yok"), hiç manifest
+  olmamasından beterdir.
+- v2.33.1'in bozuk manifesti **elle onarıldı** (15/15 platform, hepsi imzalı) — o sürümü kuran
+  Apple Silicon ve Linux arm64 kullanıcıları artık güncellemeyi görüyor.
+
+### Notlar
+- Üretici, yayınlanmadan önce **v2.33.1'in gerçek varlıklarıyla yerelde koşuldu**: ürettiği manifest
+  elle onarılmış canlı dosyayla **birebir aynı** çıktı (anahtar, URL, imza). Koruma dalı da ayrıca
+  çalıştırıldı: bir platformun imzası eksikken çıkış kodu 1 ve manifest yazılmıyor.
+- `verify` işi, ürettiği dosyaya **güvenmez** — release'te **canlı duran** manifesti indirip yeniden
+  sayar (ders 1: bir işin bittiğini varsayma, çıktısını doğrula).
+
 ## [2.33.1] — 2026-07-14 — Boş AI Yanıtı: Kör Nokta Kapatıldı
 
 ### Düzeltilen
