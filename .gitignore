@@ -414,6 +414,8 @@ _temp_*
 _fix_*
 nuget.exe
 *.py
+# ...ama tools/ altındakiler kalıcı araçtır (bkz. CLAUDE.md → Sık kullanılan).
+!tools/*.py
 
 # Project-specific: Büyük dosyalar (GitHub 100MB limiti)
 *.rar

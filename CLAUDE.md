@@ -153,6 +153,22 @@ kod sessizce hiçbir şey yapmadı.
 **Kural:** Bir ölçüm "hepsi bozuk" ya da "hepsi temiz" diyorsa — fazla düzenli olan her sonuç gibi —
 **önce ölçüm aracını** doğrula.
 
+### 12. Yeşil regresyon ≠ yeni kod ölçüldü — **kapsama kör noktası** (v2.29.0 → v2.31.0)
+
+v2.29.0'ın nakli yekûn koşusu **29 faturada "beklenmeyen sıfır fark"** dedi. Ama o 29 faturanın
+**hepsi ≤20 kalemliydi** — yani hepsi tek sayfaya sığıyordu ve **yeni yazılan çok-sayfa kod yolu
+ölçümde bir kez bile çalışmadı.** Ölçüm doğruydu, araç doğruydu, sonuç yeşildi; yalnızca **yeni
+özelliğin kendisi** kapsamın dışındaydı. Ara sayfalarda devir satırının **iki kez** basıldığını
+(bir kez kalem tablosunda, bir kez alt toplam kutusunda) CI değil, **kullanıcının ekran görüntüsü**
+yakaladı — iki sürüm sonra.
+
+**Kural:** Bir regresyon takımı "fark yok" dediğinde önce sor: **yeni kod yolu bu girdilerde
+tetikleniyor mu?** Yeni bir dal/eşik/sayfalama eklediysen, o dalı **fiilen çalıştıran** bir girdiyi
+takıma **eklemeden** yeşili kabul etme. Geriye uyum ölçümü (eski davranış bozulmadı mı?) ile
+ileriye kapsama (yeni davranış doğru mu?) **ayrı iki sorudur**; birincisi ikincisini kanıtlamaz.
+Görsel çıktı üreten değişikliklerde **render edilmiş HTML'i say** (bkz. aşağıdaki sidecar komutu) —
+"eklendi" ile "doğru yerde ve bir kez basıldı" aynı şey değildir.
+
 ---
 
 ## Mimari
@@ -307,6 +323,16 @@ cd app && npm run tauri dev      # geliştirme
 cd app && npm run check          # svelte-check (0 hata olmalı)
 cd app/src-tauri && cargo build  # Rust
 cd app && npm run data:sync      # Core → JSON (manifest.json dahil)
+python3 tools/run-xslt.py <xslt> <xml> > out.html   # şablonu Saxon'dan geçir (uygulamasız)
+```
+
+**Şablon çıktısını uygulamayı açmadan ölç:** `tools/run-xslt.py` sidecar'ı gerçek protokolüyle sürer
+(stdin: `[4B BE len][XSLT UTF-8][4B BE len][XML UTF-8]`, stdout: HTML). Bir öğenin **kaç kez**
+basıldığını saymak (bkz. ders 12) veya sidecar'ın çıkış kodunu/stderr'ini görmek için tek yol budur:
+
+```bash
+python3 tools/run-xslt.py app/static/samples/default-nakli-yekun.xslt app/static/samples/default.xml \
+  | grep -o "sonraki sayfaya devir" | wc -l    # 2 sayfalık faturada 1 olmalı
 ```
 
 ## graphify
