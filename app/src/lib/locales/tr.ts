@@ -316,6 +316,7 @@ export const tr = {
   samples: {
     menuTitle: 'Örnek fatura yükle',
     defaultPair: '🌟 Varsayılan (default.xslt + default.xml)',
+    carryForwardPair: '📄 Nakli Yekûnlü — çok sayfalı (default-nakli-yekun.xslt + default.xml)',
     userHeader: 'Kullanıcı Örnekleri',
     openFolderTitle: 'Örnekler klasörünü aç',
     empty: 'Henüz yok — aşağıdan geçerli dosyaları ekleyebilirsin.',

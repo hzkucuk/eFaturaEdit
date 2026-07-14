@@ -90,9 +90,14 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   çıktı, temiz dönüşümle **bayt bayt aynıdır** (render etkilenmez).
   Kaynak: [`app/src/lib/xslt-map.ts`](app/src/lib/xslt-map.ts)
 
-### 📄 Çok Sayfalı Fatura — Nakli Yekûn (v2.29.0)
+### 📄 Çok Sayfalı Fatura — Nakli Yekûn (v2.29.0, ayrı şablon: v2.31.0)
 
-Varsayılan örnek şablon (`default.xslt`) artık **matbu fatura gibi sayfalanır**:
+Sayfalama **ayrı bir örnek şablondadır**: `default-nakli-yekun.xslt`. 🎲 Örnek menüsünde
+🌟 Varsayılan'ın yanında **📄 Nakli Yekûnlü — çok sayfalı** olarak durur; `default.xslt` sayfalamasız
+klasik hâlini korur. İkisi de aynı `default.xml`'i (25 kalem) kullanır, aradaki fark böylece
+yan yana görülebilir.
+
+Nakli yekûnlü şablon **matbu fatura gibi sayfalanır**:
 
 - Her sayfaya `$sayfaSatiri` kalem düşer — **sabit değil, parametre**:
   ```xml
@@ -105,7 +110,8 @@ Varsayılan örnek şablon (`default.xslt`) artık **matbu fatura gibi sayfalan�
   okunabilir bir fatura sayfasıdır).
 - **Gerçek toplamlar yalnızca son sayfada.** `cac:LegalMonetaryTotal` / `cac:TaxTotal` **belgeden
   okunur, hesaplanmaz** — fatura ne beyan ediyorsa o basılır. Ara sayfaların alt kutusunda
-  *Sayfa Toplamı* + *Nakli Yekûn* görünür; bu iki değer sunum katmanında hesaplanır, çünkü UBL'de
+  yalnızca *Sayfa Toplamı* görünür (v2.31.0'a kadar devir tutarı burada da tekrarlanıyordu);
+  devir, kalem tablosunun son satırıdır. Bu iki değer sunum katmanında hesaplanır, çünkü UBL'de
   "ilk N kalemin toplamı" diye bir alan yoktur.
 - Yazdırmada sayfa sonu doğru yere düşer (`page-break-after`).
 

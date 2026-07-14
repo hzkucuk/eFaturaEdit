@@ -3,6 +3,24 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.31.0] — 2026-07-14 — Nakli Yekûn Ayrı Şablona Taşındı
+
+### Eklenen
+- **Nakli yekûnlü şablon artık ayrı bir örnek:** `default-nakli-yekun.xslt`.
+  🎲 Örnek menüsünde 🌟 Varsayılan'ın hemen yanında **📄 Nakli Yekûnlü — çok sayfalı** olarak durur.
+  Her ikisi de aynı `default.xml`'i (25 kalem) kullanır; aradaki fark doğrudan görünür — klasik
+  şablon kalemleri tek uzun tabloda döker, nakli yekûnlü olan sayfalar ve devir satırı basar.
+- **`default.xslt` v2.29.0 öncesindeki sayfalamasız haline döndü.** Sayfalama artık varsayılana
+  dayatılmıyor; isteyen nakli yekûnlü şablonu seçer.
+
+### Düzeltilen
+- **Ara sayfalarda "NAKLİ YEKÛN (sonraki sayfaya devir)" iki kez basılıyordu** — bir kez kalem
+  tablosunun son satırı olarak, bir kez de alt toplam kutusunda. Devir satırı artık yalnızca
+  kalem tablosunda (matbu fatura geleneğindeki yerinde, tutar sütununda hizalı); alt kutuda
+  yalnızca **Sayfa Toplamı** kalır — o zaten farklı bir bilgidir (sayfanın kendi toplamı,
+  devreden kümülatif tutar değil).
+  Ölçüldü: 25 kalemli `default.xml` → Saxon çıktısında "sonraki sayfaya devir" **2 → 1**.
+
 ## [2.30.1] — 2026-07-14 — Toplu Test Kullanım Kılavuzu
 
 ### Eklenen

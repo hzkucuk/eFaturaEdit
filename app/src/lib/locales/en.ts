@@ -315,6 +315,7 @@ export const en: Messages = {
   samples: {
     menuTitle: 'Load a sample invoice',
     defaultPair: '🌟 Default (default.xslt + default.xml)',
+    carryForwardPair: '📄 With carry-forward — multi-page (default-nakli-yekun.xslt + default.xml)',
     userHeader: 'User Samples',
     openFolderTitle: 'Open the samples folder',
     empty: 'Nothing yet — you can add the current files below.',

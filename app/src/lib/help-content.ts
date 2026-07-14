@@ -88,6 +88,12 @@ export const HELP_SECTIONS: HelpSection[] = [
       ile birlikte yüklenir ve (ayarlarda açıksa) otomatik dönüştürülür.</p>
       <p><strong>🌟 Varsayılan</strong> seçeneği hem örnek XSLT hem örnek XML'i birlikte yükler —
       hızlı başlangıç için idealdir.</p>
+      <p><strong>📄 Nakli Yekûnlü — çok sayfalı</strong> seçeneği aynı örnek faturayı
+      (<code>default.xml</code>, 25 kalem) <em>sayfalayan</em> bir şablonla yükler
+      (<code>default-nakli-yekun.xslt</code>): her sayfaya sabit sayıda kalem düşer, sayfanın altında
+      <em>NAKLİ YEKÛN (sonraki sayfaya devir)</em>, sonraki sayfanın başında
+      <em>NAKLİ YEKÛN (önceki sayfadan devir)</em> yazar; gerçek toplamlar yalnızca son sayfada basılır.
+      Aynı faturayı iki şablonla açıp karşılaştırarak farkı görebilirsin.</p>
     `,
   },
   {

@@ -315,6 +315,7 @@ export const pl: Messages = {
   samples: {
     menuTitle: 'Wczytaj przykładową fakturę',
     defaultPair: '🌟 Domyślne (default.xslt + default.xml)',
+    carryForwardPair: '📄 Z kwotą przeniesioną — wielostronicowe (default-nakli-yekun.xslt + default.xml)',
     userHeader: 'Przykłady użytkownika',
     openFolderTitle: 'Otwórz folder przykładów',
     empty: 'Jeszcze nic tu nie ma — możesz dodać bieżące pliki poniżej.',

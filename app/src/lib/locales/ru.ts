@@ -315,6 +315,7 @@ export const ru: Messages = {
   samples: {
     menuTitle: 'Загрузить пример счёта',
     defaultPair: '🌟 По умолчанию (default.xslt + default.xml)',
+    carryForwardPair: '📄 С переносом остатка — многостраничный (default-nakli-yekun.xslt + default.xml)',
     userHeader: 'Примеры пользователя',
     openFolderTitle: 'Открыть папку примеров',
     empty: 'Пока пусто — можно добавить текущие файлы ниже.',

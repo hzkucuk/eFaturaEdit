@@ -344,6 +344,10 @@
     await loadSampleByPath('/samples/default.xslt', '/samples/default.xml', 'default');
   }
 
+  async function loadCarryForwardSample() {
+    await loadSampleByPath('/samples/default-nakli-yekun.xslt', '/samples/default.xml', 'nakli yekûn');
+  }
+
   async function loadSample(fileName: string, displayName: string) {
     sampleMenuOpen = false;
     await loadSampleByPath('/samples/default.xslt', `/samples/${fileName}`, `default + ${displayName}`);
@@ -1972,6 +1976,9 @@ window.addEventListener('message', function(e) {
             <div class="dropdown">
               <button class="dd-item primary" onclick={loadDefaultSample}>
                 {m.samples.defaultPair}
+              </button>
+              <button class="dd-item primary" onclick={loadCarryForwardSample}>
+                {m.samples.carryForwardPair}
               </button>
               <div class="dd-divider"></div>
               {#each samples.groups as group}

@@ -316,6 +316,7 @@ export const es: Messages = {
   samples: {
     menuTitle: 'Cargar una factura de ejemplo',
     defaultPair: '🌟 Predeterminado (default.xslt + default.xml)',
+    carryForwardPair: '📄 Con saldo arrastrado — varias páginas (default-nakli-yekun.xslt + default.xml)',
     userHeader: 'Ejemplos del usuario',
     openFolderTitle: 'Abrir la carpeta de ejemplos',
     empty: 'Aún no hay nada — puedes añadir los archivos actuales abajo.',
