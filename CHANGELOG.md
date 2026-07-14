@@ -3,6 +3,26 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.32.1] — 2026-07-14 — Metin-Only Modele Görsel: Sebebi Söyleyen Hata
+
+### Düzeltilen
+- **Görsel kabul etmeyen bir modele ekran görüntüsü gönderilince anlaşılmaz bir hata çıkıyordu:**
+  `Failed to deserialize the JSON body into the target type: messages[1]: unknown variant
+  'image_url', expected 'text'`. Bu **semptomdu, sebep değildi** — kullanıcının bundan "bu model
+  görsel okuyamıyor" sonucunu çıkarması imkânsızdı. (Gerçek vaka: DeepSeek `deepseek-v4-pro`.)
+  Artık sebep yazılıyor: *"Seçili model görsel eki kabul etmiyor: {model}. Yalnızca metin
+  işleyebiliyor. Görseli kaldırıp sorunuzu yazıyla anlatın ya da Ayarlar → AI'dan görsel
+  destekleyen bir model seçin."* Sağlayıcının ham yanıtı da mesajın sonunda korunuyor.
+- Aynı durum NVIDIA NIM'in metin modelleri için de geçerliydi (ikisi de OpenAI-uyumlu yoldan geçer).
+- Günlüğe `[ai] model görsel kabul etmiyor — {sağlayıcı} · {model}` uyarısı düşüyor.
+
+### Notlar
+- Ayrım **model adı tahmin edilerek yapılmıyor** — NIM kataloğunda görsel okuyan modeller de var,
+  ad kalıbından bilinemez. Yalnızca *gerçekten görsel gönderdiğimiz* ve sağlayıcının `image_url`
+  alanından şikâyet ettiği istekte devreye girer; başka bir 400 gelirse ham gövde aynen gösterilir.
+- Sohbet geçmişi **zehirlenmiyordu**: ekler geçmişte saklanmaz (yalnızca hafif bir not), görsel
+  sadece son mesaja iliştirilir ve başarısız tur geri alınır.
+
 ## [2.32.0] — 2026-07-14 — AI Yetenekleri (Skill) — Sağlayıcı Başına Uzmanlık Paketleri
 
 ### Eklenen

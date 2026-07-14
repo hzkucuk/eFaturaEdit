@@ -123,6 +123,25 @@ fn api_error(what: &str, status: reqwest::StatusCode, body: &str) -> String {
     format!("{what} ({status}): {msg}")
 }
 
+/// Metin-only bir modele görsel gönderildiğinde sağlayıcı, isteği **ayrıştıramadan**
+/// reddeder ve ham hata sebebi gizler: NVIDIA NIM'de gelen cevap
+/// `unknown variant 'image_url', expected 'text'` — kullanıcının bundan "bu model
+/// görsel kabul etmiyor" sonucunu çıkarması imkânsızdır (semptom ≠ sebep).
+///
+/// Bu ayrım **tahminle değil ölçüyle** yapılır: yalnızca gerçekten görsel GÖNDERDİĞİMİZ
+/// isteklerde ve sağlayıcı `image_url` alanından şikâyet ettiğinde devreye girer.
+/// Model adına bakıp "bu vision destekler mi" diye tahmin YÜRÜTMEZ — NIM kataloğunda
+/// vision destekleyen modeller de var, ad kalıbından bilinemez.
+fn vision_unsupported_error(model: &str, raw: &str) -> String {
+    format!(
+        "Seçili model görsel eki kabul etmiyor: {model}. Yalnızca metin işleyebiliyor. \
+         Görseli kaldırıp sorunuzu yazıyla anlatın ya da Ayarlar → AI'dan görsel destekleyen \
+         bir model seçin (Claude, Gemini ve GPT-4o sınıfı modeller görsel okur). \
+         (Sağlayıcı yanıtı: {})",
+        raw.trim().chars().take(200).collect::<String>()
+    )
+}
+
 /// Bir mesaja iliştirilen görsel/PDF eki. `data` = base64 (prefix'siz).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AiAttachment {
@@ -551,6 +570,12 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
     } else {
         format!("{}\n{}", req.system_prompt, req.cached_context)
     };
+    // Görsel GÖNDERDİK Mİ? Hata yorumlanırken tahmin değil bu olgu kullanılır.
+    let sent_images = req
+        .messages
+        .iter()
+        .any(|m| m.attachments.iter().any(|a| a.kind == "image"));
+
     let mut messages = vec![json!({ "role": "system", "content": system_content })];
     messages.extend(req.messages.iter().map(|m| {
         // OpenAI Chat Completions yalnızca görseli (image_url) destekler; PDF
@@ -611,6 +636,17 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
         .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
 
     if !status.is_success() {
+        // Metin-only model + görsel eki: sağlayıcı isteği ayrıştıramadan reddeder ve
+        // ham mesaj sebebi gizler ("unknown variant `image_url`"). Kullanıcıya sebebi
+        // söyle. DeepSeek ve NVIDIA NIM'in metin modelleri bu yola düşer.
+        if sent_images && body.to_lowercase().contains("image_url") {
+            log::warn!(
+                "[ai] model görsel kabul etmiyor — {} · {} ({status})",
+                req.provider,
+                req.model
+            );
+            return Err(vision_unsupported_error(&req.model, &body));
+        }
         return Err(api_error("API hatası", status, &body));
     }
 
