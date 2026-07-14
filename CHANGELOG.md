@@ -3,6 +3,52 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.29.0] — 2026-07-14 — Nakli Yekûn (Çok Sayfalı Fatura) + Toplu Regresyon Koşusu
+
+### Eklenen
+- **Nakli yekûn / sayfalama — örnek şablon artık çok sayfalı fatura basıyor.**
+  Şablon şimdiye kadar 20'den az kalemde `InvoiceLine[1]`…`[20]` diye tek tek yazıp boş satırla
+  dolduruyor, **20 ve üstü kalemde ise hepsini alt alta döküyordu** — sayfa düzeni taşıyor,
+  fatura 2. sayfaya sarkıyordu.
+
+  Artık: her sayfaya `$sayfaSatiri` kalem düşer; sayfanın altında **NAKLİ YEKÛN (sonraki sayfaya
+  devir)**, sonraki sayfanın başında **NAKLİ YEKÛN (önceki sayfadan devir)** yazılır. **Logo,
+  satıcı/alıcı bilgileri, ETTN — tüm başlık her sayfada tekrar eder.** Gerçek toplamlar
+  (`LegalMonetaryTotal`) **yalnızca son sayfada** basılır; ara sayfaların alt kutusunda
+  *Sayfa Toplamı* + *Nakli Yekûn* görünür.
+
+  ```xml
+  <xsl:param name="sayfaSatiri" select="20"/>   <!-- sabit değil: N satır -->
+  ```
+  Sayfa sayısı, devir tutarları ve boş satır dolgusu bu tek parametreden türetilir.
+
+- **Toplu regresyon koşusu (🧪 Toplu Test).** Şablonu bir klasördeki **tüm** faturalara karşı
+  çalıştırır: hangileri patladı, ne kadar sürdü, çıktı kaç bayt. **📸 Anlık Görüntü** her çıktının
+  **sha256**'sını saklar; şablonu değiştirip tekrar koşunca hangi faturaların çıktısının
+  **DEĞİŞTİĞİ** satır satır çıkar. Satıra çift tıkla → o fatura editöre yüklenir.
+
+  **Neden:** İskontolu faturada düzelttiğin şey tevkifatlı faturayı bozabilir ve **kimse fark
+  etmez** — editör tek seferde tek fatura gösterir. "Bir şeyi düzelttim, başka bir şeyi bozdum mu?"
+  sorusunu tahminle değil **ölçümle** yanıtlar.
+
+### Değiştirilen
+- **Varsayılan örnek fatura (`default.xml`) artık 25 kalemli, iki sayfalık gerçek bir fatura**
+  (lastik/jant/servis kalemleri). Kendi içinde tutarlı: miktar × birim fiyat = satır tutarı,
+  KDV %18, `LegalMonetaryTotal` kalemlerin **gerçek** toplamı (136.735,00 + 24.612,30 KDV =
+  **161.347,30 TL** ödenecek). Nakli yekûn (134.035,00 TL) yalnızca sunum katmanında hesaplanır —
+  UBL'de "ilk 20 kalemin toplamı" diye bir alan yoktur.
+
+### Doğrulama
+Sidecar'a doğrudan beslenerek ölçüldü: **29 örnek faturanın (≤20 kalem) çıktısı değişmedi** —
+eski ve yeni şablon arasındaki tek fark eklenen sayfa kabı `<div>`'i; beklenmeyen sıfır fark.
+25 kalemli fatura 2 sayfaya bölünüyor, devir tutarları toplamı tutuyor
+(134.035,00 + 2.700,00 = 136.735,00).
+
+### Düzeltilen
+- Devir satırının `colspan`'ı bir eksikti (9): tutar **"Diğer Vergileri"** sütununa düşüyordu.
+  Başlık metinlerini saymak yanılttı — `<td>`'ler sayılınca tablonun **11 sütun** olduğu
+  (Sıra No dahil) görüldü. `colspan="10"`.
+
 ## [2.28.0] — 2026-07-13 — XPath Test Konsolu
 
 ### Eklenen

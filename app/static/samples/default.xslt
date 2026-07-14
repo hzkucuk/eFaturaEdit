@@ -58,6 +58,15 @@
   <xsl:param name="SV_OutputFormat" select="'HTML'"/>
   <xsl:variable name="XML" select="/"/>
 
+  <!-- ═══ SAYFALAMA ═══════════════════════════════════════════════
+       $sayfaSatiri: bir sayfaya kaç kalem sığar. SABİT DEĞİL — parametre;
+       farklı bir matbu düzen için tek yerden değiştirilir. -->
+  <xsl:param name="sayfaSatiri" select="20"/>
+  <xsl:variable name="kalemler" select="//n1:Invoice/cac:InvoiceLine"/>
+  <!-- Kalem yoksa da 1 sayfa basılır (boş matbu fatura). -->
+  <xsl:variable name="sayfaSayisi"
+    select="max((1, xs:integer(ceiling(count($kalemler) div $sayfaSatiri))))"/>
+
 
   <xsl:template match="/">
     <html>
@@ -235,6 +244,24 @@
       </head>
       <body
 				style="margin-left=0.6in; margin-right=0.6in; margin-top=0.79in; margin-bottom=0.79in">
+        <xsl:for-each select="1 to $sayfaSayisi">
+          <xsl:variable name="sayfa" select="."/>
+          <!-- Bu sayfaya düşen kalemler ve devir tutarları. SAYFA DÖNGÜSÜ
+               seviyesinde tanımlanır: hem kalem tablosundan hem de alt toplam
+               kutusundan görünmeleri gerekiyor. -->
+          <xsl:variable name="dilim"
+            select="subsequence($kalemler, ($sayfa - 1) * $sayfaSatiri + 1, $sayfaSatiri)"/>
+          <xsl:variable name="devirGelen"
+            select="sum(subsequence($kalemler, 1, ($sayfa - 1) * $sayfaSatiri)/cbc:LineExtensionAmount)"/>
+          <xsl:variable name="sayfaToplami" select="sum($dilim/cbc:LineExtensionAmount)"/>
+          <xsl:variable name="devirGiden" select="$devirGelen + $sayfaToplami"/>
+          <!-- Boş matbu satır şablonu: bağlam düğümü ister; tamsayı bağlamında
+               ("1 to N" döngüsü) çözülemeyeceği için önceden yakalanır. -->
+          <xsl:variable name="bosSatir" select="$XML//n1:Invoice"/>
+          <div class="ef-sayfa">
+            <xsl:if test="$sayfa &lt; $sayfaSayisi">
+              <xsl:attribute name="style">page-break-after: always; margin-bottom: 24px;</xsl:attribute>
+            </xsl:if>
         <xsl:for-each select="$XML">
           <table style="border-color:blue; " border="0" cellspacing="0px" width="800"
 						cellpadding="0px">
@@ -741,196 +768,98 @@
                   </span>
                 </td>
               </tr>
-              <xsl:if test="count(//n1:Invoice/cac:InvoiceLine) &gt;= 20">
-                <xsl:for-each select="//n1:Invoice/cac:InvoiceLine">
-                  <xsl:apply-templates select="."/>
-                </xsl:for-each>
+              <!-- ═══ SAYFALAMA + NAKLİ YEKÛN ═══════════════════════════════
+                   ESKİDEN: 20'den az kalemde InvoiceLine[1]..[20] tek tek yazılıp
+                   boş satırla dolduruluyordu; 20 VE ÜSTÜ kalemde ise hepsi alt alta
+                   döküldüğü için sayfa düzeni taşıyordu.
+                   ŞİMDİ: her sayfaya $sayfaSatiri kalem düşer; sayfanın altında
+                   SONRAKİ sayfaya devir, sonraki sayfanın başında ÖNCEKİNDEN gelen
+                   devir yazılır. Gerçek toplamlar yalnızca SON sayfada basılır.
+                   Tek sayfalık faturalarda çıktı eskisiyle aynıdır. -->
+              <xsl:if test="$sayfa &gt; 1">
+                <tr id="lineTableTr">
+                  <td id="lineTableTd" colspan="10" align="right">
+                    <span style="font-weight:bold; ">
+                      <xsl:text>NAKLİ YEKÛN (önceki sayfadan devir)&#160;</xsl:text>
+                    </span>
+                  </td>
+                  <td id="lineTableTd" align="right">
+                    <span style="font-weight:bold; ">
+                      <xsl:text>&#160;</xsl:text>
+                      <xsl:call-template name="Devir_Tutari">
+                        <xsl:with-param name="tutar" select="$devirGelen"/>
+                      </xsl:call-template>
+                    </span>
+                  </td>
+                </tr>
               </xsl:if>
-              <xsl:if test="count(//n1:Invoice/cac:InvoiceLine) &lt; 20">
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[1]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[1]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[2]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[2]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[3]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[3]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[4]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[4]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[5]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[5]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[6]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[6]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[7]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[7]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[8]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[8]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[9]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[9]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[10]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[10]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[11]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[11]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[12]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[12]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[13]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[13]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[14]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[14]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[15]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[15]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[16]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[16]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[17]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[17]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[18]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[18]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[19]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[19]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-                <xsl:choose>
-                  <xsl:when test="//n1:Invoice/cac:InvoiceLine[20]">
-                    <xsl:apply-templates
-											select="//n1:Invoice/cac:InvoiceLine[20]"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:apply-templates select="//n1:Invoice"/>
-                  </xsl:otherwise>
-                </xsl:choose>
+
+              <xsl:apply-templates select="$dilim"/>
+
+              <!-- Matbu görünüm: sayfayı $sayfaSatiri satıra tamamla. -->
+              <xsl:for-each select="1 to ($sayfaSatiri - count($dilim))">
+                <xsl:apply-templates select="$bosSatir"/>
+              </xsl:for-each>
+
+              <xsl:if test="$sayfa &lt; $sayfaSayisi">
+                <tr id="lineTableTr">
+                  <td id="lineTableTd" colspan="10" align="right">
+                    <span style="font-weight:bold; ">
+                      <xsl:text>NAKLİ YEKÛN (sonraki sayfaya devir)&#160;</xsl:text>
+                    </span>
+                  </td>
+                  <td id="lineTableTd" align="right">
+                    <span style="font-weight:bold; ">
+                      <xsl:text>&#160;</xsl:text>
+                      <xsl:call-template name="Devir_Tutari">
+                        <xsl:with-param name="tutar" select="$devirGiden"/>
+                      </xsl:call-template>
+                    </span>
+                  </td>
+                </tr>
               </xsl:if>
             </tbody>
           </table>
         </xsl:for-each>
+        <!-- ARA SAYFALARIN alt toplam kutusu: gerçek toplamlar yalnızca son
+             sayfada basılır, ama kutu boş kalmamalı — sayfanın kendi toplamı ve
+             sonraki sayfaya devreden tutar buraya yazılır. -->
+        <xsl:if test="$sayfa &lt; $sayfaSayisi">
+          <table id="budgetContainerTable" width="800px">
+            <tr id="budgetContainerTr" align="right">
+              <td id="budgetContainerDummyTd"/>
+              <td id="lineTableBudgetTd" align="right" width="200px">
+                <span style="font-weight:bold; ">
+                  <xsl:text>Sayfa Toplamı</xsl:text>
+                </span>
+              </td>
+              <td id="lineTableBudgetTd" style="width:81px; " align="right">
+                <xsl:call-template name="Devir_Tutari">
+                  <xsl:with-param name="tutar" select="$sayfaToplami"/>
+                </xsl:call-template>
+              </td>
+            </tr>
+            <tr id="budgetContainerTr" align="right">
+              <td id="budgetContainerDummyTd"/>
+              <td id="lineTableBudgetTd" align="right" width="200px">
+                <span style="font-weight:bold; ">
+                  <xsl:text>NAKLİ YEKÛN (sonraki sayfaya devir)</xsl:text>
+                </span>
+              </td>
+              <td id="lineTableBudgetTd" style="width:81px; " align="right">
+                <span style="font-weight:bold; ">
+                  <xsl:call-template name="Devir_Tutari">
+                    <xsl:with-param name="tutar" select="$devirGiden"/>
+                  </xsl:call-template>
+                </span>
+              </td>
+            </tr>
+          </table>
+        </xsl:if>
+
+        <!-- Gerçek toplamlar ve notlar YALNIZCA son sayfada. -->
+        <xsl:if test="$sayfa = $sayfaSayisi">
+        <xsl:for-each select="$XML">
         <table id="budgetContainerTable" width="800px">
           <tr id="budgetContainerTr" align="right">
             <td id="budgetContainerDummyTd"/>
@@ -1381,6 +1310,10 @@
 			  
           </tbody>
         </table>
+        </xsl:for-each>
+        </xsl:if>
+        </div>
+        </xsl:for-each>
       </body>
     </html>
   </xsl:template>
@@ -1833,6 +1766,26 @@
         </xsl:when>
         <xsl:otherwise>
           <xsl:value-of select="@currencyID"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:if>
+  </xsl:template>
+  <!-- Devir tutarı: mevcut Curr_Type ile AYNI biçim (format-number + para birimi).
+       Curr_Type bağlam düğümü ister; devir ise hesaplanmış bir sayıdır. -->
+  <xsl:template name="Devir_Tutari">
+    <xsl:param name="tutar"/>
+    <xsl:value-of select="format-number($tutar, '###.##0,00', 'european')"/>
+    <!-- $XML ile MUTLAK: bu şablon sayfa döngüsünden de çağrılıyor ve orada
+         bağlam bir tamsayıdır ("1 to N") — göreli "//" kök bulamaz. -->
+    <xsl:variable name="pb" select="($XML//n1:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount/@currencyID)[1]"/>
+    <xsl:if test="$pb">
+      <xsl:text> </xsl:text>
+      <xsl:choose>
+        <xsl:when test="$pb = 'TRL' or $pb = 'TRY'">
+          <xsl:text>TL</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$pb"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>

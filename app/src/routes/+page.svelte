@@ -29,6 +29,7 @@
   import SnippetEditor from '$lib/SnippetEditor.svelte';
   import CodeEditor from '$lib/CodeEditor.svelte';
   import XPathConsole from '$lib/XPathConsole.svelte';
+  import BatchRunner from '$lib/BatchRunner.svelte';
   import Splitter from '$lib/Splitter.svelte';
   import ContextMenu from '$lib/ContextMenu.svelte';
   import HelpModal from '$lib/HelpModal.svelte';
@@ -100,6 +101,8 @@
   let xmlEditor = $state<CodeEditor>();
   /** XPath test konsolu açık mı (XML panelinin altında). */
   let xpathOpen = $state(false);
+  /** Toplu regresyon penceresi açık mı. */
+  let batchOpen = $state(false);
   let previewFrame = $state<HTMLIFrameElement>();
 
   // Preview sağ tık menüsü
@@ -425,6 +428,24 @@
       pushRecent(result.path, 'xml');
       status(f(m.status.xmlOpened, { path: result.path }));
       if (settings.autoTransformOnLoad && editorState.xsltText) await runTransform();
+    } catch (err) {
+      status(f(m.errors.openFailed, { what: 'XML', msg: (err as Error).message }), true);
+    }
+  }
+
+  /** Toplu koşu listesinden bir faturayı editöre yükler (satıra çift tık). */
+  async function loadXmlFromPath(path: string) {
+    try {
+      const content = await reopenFile(path);
+      ignoreNextChange.xml = true;
+      editorState.xmlText = content.content;
+      editorState.xmlPath = content.path;
+      editorState.xmlDirty = false;
+      xmlEditor?.setValue(content.content);
+      pushRecent(content.path, 'xml');
+      batchOpen = false;
+      status(f(m.status.xmlOpened, { path: content.path }));
+      if (editorState.xsltText) await runTransform();
     } catch (err) {
       status(f(m.errors.openFailed, { what: 'XML', msg: (err as Error).message }), true);
     }
@@ -1817,6 +1838,7 @@ window.addEventListener('message', function(e) {
         </div>
 
         <button class="primary" onclick={() => runTransform()} title={m.toolbar.transformTitle}>▶ {m.toolbar.transform}</button>
+        <button onclick={() => (batchOpen = true)} title={m.batch.buttonTitle}>🧪 {m.batch.button}</button>
       </div>
 
       <div class="btn-group" title={m.groups.helpSettings}>
@@ -2290,6 +2312,15 @@ window.addEventListener('message', function(e) {
 <!-- ─── Yardım penceresi ──────────────────────────────────────────── -->
 {#if helpOpen}
   <HelpModal onclose={() => (helpOpen = false)} />
+{/if}
+
+<!-- ─── Toplu regresyon koşusu ────────────────────────────────────── -->
+{#if batchOpen}
+  <BatchRunner
+    xsltText={editorState.xsltText}
+    onclose={() => (batchOpen = false)}
+    onopen={loadXmlFromPath}
+  />
 {/if}
 
 <!-- ─── Snippet ekle/düzenle ──────────────────────────────────────── -->

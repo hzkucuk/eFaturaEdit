@@ -90,6 +90,28 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   çıktı, temiz dönüşümle **bayt bayt aynıdır** (render etkilenmez).
   Kaynak: [`app/src/lib/xslt-map.ts`](app/src/lib/xslt-map.ts)
 
+### 📄 Çok Sayfalı Fatura — Nakli Yekûn (v2.29.0)
+
+Varsayılan örnek şablon (`default.xslt`) artık **matbu fatura gibi sayfalanır**:
+
+- Her sayfaya `$sayfaSatiri` kalem düşer — **sabit değil, parametre**:
+  ```xml
+  <xsl:param name="sayfaSatiri" select="20"/>
+  ```
+  Sayfa sayısı, devir tutarları ve boş satır dolgusu bu tek değerden türetilir.
+- Sayfanın altında **NAKLİ YEKÛN (sonraki sayfaya devir)**, sonraki sayfanın başında
+  **NAKLİ YEKÛN (önceki sayfadan devir)**.
+- **Logo, satıcı/alıcı, ETTN — tüm başlık her sayfada tekrar eder** (sayfa 2 tek başına da
+  okunabilir bir fatura sayfasıdır).
+- **Gerçek toplamlar yalnızca son sayfada.** `cac:LegalMonetaryTotal` / `cac:TaxTotal` **belgeden
+  okunur, hesaplanmaz** — fatura ne beyan ediyorsa o basılır. Ara sayfaların alt kutusunda
+  *Sayfa Toplamı* + *Nakli Yekûn* görünür; bu iki değer sunum katmanında hesaplanır, çünkü UBL'de
+  "ilk N kalemin toplamı" diye bir alan yoktur.
+- Yazdırmada sayfa sonu doğru yere düşer (`page-break-after`).
+
+**Geriye uyum ölçüldü:** 20 kalemden az faturalarda çıktı eskisiyle **birebir aynı** — 29 örnek
+fatura sidecar'a beslenip karşılaştırıldı, tek fark eklenen sayfa kabı `<div>`'i.
+
 ### ✂️ Snippet Sistemi — 294 Snippet
 
 | Kategori | Adet | İçerik |
@@ -114,6 +136,11 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   katla/aç `Ctrl+Alt+[` / `Ctrl+Alt+]` (macOS'ta da `Ctrl` — `Cmd` değil), **tek blok** macOS'ta
   `Cmd+Alt+[` / `]`, diğer sistemlerde `Ctrl+Shift+[` / `]`. Her editör başlığında **⊟ / ⊞**
   düğmeleri — UBL-TR belgeleri derin iç içe olduğundan "tümünü katla" yapıyı bir bakışta gösterir.
+- **Toplu regresyon koşusu (v2.29.0):** Toolbar → **🧪 Toplu Test**. Şablonu bir klasördeki tüm
+  faturalara karşı çalıştırır; hangileri patladı, çıktı kaç bayt, ne kadar sürdü. **📸 Anlık
+  Görüntü** her çıktının **sha256**'sını saklar → şablonu değiştirip tekrar koşunca hangi
+  faturaların çıktısının **DEĞİŞTİĞİ** satır satır çıkar. Satıra çift tık → fatura editöre yüklenir.
+  Sıralı çalışır (50 faturaya aynı anda 50 sidecar açmaz).
 - **XPath test konsolu (v2.28.0):** XML panelindeki **ƒx** düğmesi veya `Cmd/Ctrl+Shift+X`.
   İfadeyi yaz → Enter → yüklü faturaya karşı anında çalışır; kaç düğüm eşleşti ve değerleri ne
   görünür. `↑`/`↓` geçmiş, `Esc` kapatır. Şablonu kurcalayıp dönüştürmeden "bu alan neden boş
