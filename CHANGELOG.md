@@ -3,6 +3,32 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.30.0] — 2026-07-14 — Çoklu Dosya Sekmesi
+
+### Eklenen
+- **Sekmeler — aynı anda birden çok fatura/şablon açık tutulabiliyor.**
+  Bir sekme = bir **çalışma**: kendi XSLT'si, XML'i, önizlemesi ve kaydedilmemiş-değişiklik durumu.
+  Uygulama zaten baştan sona çift üzerine kuruluydu (dönüşümün girdisi şablon + veri), sekme de
+  çifti temsil eder — pano başına ayrı sekme değil.
+  - Editörlerin üstünde sekme şeridi: dosya adı, kaydedilmemiş göstergesi (●), kapatma (×).
+  - **Kısayollar:** `Cmd/Ctrl+T` yeni sekme · `Cmd/Ctrl+1…9` N'inci sekmeye git ·
+    `Ctrl+Tab` / `Ctrl+Shift+Tab` sonraki/önceki sekme. Kapatma: × düğmesi veya **orta tık**.
+    (`Cmd+W` bilerek kullanılmadı: macOS'ta Tauri'nin varsayılan menüsündeki "Pencereyi Kapat"a
+    ait — webview'e hiç ulaşmaz, yani çalışmayan bir kısayol olurdu.)
+  - Sekmeler sürükle-bırak ile yeniden sıralanır.
+
+### Düzeltilen
+- **Örnek yüklemek kaydedilmemiş çalışmayı sessizce eziyordu.** Artık bir dosya/örnek yüklenirken
+  aktif sekmede **kaydedilmemiş** içerik varsa o içerik ezilmez, **yeni sekmede** açılır.
+  Veri yüklenirken yeni sekme, **temiz** şablonu devralır — "aynı şablon, başka fatura" akışı
+  bozulmasın diye (kirli şablon devralınmaz: aynı yol için iki farklı sürüm doğar, biri diğerini
+  sessizce ezerdi).
+- **Çıkışta yalnızca aktif sekmeye bakılıyordu.** Kapatma koruması artık **tüm sekmeleri** sayar;
+  "Kaydet ve Çık" kirli sekmelerin hepsini sırayla kaydeder. Arka sekmedeki kaydedilmemiş fatura
+  artık sessizce kaybolmuyor.
+- Kaydedilen bir dosya başka sekmelerde de açıksa, o sekmelerin **temiz** kopyaları diskteki yeni
+  içerikle eşitlenir — yoksa oraya geçip kaydetmek az önceki kaydı geri alırdı.
+
 ## [2.29.0] — 2026-07-14 — Nakli Yekûn (Çok Sayfalı Fatura) + Toplu Regresyon Koşusu
 
 ### Eklenen

@@ -367,6 +367,17 @@ export const en: Messages = {
     styleBlockMissing: 'No style block found in the XSLT — add one first.',
   },
 
+  tabs: {
+    newTab: 'New',
+    newTitle: 'New tab (Cmd/Ctrl+T)',
+    opened: 'New tab opened',
+    close: 'Close tab',
+    closeTitle: 'Close tab (middle-click)',
+    unsavedTab: 'Not saved yet',
+    closeDirtyTitle: '⚠️ Unsaved Changes',
+    closeDirtyBody: 'Tab "{name}" has unsaved changes. Closing it will discard them. Close anyway?',
+  },
+
   exit: {
     title: '⚠️ Unsaved Changes',
     body: 'There are unsaved changes in {files}. Do you want to save before quitting?',

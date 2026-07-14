@@ -54,6 +54,20 @@ export const HELP_SECTIONS: HelpSection[] = [
       <p>Kaydetmeden önce dosya otomatik olarak XML syntax kontrolünden geçer.
       Hata varsa <strong>dosya kaydedilmez</strong> ve imleç otomatik olarak
       hatalı satıra konumlanır.</p>
+      <h4>Sekmeler</h4>
+      <p>Editörlerin üstündeki şeritte her sekme bir <strong>çalışmadır</strong>: kendi XSLT'si,
+      XML'i ve önizlemesi. Birden çok fatura/şablon üzerinde aynı anda çalışabilirsin.</p>
+      <ul>
+        <li><kbd>Cmd/Ctrl+T</kbd> — yeni sekme (<strong>+</strong> düğmesi de aynı işi yapar).</li>
+        <li><kbd>Cmd/Ctrl+1</kbd>…<kbd>9</kbd> — N'inci sekmeye git.</li>
+        <li><kbd>Ctrl+Tab</kbd> / <kbd>Ctrl+Shift+Tab</kbd> — sonraki / önceki sekme.</li>
+        <li>Kapatmak için <strong>×</strong> düğmesi veya sekmeye <strong>orta tık</strong>.
+        Kaydedilmemiş değişiklik varsa sorar.</li>
+        <li>Sekmeler sürükle-bırakla yeniden sıralanır.</li>
+      </ul>
+      <p>Bir dosya veya örnek yüklerken aktif sekmede <strong>kaydedilmemiş</strong> içerik varsa,
+      o içerik ezilmez — dosya <strong>yeni bir sekmede</strong> açılır. Çıkışta kaydetme kontrolü
+      <strong>tüm sekmeleri</strong> kapsar.</p>
     `,
   },
   {

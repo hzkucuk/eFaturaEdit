@@ -11,6 +11,7 @@ görmenizi sağlar.
 - **149 hazır UBL-TR snippet'i** (e-Fatura, e-Arşiv, e-İrsaliye) + kullanıcı tanımlı snippet ekleme/düzenleme/silme.
 - **Sürükle-bırak** snippet ekleme (editöre veya doğrudan önizlemeye).
 - **Canlı önizleme** — responsive boyut/zoom, sağ tık menüsü, DevTools ile CSS düzenleyip tek tıkla XSLT'ye aktarma.
+- **Çoklu dosya sekmesi** — her sekme bir XSLT+XML çifti ve kendi önizlemesi (`Cmd/Ctrl+T`, `Cmd/Ctrl+1…9`, `Ctrl+Tab`). Kaydedilmemiş çalışma asla ezilmez, çıkış koruması tüm sekmeleri kapsar.
 - **17 GİB resmi örnek senaryosu** + kullanıcı kendi örnek klasörünü yönetebilir.
 - **Otomatik dönüştür, otomatik kaydet, çıkışta kaydetme kontrolü.**
 - **Kapsamlı yardım sistemi** (F1) — aranabilir, sidebar navigasyonlu dokümantasyon.

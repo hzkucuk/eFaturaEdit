@@ -368,6 +368,17 @@ export const es: Messages = {
     styleBlockMissing: 'No se encontró un bloque de estilos en el XSLT — añade uno primero.',
   },
 
+  tabs: {
+    newTab: 'Nueva',
+    newTitle: 'Nueva pestaña (Cmd/Ctrl+T)',
+    opened: 'Nueva pestaña abierta',
+    close: 'Cerrar pestaña',
+    closeTitle: 'Cerrar pestaña (clic central)',
+    unsavedTab: 'Aún no guardado',
+    closeDirtyTitle: '⚠️ Cambios sin guardar',
+    closeDirtyBody: 'La pestaña "{name}" tiene cambios sin guardar. Si la cierras, se perderán. ¿Cerrar de todos modos?',
+  },
+
   exit: {
     title: '⚠️ Cambios sin guardar',
     body: 'Hay cambios sin guardar en {files}. ¿Quieres guardar antes de salir?',

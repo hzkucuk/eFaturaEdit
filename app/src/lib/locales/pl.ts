@@ -367,6 +367,17 @@ export const pl: Messages = {
     styleBlockMissing: 'Nie znaleziono bloku stylów w XSLT — najpierw go dodaj.',
   },
 
+  tabs: {
+    newTab: 'Nowa',
+    newTitle: 'Nowa karta (Cmd/Ctrl+T)',
+    opened: 'Otwarto nową kartę',
+    close: 'Zamknij kartę',
+    closeTitle: 'Zamknij kartę (środkowy przycisk)',
+    unsavedTab: 'Jeszcze nie zapisano',
+    closeDirtyTitle: '⚠️ Niezapisane zmiany',
+    closeDirtyBody: 'Karta „{name}” ma niezapisane zmiany. Zamknięcie ich odrzuci. Zamknąć mimo to?',
+  },
+
   exit: {
     title: '⚠️ Niezapisane zmiany',
     body: 'W {files} są niezapisane zmiany. Zapisać przed wyjściem?',

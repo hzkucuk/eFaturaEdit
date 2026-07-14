@@ -368,6 +368,17 @@ export const tr = {
     styleBlockMissing: 'XSLT içinde bir stil bloğu bulunamadı — önce bir stil bloğu ekleyin.',
   },
 
+  tabs: {
+    newTab: 'Yeni',
+    newTitle: 'Yeni sekme (Cmd/Ctrl+T)',
+    opened: 'Yeni sekme açıldı',
+    close: 'Sekmeyi kapat',
+    closeTitle: 'Sekmeyi kapat (orta tık)',
+    unsavedTab: 'Henüz kaydedilmemiş',
+    closeDirtyTitle: '⚠️ Kaydedilmemiş Değişiklikler',
+    closeDirtyBody: '"{name}" sekmesinde kaydedilmemiş değişiklikler var. Kapatırsan bu değişiklikler kaybolur. Yine de kapatılsın mı?',
+  },
+
   exit: {
     title: '⚠️ Kaydedilmemiş Değişiklikler',
     body: '{files} dosyasında kaydedilmemiş değişiklikler var. Çıkmadan önce kaydetmek ister misin?',

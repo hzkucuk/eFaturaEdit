@@ -157,6 +157,18 @@ fatura sidecar'a beslenip karşılaştırıldı, tek fark eklenen sayfa kabı `<
   ayrı rotalar ve kapsamlı bileşenler dahil **tüm alanlara** yansır.
 - **Dosya işlemleri:** Aç / Kaydet / Farklı Kaydet (native dialog), `Cmd/Ctrl+S` ile XSLT+XML birlikte
   kaydetme, kaydetmeden önce syntax kontrolü (hata varsa imleç hatalı satıra gider), son 10 dosya listesi.
+- **Çoklu dosya sekmesi (v2.30.0):** Bir sekme = bir **çalışma**, yani bir XSLT+XML **çifti** ve o
+  çiftin önizlemesi (pano başına ayrı sekme değil — dönüşümün girdisi zaten şablon + veridir).
+  Sekme şeridi editörlerin üstünde: dosya adı, kaydedilmemiş göstergesi (●), kapatma (×),
+  sürükle-bırakla yeniden sıralama.
+  - **Kısayollar:** `Cmd/Ctrl+T` yeni sekme · `Cmd/Ctrl+1…9` N'inci sekme ·
+    `Ctrl+Tab` / `Ctrl+Shift+Tab` sonraki/önceki. Kapatma: × veya **orta tık**.
+    `Cmd+W` **bilerek yok** — macOS'ta Tauri'nin varsayılan menüsündeki "Pencereyi Kapat"a aittir,
+    webview'e hiç ulaşmaz; sekmeye bağlasaydık üç platformdan birinde sessizce çalışmazdı.
+  - **Kaydedilmemiş içerik asla ezilmez:** Dosya/örnek yüklenirken aktif sekmedeki ilgili slot
+    kirliyse yeni sekmede açılır. Veri yüklenirken yeni sekme **temiz** şablonu devralır
+    ("aynı şablon, başka fatura" akışı sürsün diye); kirli şablon devralınmaz.
+  - Çıkış koruması ve "Kaydet ve Çık" **tüm sekmeleri** kapsar, yalnızca aktif olanı değil.
 - **Sürükle-bırak:** `.xslt`/`.xsl`/`.xml` dosyalarını Finder/Explorer'dan doğrudan pencereye bırak.
   Tauri'nin native sürükle-bırak olayı kullanılır (HTML5 drag API WKWebView'de güvenilmez).
 - **"Birlikte Aç":** Uygulama `.xslt`/`.xsl` ve `.xml` türlerini işletim sistemine kaydeder —
@@ -232,7 +244,8 @@ fatura sidecar'a beslenip karşılaştırıldı, tek fark eklenen sayfa kabı `<
 
 ### Bilinen sınırlamalar
 
-- Çoklu dosya sekmesi ve native menü çubuğu yok.
+- Native menü çubuğu yok (macOS'ta yalnızca Tauri'nin varsayılan menüsü).
+- Sekmeler oturumla birlikte kapanır — uygulama açılışında **geri yüklenmez**.
 - WYSIWYG kaynak eşlemesi yalnızca **literal** öğeleri kapsar; `<xsl:element name="...">` ile
   dinamik üretilen öğeler eşlemede görünmez.
 - macOS için evrensel (universal) ikili üretilemez — GraalVM native-image tek mimari derler;

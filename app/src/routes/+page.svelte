@@ -12,7 +12,16 @@
   import type { Snippet } from '$lib/data/types';
   import { transformXml, validateXml, isWellFormed, XsltError, engineStatus } from '$lib/xslt';
   import { settings, updatePanelSize, updateSetting, themeKind, loadApiKeys } from '$lib/settings.svelte';
-  import { editorState } from '$lib/editor-state.svelte';
+  import {
+    editorState,
+    tabsState,
+    newTab,
+    closeTab,
+    activateTab,
+    tabTitle,
+    dirtyTabs,
+    isTabEmpty,
+  } from '$lib/editor-state.svelte';
   import { openFile, saveFile, saveFileAs, reopenFile } from '$lib/fileio';
   import { recentFiles, pushRecent, clearRecent, basename } from '$lib/recent-files.svelte';
   import { dragState, beginPossibleDrag } from '$lib/drag.svelte';
@@ -32,6 +41,7 @@
   import BatchRunner from '$lib/BatchRunner.svelte';
   import Splitter from '$lib/Splitter.svelte';
   import ContextMenu from '$lib/ContextMenu.svelte';
+  import TabBar from '$lib/TabBar.svelte';
   import HelpModal from '$lib/HelpModal.svelte';
   import AIAssistant from '$lib/AIAssistant.svelte';
   import UpdateModal from '$lib/UpdateModal.svelte';
@@ -198,6 +208,13 @@
     const _y = editorState.xmlText;
     void _x;
     void _y;
+    // Sekme değişimi de "metin değişti" sayılır (proxy başka sekmeyi gösterir).
+    // Ama o sekmenin önizlemesi zaten hazır — 600 KB'lık faturayı boşuna yeniden
+    // dönüştürüp her sekme geçişini yavaşlatma.
+    if (skipNextAutoTransform) {
+      skipNextAutoTransform = false;
+      return;
+    }
     if (settings.autoTransformDebounceMs <= 0) return;
     if (!editorState.xsltText || !editorState.xmlText) return;
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -222,6 +239,106 @@
     }, settings.autoSaveDelayMs);
   });
 
+  // ─── Sekmeler ────────────────────────────────────────────────────────
+  // Bir sekme = bir XSLT+XML çifti + önizlemesi (bkz. editor-state.svelte.ts).
+  //
+  // CodeMirror örnekleri sekmeler arasında PAYLAŞILIR — sekme başına ayrı editör
+  // yok. Bu yüzden sekme değişince aktif sekmenin metnini editörlere elle yazmak
+  // ve dirty izleyiciyi susturmak gerekir; yoksa sekmeye geçer geçmez içerik
+  // "değişmiş" sayılır ve kullanıcı hiç dokunmadığı dosyayı kaydetmeye çağrılır.
+
+  /** Sekme değişiminde önizlemeyi yeniden derlemeyi bir kez atla (zaten önbellekte). */
+  let skipNextAutoTransform = false;
+
+  /** Aktif sekmenin içeriğini CodeMirror'a yazar. */
+  function syncEditorsFromState() {
+    ignoreNextChange.xslt = true;
+    ignoreNextChange.xml = true;
+    xsltEditor?.setValue(editorState.xsltText);
+    xmlEditor?.setValue(editorState.xmlText);
+  }
+
+  function switchToTab(id: number) {
+    if (id === tabsState.activeId) return;
+    activateTab(id);
+    // Önizleme sekmeyle birlikte taşınır; varsa yeniden dönüştürmeye gerek yok.
+    skipNextAutoTransform = Boolean(editorState.previewHtml);
+    syncEditorsFromState();
+  }
+
+  function addTab() {
+    newTab();
+    skipNextAutoTransform = true; // boş sekme — dönüştürecek bir şey yok
+    syncEditorsFromState();
+    status(m.tabs.opened);
+  }
+
+  /**
+   * Sekmeyi kapat. Kaydedilmemiş değişiklik varsa <b>sor</b> — sekme kapatmak,
+   * pencereyi kapatmak kadar kolay veri kaybettirir.
+   */
+  async function requestCloseTab(id: number) {
+    const tab = tabsState.list.find((t) => t.id === id);
+    if (!tab) return;
+
+    if (tab.xsltDirty || tab.xmlDirty) {
+      const proceed = await ask(f(m.tabs.closeDirtyBody, { name: tabTitle(tab, m.tabs.newTab) }), {
+        title: m.tabs.closeDirtyTitle,
+        kind: 'warning',
+      });
+      if (!proceed) return; // "İptal" → sekme açık kalır
+    }
+
+    closeTab(id);
+    skipNextAutoTransform = Boolean(editorState.previewHtml);
+    syncEditorsFromState();
+  }
+
+  /**
+   * Bir dosya yüklenirken hedef sekmeyi seçer.
+   *
+   * Kural: <b>kaydedilmemiş içerik asla ezilmez.</b> Yüklenecek slot ('xslt' /
+   * 'xml' / çift için 'both') aktif sekmede kirliyse yeni sekme açılır; değilse
+   * (boş ya da diske yazılmış) aktif sekmeye yüklenir — böylece "şablonu aç,
+   * sonra faturayı aç" akışı eskisi gibi tek sekmede çalışır.
+   */
+  function prepareTargetTab(slot: 'xslt' | 'xml' | 'both'): void {
+    const t = tabsState.list.find((x) => x.id === tabsState.activeId);
+    if (!t) return;
+    const clash =
+      (slot === 'xslt' && t.xsltDirty) ||
+      (slot === 'xml' && t.xmlDirty) ||
+      (slot === 'both' && (t.xsltDirty || t.xmlDirty));
+    if (!clash || isTabEmpty(t)) return;
+
+    // Yeni sekme, veri yüklenirken şablonu DEVRALIR: "aynı şablon, başka fatura"
+    // bu uygulamanın en sık akışı — boş bir sekme açmak önizlemeyi kör bırakırdı.
+    // Yalnızca TEMİZ şablon devralınır: diskteki hâliyle aynı olduğu için aynı
+    // yolu gösteren iki sekme aynı içeriği taşır. Kirli metni kopyalasaydık tek
+    // bir yol için iki farklı sürüm doğar, biri diğerini sessizce ezerdi.
+    const inherit =
+      slot === 'xml' && t.xsltText && !t.xsltDirty
+        ? { xsltText: t.xsltText, xsltPath: t.xsltPath }
+        : {};
+    newTab(inherit);
+  }
+
+  /**
+   * Aynı dosyayı gösteren DİĞER temiz sekmeleri diskteki yeni içerikle eşitler.
+   *
+   * Şablon devralma yüzünden bir yol birden çok sekmede açık olabilir. Kaydettikten
+   * sonra o sekmeler eski metni tutmaya devam ederse, kullanıcı oraya geçip
+   * kaydettiğinde <b>az önceki kaydını sessizce geri alır.</b> Kirli sekmelere
+   * dokunulmaz — oradaki metin kullanıcının kendi düzenlemesidir.
+   */
+  function syncCleanTwins(kind: 'xslt' | 'xml', path: string, text: string) {
+    for (const t of tabsState.list) {
+      if (t.id === tabsState.activeId) continue;
+      if (kind === 'xslt' && t.xsltPath === path && !t.xsltDirty) t.xsltText = text;
+      if (kind === 'xml' && t.xmlPath === path && !t.xmlDirty) t.xmlText = text;
+    }
+  }
+
   // ─── Actions: load ──────────────────────────────────────────────────
   async function loadDefaultSample() {
     await loadSampleByPath('/samples/default.xslt', '/samples/default.xml', 'default');
@@ -238,6 +355,7 @@
         fetch(xsltUrl).then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${xsltUrl}: ${r.status}`)))),
         fetch(xmlUrl).then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${xmlUrl}: ${r.status}`)))),
       ]);
+      prepareTargetTab('both');
       ignoreNextChange.xslt = true;
       ignoreNextChange.xml = true;
       editorState.xsltText = xsl;
@@ -268,6 +386,7 @@
     sampleMenuOpen = false;
     try {
       const { xslt, xml } = await loadUserSample(sample);
+      prepareTargetTab('both');
       ignoreNextChange.xslt = true;
       ignoreNextChange.xml = true;
       editorState.xsltText = xslt;
@@ -392,6 +511,7 @@
         status(f(m.errors.notAnXslt, { name: basename(result.path) }), true);
         return;
       }
+      prepareTargetTab('xslt');
       ignoreNextChange.xslt = true;
       editorState.xsltText = result.content;
       editorState.xsltPath = result.path;
@@ -420,6 +540,7 @@
         status(f(m.errors.notAnXml, { name: basename(result.path) }), true);
         return;
       }
+      prepareTargetTab('xml');
       ignoreNextChange.xml = true;
       editorState.xmlText = result.content;
       editorState.xmlPath = result.path;
@@ -437,6 +558,7 @@
   async function loadXmlFromPath(path: string) {
     try {
       const content = await reopenFile(path);
+      prepareTargetTab('xml');
       ignoreNextChange.xml = true;
       editorState.xmlText = content.content;
       editorState.xmlPath = content.path;
@@ -499,6 +621,8 @@
       const loaded: string[] = [];
       const skipped: string[] = [];
 
+      prepareTargetTab(xsltFile && xmlFile ? 'both' : xsltFile ? 'xslt' : 'xml');
+
       // Aynı türden fazlası varsa ilkini al, kalanını sessizce yutma — söyle.
       for (const f of files) {
         if (f !== xsltFile && f !== xmlFile) {
@@ -543,6 +667,7 @@
     recentMenuOpen = false;
     try {
       const result = await reopenFile(path);
+      prepareTargetTab(kind);
       if (kind === 'xslt') {
         ignoreNextChange.xslt = true;
         editorState.xsltText = result.content;
@@ -586,6 +711,19 @@
 
   /** Kaydedilecek bir şey var mı? (değişmiş VEYA diskte hiç olmayan dosya) */
   const canSave = $derived(needsSave('xslt', false) || needsSave('xml', false));
+
+  /**
+   * Çıkış modalında "neyi kaydedeceğiz" listesi. Tek sekmede eskisi gibi
+   * "XSLT ve XML" der; birden çok sekme açıkken sekme adlarını sayar — kullanıcı
+   * hangi faturanın kaydedilmemiş olduğunu görmeli.
+   */
+  const dirtyLabel = $derived.by(() => {
+    const dirty = dirtyTabs();
+    if (tabsState.list.length === 1 && dirty.length === 1) {
+      return [dirty[0].xsltDirty && 'XSLT', dirty[0].xmlDirty && 'XML'].filter(Boolean).join(m.exit.and);
+    }
+    return dirty.map((t) => tabTitle(t, m.tabs.newTab)).join(m.exit.and);
+  });
 
   /** XSLT ve XML'i BİRLİKTE kaydet (Cmd+S, Kaydet düğmesi, otomatik kayıt). */
   async function saveAll(silent = false): Promise<boolean> {
@@ -633,6 +771,7 @@
         await saveFile(currentPath, text);
         if (kind === 'xslt') editorState.xsltDirty = false;
         else editorState.xmlDirty = false;
+        syncCleanTwins(kind, currentPath, text);
         pushRecent(currentPath, kind);
         if (!silent) status(f(m.status.saved, { kind: kind.toUpperCase(), path: currentPath }));
       } else {
@@ -1311,6 +1450,23 @@ window.addEventListener('message', function(e) {
     } else if (meta && e.key === '0') {
       e.preventDefault();
       resetZoom();
+    } else if (meta && (e.key === 't' || e.key === 'T')) {
+      e.preventDefault();
+      addTab();
+    } else if (e.ctrlKey && e.key === 'Tab') {
+      // Sonraki/önceki sekme (tarayıcı geleneği). Ctrl+Tab, macOS'ta da Ctrl'dür.
+      e.preventDefault();
+      const list = tabsState.list;
+      if (list.length > 1) {
+        const i = list.findIndex((t) => t.id === tabsState.activeId);
+        const step = e.shiftKey ? -1 : 1;
+        switchToTab(list[(i + step + list.length) % list.length].id);
+      }
+    } else if (meta && e.key >= '1' && e.key <= '9') {
+      // Cmd/Ctrl+N → N'inci sekme. (Cmd+0 zaten "yakınlaştırmayı sıfırla".)
+      e.preventDefault();
+      const tab = tabsState.list[Number(e.key) - 1];
+      if (tab) switchToTab(tab.id);
     } else if (e.key === 'F1') {
       e.preventDefault();
       helpOpen = true;
@@ -1596,7 +1752,9 @@ window.addEventListener('message', function(e) {
       const win = getCurrentWindow();
       unlistenClose = await win.onCloseRequested(async (event) => {
         if (forceClose) return; // izin verildi, kapanmaya devam et
-        if (editorState.xsltDirty || editorState.xmlDirty) {
+        // Aktif sekmeye değil, TÜM sekmelere bak: arka sekmedeki kaydedilmemiş
+        // fatura da kullanıcının emeği — sessizce gitmesin.
+        if (dirtyTabs().length > 0) {
           event.preventDefault();
           exitConfirmOpen = true;
         }
@@ -1607,12 +1765,29 @@ window.addEventListener('message', function(e) {
     }
   }
 
+  /**
+   * Kirli sekmelerin hepsini kaydeder.
+   *
+   * Kaydetme yolu (`saveAll` → `saveOne`) baştan sona `editorState` üzerinden,
+   * yani <b>aktif</b> sekme üzerinden okur. Sekme başına ikinci bir kaydetme yolu
+   * yazmak yerine odağı sekmeler arasında gezdiriyoruz — böylece sözdizimi
+   * hatasında imleç doğru sekmede doğru satıra gider (`saveOne` → `goToLine`).
+   */
+  async function saveAllTabs(): Promise<boolean> {
+    for (const tab of dirtyTabs()) {
+      switchToTab(tab.id);
+      await tick(); // editörler yeni içeriğe otursun
+      if (!(await saveAll())) return false;
+    }
+    return true;
+  }
+
   /** Kaydet ve çık. Syntax hatası varsa çıkışı iptal eder, kullanıcı düzeltmeli. */
   async function confirmSaveAndExit() {
     exitInProgress = true;
     try {
-      const ok = await saveAll();
-      if (!ok && (editorState.xsltDirty || editorState.xmlDirty)) {
+      const ok = await saveAllTabs();
+      if (!ok && dirtyTabs().length > 0) {
         status(m.exit.saveFailedSyntax, true);
         exitInProgress = false;
         return; // modal açık kalır, kullanıcı düzeltsin
@@ -1938,7 +2113,10 @@ window.addEventListener('message', function(e) {
     <Splitter direction="vertical" bind:position={snippetsWidth} min={40} />
 
     <!-- Editör paneli -->
-    <section class="editors" style="grid-template-rows: 22px {xsltHeight}px 4px 22px 1fr;">
+    <section class="editors" style="grid-template-rows: 26px 22px {xsltHeight}px 4px 22px 1fr;">
+      <!-- Sekme şeridi: her sekme bir XSLT+XML çifti ve kendi önizlemesi. -->
+      <TabBar onselect={switchToTab} onclose={requestCloseTab} onnew={addTab} />
+
       <!-- Tam yol gösterilir: aynı adlı şablonlar farklı klasörlerde durabilir,
            sadece dosya adı hangi dosyayla çalıştığını söylemeye yetmez. -->
       <div class="panel-header">
@@ -2343,11 +2521,7 @@ window.addEventListener('message', function(e) {
     <div class="exit-modal" role="alertdialog" aria-label={m.common.unsavedChanges}>
       <h3>{m.exit.title}</h3>
       <p>
-        {f(m.exit.body, {
-          files: [editorState.xsltDirty && 'XSLT', editorState.xmlDirty && 'XML']
-            .filter(Boolean)
-            .join(m.exit.and),
-        })}
+        {f(m.exit.body, { files: dirtyLabel })}
       </p>
       <div class="exit-actions">
         <button class="exit-btn cancel" onclick={cancelExit} disabled={exitInProgress}>{m.common.cancel}</button>

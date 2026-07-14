@@ -1,6 +1,6 @@
 {
   "name": "efatura-edit",
-  "version": "2.29.0",
+  "version": "2.30.0",
   "description": "E-Fatura Dizayn Editörü — Tauri + SvelteKit + Saxon-JS",
   "type": "module",
   "scripts": {
