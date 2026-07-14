@@ -146,6 +146,9 @@ kod sessizce hiçbir şey yapmadı.
   Az kalsın çalışan bir özelliği geri alıyordum.
 - İndirdiğin dosyanın **sandığın dosya olduğunu** doğrula: `latest`, CI koşarken **yarım**
   `latest.json` döndürür (6/15 platform). Sabit girdiyle (`--pattern`, etiketle) ölç.
+- Node'da runes testi yazarken: `import 'svelte'` **`index-server.js`'e** (SSR) çözülür; oradaki
+  `flushSync` hiçbir şey flush **etmez**. Effect'ler hiç çalışmaz, test "her şey bozuk" der —
+  oysa bozuk olan testtir. `node --conditions browser` ile koş. (v2.30.0'da tam da bu oldu.)
 
 **Kural:** Bir ölçüm "hepsi bozuk" ya da "hepsi temiz" diyorsa — fazla düzenli olan her sonuç gibi —
 **önce ölçüm aracını** doğrula.
