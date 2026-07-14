@@ -95,6 +95,31 @@ talimatları (macOS'ten Windows/Linux derleme dahil) için [INSTALL.md](INSTALL.
 4. **Cmd/Ctrl+S** ile kaydedin — sözdizimi hatası varsa imleç otomatik olarak hatalı satıra gider.
 5. Yardım için **F1**.
 
+### 🧪 Toplu Test — "bir şeyi düzeltirken başka bir şeyi bozdum mu?"
+
+Editör tek seferde **tek fatura** gösterir. İskontolu faturada hizaladığın sütun, tevkifatlı faturada
+kaymış olabilir ve **bunu göremezsin**. Toplu Test şablonunu bir klasördeki **tüm** faturalara karşı
+çalıştırıp bu kör noktayı kapatır.
+
+```
+~/Belgeler/fatura-testleri/     ← klasördeki TÜM .xml dosyaları taranır
+├── 01-temel-fatura.xml
+├── 02-iskontolu.xml
+├── 03-tevkifatli.xml
+└── 04-25-kalemli-iki-sayfa.xml
+```
+
+1. Test edeceğin **XSLT'yi editöre yükle** (o an ekranda olan şablon kullanılır).
+2. **🧪 Toplu Test** → **📁 Fatura Klasörü Seç** → koşu kendiliğinden başlar. Her satırda sonuç,
+   süre, çıktı boyutu; hata varsa **Saxon'un gerçek mesajı** (satır numarasıyla). Satıra çift tıkla →
+   o fatura editöre yüklenir.
+3. **📸 Anlık Görüntü Al** → her çıktının **sha256**'sı saklanır.
+4. Şablonu değiştir → **▶ Tekrar Çalıştır** → satırlar `aynı` / **`DEĞİŞTİ`** / `yeni` diye etiketlenir.
+   **Beklemediğin bir fatura "DEĞİŞTİ" diyorsa, farkında olmadan bir şey bozmuşsundur.**
+
+Değişiklik kasıtlıysa yeniden 📸 ile referansı tazele. Ayrıntılı anlatım: uygulama içi **F1 → 🧪 Toplu
+Test**.
+
 ## Katkıda Bulunma
 
 Bu proje MIT lisansı ile açık kaynaktır. Hata bildirimi, öneri ve pull request'ler memnuniyetle karşılanır.

@@ -3,6 +3,17 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.30.1] — 2026-07-14 — Toplu Test Kullanım Kılavuzu
+
+### Eklenen
+- **Yardım (F1) → 🧪 Toplu Test (Regresyon) bölümü.** Özellik v2.29.0'da **belgesiz** çıkmıştı:
+  uygulamada düğme vardı, ama ne işe yaradığını ve nasıl kullanılacağını anlatan tek satır yoktu.
+  Yeni bölüm şunları anlatır: hangi derde deva olduğu (tek fatura gösteren editörün kör noktası),
+  test klasörünün nasıl kurulacağı (**örnek klasör ağacı + macOS/Windows yolları**), adım adım
+  çalıştırma, 📸 anlık görüntünün ne yaptığı, `aynı` / `DEĞİŞTİ` / `yeni` etiketlerinin okunuşu,
+  tipik çalışma akışı ve `batch-baseline.json`'ın **üç platformdaki gerçek yolu**.
+- Yardım içeriğinde artık çok satırlı blok (`pre`) ve sıralı liste (`ol`) da düzgün görünüyor.
+
 ## [2.30.0] — 2026-07-14 — Çoklu Dosya Sekmesi
 
 ### Eklenen

@@ -251,6 +251,30 @@
     font-size: 12px;
     color: #0a5cff;
   }
+  /* Klasör ağacı gibi çok satırlı bloklar. İçindeki <code> satır-içi çip
+     stilini almasın — blok zaten kendi zeminini taşıyor. */
+  .help-content :global(pre) {
+    background: #f0f2f5;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    margin: 0.5rem 0;
+    overflow-x: auto;
+  }
+  .help-content :global(pre code) {
+    background: none;
+    padding: 0;
+    color: #374151;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .help-content :global(ol) {
+    margin: 0.4rem 0 0.8rem 1.1rem;
+    padding: 0;
+  }
+  .help-content :global(ol li) {
+    margin-bottom: 0.3rem;
+  }
   .help-content :global(kbd) {
     display: inline-block;
     padding: 2px 7px;

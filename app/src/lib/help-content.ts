@@ -91,6 +91,94 @@ export const HELP_SECTIONS: HelpSection[] = [
     `,
   },
   {
+    id: 'toplu-test',
+    title: 'Toplu Test (Regresyon)',
+    icon: '🧪',
+    keywords: 'toplu test regresyon batch anlık görüntü snapshot sha256 değişti bozdum mu klasör',
+    html: `
+      <h4>Hangi derde deva?</h4>
+      <p>Editör sana <strong>tek seferde tek fatura</strong> gösterir. Şablonda yaptığın bir düzeltme
+      ekrandaki faturayı düzeltirken <strong>başka bir senaryoyu bozabilir</strong> — iskontolu faturada
+      hizaladığın sütun, tevkifatlı faturada kayabilir. Editörde bunu göremezsin, çünkü o faturaya
+      bakmıyorsun. <strong>Toplu Test</strong> tam olarak bu kör noktayı kapatır: şablonunu bir
+      klasördeki <strong>bütün</strong> faturalara karşı çalıştırır ve <em>"bir şeyi düzeltirken başka
+      bir şeyi bozdum mu?"</em> sorusunu tahminle değil <strong>ölçümle</strong> yanıtlar.</p>
+
+      <h4>Hazırlık: fatura klasörü</h4>
+      <p>Bir klasöre, şablonunun karşılaşacağı <strong>farklı senaryoları</strong> temsil eden gerçek
+      <code>.xml</code> faturaları koy. Klasördeki <strong>tüm <code>.xml</code> dosyaları</strong>
+      (alfabetik sırayla) taranır; alt klasörlere inilmez.</p>
+      <pre><code>~/Belgeler/fatura-testleri/
+├── 01-temel-fatura.xml
+├── 02-iskontolu.xml
+├── 03-tevkifatli.xml
+├── 04-istisna-kdv0.xml
+├── 05-doviz-usd.xml
+├── 06-25-kalemli-iki-sayfa.xml
+└── 07-iade-fatura.xml</code></pre>
+      <p>Windows'ta örnek: <code>C:\\Users\\ahmet\\Belgeler\\fatura-testleri</code></p>
+      <p><strong>Klasörü nasıl doldurursun?</strong> En değerli test faturaları <strong>senin gerçek
+      faturalarındır</strong> — özellikle geçmişte "bu fatura bozuk basılıyor" diye geri dönen örnekler.
+      Her birini bu klasöre at; artık bir daha sessizce bozulamazlar.</p>
+      <p>Uygulamayla gelen GİB örneklerinden de yararlanabilirsin: <strong>🎲 Örnek ▼</strong> menüsünden
+      bir senaryo yükle, sonra <strong>💾 Farklı</strong> de. Bu, çifti birlikte kaydeder — <em>önce</em>
+      XSLT için, <em>sonra</em> XML için pencere açılır; XML penceresinde test klasörünü göster.
+      (Paketli örnekler uygulamanın içine gömülüdür; diskte gezilebilir bir klasörleri yoktur.)</p>
+
+      <h4>Adım adım çalıştırma</h4>
+      <ul>
+        <li><strong>1.</strong> Test etmek istediğin <strong>XSLT şablonunu editöre yükle</strong>
+        (Toplu Test, editördeki şablonu kullanır — diskteki hâlini değil, <em>o an ekranda olanı</em>).</li>
+        <li><strong>2.</strong> Araç çubuğunda <strong>🧪 Toplu Test</strong> düğmesine bas.</li>
+        <li><strong>3.</strong> <strong>📁 Fatura Klasörü Seç</strong> → yukarıdaki klasörü seç.
+        Seçer seçmez koşu <strong>kendiliğinden başlar</strong>. Faturalar <strong>sırayla</strong>
+        işlenir (aynı anda 50 dönüşüm başlatmak makineyi çökertirdi); ilerleme çubuğu hangi dosyada
+        olduğunu gösterir.</li>
+        <li><strong>4.</strong> Sonuç tablosu: her satırda <strong>dosya adı</strong>,
+        <strong>sonuç</strong> (✓ / ✗ ve hata mesajı), <strong>süre</strong> ve <strong>çıktı boyutu</strong>.
+        Başarısız satırlarda <strong>Saxon'un gerçek hata metni</strong> yazar (satır numarasıyla) —
+        "bilinmeyen hata" demeyiz.</li>
+        <li><strong>5.</strong> Bir satıra <strong>çift tıkla</strong> → o fatura editöre yüklenir,
+        hatayı gözünle görürsün.</li>
+      </ul>
+
+      <h4>📸 Anlık Görüntü — asıl güç burada</h4>
+      <p>Koşu başarılıysa <strong>📸 Anlık Görüntü Al</strong> düğmesine bas. Uygulama her faturanın
+      HTML çıktısının <strong>sha256 imzasını</strong> saklar. Bu, o anki çıktının "fotoğrafıdır".</p>
+      <p>Şimdi şablonda değişiklik yap, <strong>▶ Tekrar Çalıştır</strong> de. Her satır artık
+      etiketlenir:</p>
+      <ul>
+        <li><strong>aynı</strong> — çıktı bit bit aynı. Bu faturaya <strong>dokunmadın</strong>.</li>
+        <li><strong>DEĞİŞTİ</strong> — çıktı farklı. <strong>Beklediğin faturalar mı değişti?</strong>
+        Sadece iskontoyu düzelttiysen ama tevkifatlı fatura da "DEĞİŞTİ" diyorsa, farkında olmadan
+        bir şey bozmuşsun demektir — <em>işte yakalamak istediğin an budur.</em></li>
+        <li><strong>yeni</strong> — bu fatura anlık görüntü alındığında yoktu (klasöre sonradan eklendi).</li>
+      </ul>
+      <p>Değişiklik <strong>kasıtlıysa</strong> yeniden <strong>📸 Anlık Görüntü Al</strong> diyerek yeni
+      hâli referans yap. Böylece bir sonraki düzenlemede yalnızca <em>ondan sonraki</em> farklar görünür.</p>
+
+      <h4>Tipik akış</h4>
+      <ol>
+        <li>Şablonu yükle → 🧪 Toplu Test → klasörü seç → hepsi ✓ mi, bak.</li>
+        <li>📸 Anlık Görüntü Al (temiz başlangıç noktası).</li>
+        <li>Şablonda değişikliği yap (örn. nakli yekûn satırının sütununu düzelt).</li>
+        <li>▶ Tekrar Çalıştır → <strong>yalnızca çok kalemli faturalar "DEĞİŞTİ" demeli.</strong>
+        Başkası da değiştiyse dur ve bak.</li>
+        <li>Sonuç doğruysa 📸 Anlık Görüntü Al ve devam et.</li>
+      </ol>
+
+      <h4>Anlık görüntüler nerede saklanıyor?</h4>
+      <p>Klasör bazında, uygulama veri klasöründeki <code>batch-baseline.json</code> dosyasında.
+      Her klasörün kendi anlık görüntüsü vardır — farklı müşteri/şablon setleri birbirine karışmaz.</p>
+      <ul>
+        <li><strong>macOS:</strong> <code>~/Library/Application Support/com.zaferbilgisayar.efaturaedit/batch-baseline.json</code></li>
+        <li><strong>Windows:</strong> <code>%APPDATA%\\com.zaferbilgisayar.efaturaedit\\batch-baseline.json</code></li>
+        <li><strong>Linux:</strong> <code>~/.config/com.zaferbilgisayar.efaturaedit/batch-baseline.json</code></li>
+      </ul>
+      <p>Dosyayı silmek yalnızca referansı sıfırlar; faturalarına veya şablonuna hiçbir şey olmaz.</p>
+    `,
+  },
+  {
     id: 'snippetler',
     title: "Snippet'ler",
     icon: '🧩',
