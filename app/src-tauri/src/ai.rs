@@ -81,14 +81,61 @@ fn truncated_error(max_tokens: u32) -> String {
     )
 }
 
+/// `choices[0].message` içinde BOŞ OLMAYAN, `content` DIŞINDAKİ metin alanlarını listeler.
+///
+/// Uydurma alan adı ARAMAZ (ders 10: tahminle yazılan tanımlayıcı hata vermez, sadece iş
+/// görmez). Yanıtta gerçekten ne geldiyse onu okur — bu sayede içerik beklenmedik bir alana
+/// konduysa (akıl yürütme alanı vb.) adını sağlayıcının kendisinden öğreniriz.
+fn other_text_fields(body: &str) -> String {
+    let Ok(json) = serde_json::from_str::<Value>(body) else {
+        return String::new();
+    };
+    let Some(obj) = json["choices"][0]["message"].as_object() else {
+        return String::new();
+    };
+    obj.iter()
+        .filter(|(k, _)| k.as_str() != "content" && k.as_str() != "role")
+        .filter_map(|(k, v)| {
+            let s = v.as_str()?;
+            if s.trim().is_empty() {
+                return None;
+            }
+            Some(format!("{k} ({} karakter)", s.chars().count()))
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 /// Boş yanıt da başarı sayılmaz — sessizce "hiçbir şey olmadı" görüntüsü verir.
-fn empty_error(finish_reason: &str) -> String {
+///
+/// **Kör nokta kapatıldı (v2.33.1):** İçerik boş geldiğinde sağlayıcının GERÇEKTE ne
+/// döndürdüğünü bilmiyorduk — `deepseek-v4-flash` üç kez `finish_reason: stop` ile ama
+/// boş `content` ile döndü ve teşhis edilemedi. Sebep ancak ham gövde görülerek öğrenilir;
+/// bu yüzden gövde artık loglanır (yanıt gövdesidir, istek değil — anahtar içermez).
+fn empty_error(provider: &str, model: &str, finish_reason: &str, body: &str) -> String {
+    log::error!(
+        "[ai] BOŞ İÇERİK — {provider} · {model} · bitiş={finish_reason} · ham yanıt: {}",
+        body.chars().take(1500).collect::<String>()
+    );
+
     let hint = if finish_reason.is_empty() {
         String::new()
     } else {
         format!(" (bitiş sebebi: {finish_reason})")
     };
-    format!("Sağlayıcı boş yanıt döndürdü{hint}. Lütfen tekrar deneyin.")
+    let extras = other_text_fields(body);
+    if extras.is_empty() {
+        format!(
+            "Sağlayıcı boş yanıt döndürdü{hint}. Lütfen tekrar deneyin; sorun sürerse \
+             Ayarlar → AI'dan başka bir model seçin."
+        )
+    } else {
+        format!(
+            "Model beklenen `content` alanını boş döndürdü{hint}, ama yanıtta şu alan(lar) dolu: \
+             {extras}. Yani model cevabı okuduğumuz yere koymamış. Ayarlar → AI'dan başka bir \
+             model seçin. (Ham yanıt günlüğe yazıldı.)"
+        )
+    }
 }
 
 /// Başarısız HTTP yanıtını okunur hataya çevirir. Sağlayıcılar hata gövdesini
@@ -454,13 +501,15 @@ async fn call_anthropic(req: &AiChatRequest) -> Result<String, String> {
         return Err(truncated_error(16384));
     }
 
+    // "Metin bloğu yok" ile "metin bloğu boş" pratikte aynı sonuçtur: kullanıcıya
+    // gösterilecek bir şey yok. İkisi de ham gövdeyi loglayan tek kapıdan geçer.
     let text = json["content"]
         .as_array()
         .and_then(|blocks| blocks.iter().find(|b| b["type"].as_str() == Some("text")))
         .and_then(|b| b["text"].as_str())
-        .ok_or_else(|| String::from("Yanıtta metin bulunamadı."))?;
+        .unwrap_or("");
     if text.trim().is_empty() {
-        return Err(empty_error(stop));
+        return Err(empty_error(&req.provider, &req.model, stop, &body));
     }
     Ok(text.to_string())
 }
@@ -548,9 +597,9 @@ async fn call_gemini(req: &AiChatRequest) -> Result<String, String> {
 
     let text = json["candidates"][0]["content"]["parts"][0]["text"]
         .as_str()
-        .ok_or_else(|| String::from("Yanıtta metin bulunamadı."))?;
+        .unwrap_or("");
     if text.trim().is_empty() {
-        return Err(empty_error(finish));
+        return Err(empty_error(&req.provider, &req.model, finish, &body));
     }
     Ok(text.to_string())
 }
@@ -663,9 +712,55 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
 
     let text = json["choices"][0]["message"]["content"]
         .as_str()
-        .ok_or_else(|| String::from("Yanıtta metin bulunamadı."))?;
+        .unwrap_or("");
     if text.trim().is_empty() {
-        return Err(empty_error(finish));
+        return Err(empty_error(&req.provider, &req.model, finish, &body));
     }
     Ok(text.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Asıl vaka: model `content`'i boş bırakıp cevabı BAŞKA bir alana koyuyor.
+    /// Alan adını biz bilmiyoruz — yanıttan okunmalı (ders 10: tahminle yazılan
+    /// tanımlayıcı hata vermez, sadece iş görmez).
+    #[test]
+    fn bos_content_diger_alanlari_bildirir() {
+        let body = r#"{"choices":[{"finish_reason":"stop","message":{
+            "role":"assistant","content":"","reasoning_content":"abcde"}}]}"#;
+        assert_eq!(other_text_fields(body), "reasoning_content (5 karakter)");
+
+        let msg = empty_error("deepseek", "deepseek-v4-flash", "stop", body);
+        assert!(msg.contains("reasoning_content"), "alan adı kullanıcıya söylenmeli: {msg}");
+    }
+
+    /// Gerçekten bomboş yanıt: söylenecek alan yok, genel mesaj verilmeli — ama
+    /// bitiş sebebi GİZLENMEMELİ.
+    #[test]
+    fn tamamen_bos_yanit_genel_mesaj() {
+        let body =
+            r#"{"choices":[{"finish_reason":"stop","message":{"role":"assistant","content":""}}]}"#;
+        assert_eq!(other_text_fields(body), "");
+        let msg = empty_error("deepseek", "deepseek-chat", "stop", body);
+        assert!(msg.contains("boş yanıt döndürdü"), "{msg}");
+        assert!(msg.contains("bitiş sebebi: stop"), "{msg}");
+    }
+
+    /// Bozuk/JSON olmayan gövde (HTML hata sayfası) teşhis yolunu ÇÖKERTMEMELİ (ders 4).
+    #[test]
+    fn bozuk_govde_cokmez() {
+        assert_eq!(other_text_fields("<html>502 Bad Gateway</html>"), "");
+        assert_eq!(other_text_fields(""), "");
+        assert!(!empty_error("nvidia", "x", "", "<html>502</html>").is_empty());
+    }
+
+    /// Boş dizeler, null'lar ve `role` gürültüdür — kullanıcıya listelenmemeli.
+    #[test]
+    fn bos_alanlar_ve_rol_listelenmez() {
+        let body = r#"{"choices":[{"message":{"role":"assistant","content":"",
+            "reasoning_content":"   ","tool_calls":null,"refusal":"engellendi"}}]}"#;
+        assert_eq!(other_text_fields(body), "refusal (10 karakter)");
+    }
 }

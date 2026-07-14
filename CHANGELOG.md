@@ -3,6 +3,30 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.33.1] — 2026-07-14 — Boş AI Yanıtı: Kör Nokta Kapatıldı
+
+### Düzeltilen
+- **"Sağlayıcı boş yanıt döndürdü" hatası teşhis edilemiyordu.** `deepseek-v4-flash` üç kez
+  `finish_reason: stop` (yani "bitirdim") ile ama **boş `content`** ile döndü — model 8-9 saniye
+  çalışıp bir şey üretti, ama bizim okuduğumuz alanda değildi. Ham gövde loglanmadığı için
+  sağlayıcının **ne döndürdüğü görülemiyordu**; teşhis kördü.
+- Artık `content` boş çıktığında:
+  1. **Ham yanıt gövdesi günlüğe yazılır** (`[ai] BOŞ İÇERİK — sağlayıcı · model · bitiş=… · ham yanıt: …`).
+     Bu yanıt gövdesidir, istek değil — **API anahtarı içermez.**
+  2. Yanıtta `content` dışında **hangi alanların dolu geldiği okunur** ve kullanıcıya söylenir
+     (ör. *"yanıtta şu alan(lar) dolu: reasoning_content (2140 karakter) — model cevabı okuduğumuz
+     yere koymamış"*). Alan adı **tahmin edilmiyor**, sağlayıcının yanıtından öğreniliyor.
+- Aynı kapı üç sağlayıcı yolunda da (Anthropic, Gemini, OpenAI-uyumlu) geçerli. "Metin bloğu yok" ile
+  "metin boş" durumları birleştirildi — ikisi de kullanıcı için aynı sonuç (gösterilecek bir şey yok).
+
+### Notlar
+- Bu **sebebi bulmadı, sebebi görünür kıldı.** Boş yanıt tekrarlarsa günlükteki `[ai] BOŞ İÇERİK`
+  satırı cevabın hangi alanda geldiğini söyleyecek; doğru alanı ondan sonra **ölçerek** okuyacağız.
+  (Tahminle `reasoning_content` okumaya kalkmak, uydurulan alan adının sessizce iş görmemesi
+  riskini taşırdı.)
+- `ai.rs` için ilk birim testleri eklendi (4 test): boş içerikte diğer alanların bildirilmesi, tamamen
+  boş yanıt, bozuk/HTML gövdenin teşhis yolunu çökertmemesi, boş alanların ve `role`'ün listelenmemesi.
+
 ## [2.33.0] — 2026-07-14 — Önizleme Sağ Tık Menüsü: Arama, Kopyalama, Zoom, Görsel
 
 ### Eklenen

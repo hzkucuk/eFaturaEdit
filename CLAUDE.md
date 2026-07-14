@@ -149,6 +149,12 @@ kod sessizce hiçbir şey yapmadı.
 - Node'da runes testi yazarken: `import 'svelte'` **`index-server.js`'e** (SSR) çözülür; oradaki
   `flushSync` hiçbir şey flush **etmez**. Effect'ler hiç çalışmaz, test "her şey bozuk" der —
   oysa bozuk olan testtir. `node --conditions browser` ile koş. (v2.30.0'da tam da bu oldu.)
+- **`strings` Türkçe dizeleri BULAMAZ** (v2.32.1). Çok baytlı `ğ ı ş` ASCII dizisini böldüğü için
+  ikilide **var olan** mesajı "yok" gösterdi; az kalsın "derleme çalışmadı" sonucuna varıyordum.
+  İkilide dize doğrulaması `grep -a <ikili>` ile yapılır. Kontrol olarak **bilinen bir dizeyi de**
+  arat: o da bulunamıyorsa hatalı olan araçtır, kod değil.
+- **`format!` / `log::` makroları format dizesini `{}` yerlerinden PARÇALAR.** İkilide
+  `"sistem {} bayt"` diye bütün bir dize aramak sıfır döndürür — parça (`" · sistem "`) aranmalı.
 
 **Kural:** Bir ölçüm "hepsi bozuk" ya da "hepsi temiz" diyorsa — fazla düzenli olan her sonuç gibi —
 **önce ölçüm aracını** doğrula.
@@ -168,6 +174,34 @@ takıma **eklemeden** yeşili kabul etme. Geriye uyum ölçümü (eski davranı�
 ileriye kapsama (yeni davranış doğru mu?) **ayrı iki sorudur**; birincisi ikincisini kanıtlamaz.
 Görsel çıktı üreten değişikliklerde **render edilmiş HTML'i say** (bkz. aşağıdaki sidecar komutu) —
 "eklendi" ile "doğru yerde ve bir kez basıldı" aynı şey değildir.
+
+### 13. Derleyicinin GÖRMEDİĞİ kod — `npm run check` yeşil ama kod hiç denetlenmemiş olabilir
+
+Bu projede iki yerde kod, **dize içinde** yaşar ve ne TypeScript ne `svelte-check` onu görür:
+- **Iframe köprüsü** (`+page.svelte` → `bridgeJs`): önizlemeye enjekte edilen JS. Sağ tık, arama,
+  WYSIWYG hep burada. Yazım hatası **derlemede yakalanmaz**, çalışma anında sessizce ölür.
+- **AI sistem promptu** ve **yetenek (skill) paketleri**: sadece metin — "yanlış" olduğunu ancak
+  modelin davranışından anlarsın.
+
+**Kural:** Bu koddaki mantığı ölçmek için onu **gerçek bir DOM'da koştur**. Kaynaktan **birebir kes**
+(yeniden yazma — yeniden yazarsan testin kendi kopyasını ölçersin, ders 11) ve `jsdom`'da çalıştır.
+`jsdom`'u projeye bağımlılık olarak **ekleme**; scratchpad'e kurup oradan koş.
+DOM'u değiştiren bir özellik yazdıysan (arama vurgusu gibi) **geri alma yolunu da ölç**: artakalan
+`<mark>` "HTML'i Kopyala" çıktısını ve WYSIWYG'i kirletir. Prompta giden metnin gerçekten gittiğini
+ise **boyutunu loglayarak** doğrula (`[ai] istek — … sistem N bayt`).
+
+### 14. Sağlayıcı hatası **semptomu** söyler, sebebi değil (AI)
+
+- Metin-only modele görsel gönderilince DeepSeek/NIM şunu döndürdü:
+  `unknown variant 'image_url', expected 'text'`. Kullanıcının bundan "bu model görsel okumuyor"
+  sonucunu çıkarması **imkânsız**.
+- `content` **boş** ama `finish_reason: stop` → model "bitirdim" diyor, elde bir şey yok. Ham gövdeyi
+  loglamadığımız için **teşhis edilemedi** (v2.33.1'de kapatıldı).
+
+**Kural:** Yanıttan beklediğini alamıyorsan **ham gövdeyi logla** (yanıt gövdesidir, anahtar içermez).
+Sebebi ayırt ederken **model adına bakıp tahmin yürütme** ("bu model vision destekler mi?" — NIM
+kataloğunda destekleyen de var, addan bilinemez): **ne gönderdiğimize** bak (görsel gönderdik mi?) ve
+**yanıtta gerçekten hangi alanlar dolu**, onu **oku** (uydurma alan adı arama — ders 10).
 
 ---
 
