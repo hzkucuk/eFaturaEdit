@@ -369,6 +369,7 @@ export const en: Messages = {
 
   tabs: {
     newTab: 'New',
+    defaultXml: '(default data)',
     newTitle: 'New tab (Cmd/Ctrl+T)',
     opened: 'New tab opened',
     close: 'Close tab',

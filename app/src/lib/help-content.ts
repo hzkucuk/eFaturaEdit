@@ -55,8 +55,12 @@ export const HELP_SECTIONS: HelpSection[] = [
       Hata varsa <strong>dosya kaydedilmez</strong> ve imleç otomatik olarak
       hatalı satıra konumlanır.</p>
       <h4>Sekmeler</h4>
-      <p>Editörlerin üstündeki şeritte her sekme bir <strong>çalışmadır</strong>: kendi XSLT'si,
-      XML'i ve önizlemesi. Birden çok fatura/şablon üzerinde aynı anda çalışabilirsin.</p>
+      <p>Her sekme bir <strong>çalışmadır</strong>: kendi XSLT'si, XML'i ve önizlemesi. Birden çok
+      fatura/şablon üzerinde aynı anda çalışabilirsin.</p>
+      <p><strong>Her panonun kendi şeridi var, ama şeritler evli:</strong> üstteki şerit şablon
+      adlarını, alttaki veri adlarını gösterir; ikisi de aynı sekmeyi işaret eder. XML şeridinden
+      2. sekmeyi seçersen XSLT şeridi de 2'ye geçer — şablon verisinden ayrılmaz. XSLT'yi tek başına
+      açıp varsayılan veriyle eşlendiğinde XML sekmesi <em>(varsayılan veri)</em> yazar.</p>
       <ul>
         <li><kbd>Cmd/Ctrl+T</kbd> — yeni sekme (<strong>+</strong> düğmesi de aynı işi yapar).</li>
         <li><kbd>Cmd/Ctrl+1</kbd>…<kbd>9</kbd> — N'inci sekmeye git.</li>

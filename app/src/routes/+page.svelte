@@ -2113,9 +2113,11 @@ window.addEventListener('message', function(e) {
     <Splitter direction="vertical" bind:position={snippetsWidth} min={40} />
 
     <!-- Editör paneli -->
-    <section class="editors" style="grid-template-rows: 26px 22px {xsltHeight}px 4px 22px 1fr;">
-      <!-- Sekme şeridi: her sekme bir XSLT+XML çifti ve kendi önizlemesi. -->
-      <TabBar onselect={switchToTab} onclose={requestCloseTab} onnew={addTab} />
+    <section class="editors" style="grid-template-rows: 26px 22px {xsltHeight}px 4px 26px 22px 1fr;">
+      <!-- Her panonun kendi sekme şeridi var, ama şeritler EVLİDİR: ikisi de aynı
+           sekme listesini gösterir ve aynı çifti seçer. XML şeridinden sekme
+           değiştirmek XSLT şeridini de taşır — şablon ile verisi ayrılmaz. -->
+      <TabBar kind="xslt" onselect={switchToTab} onclose={requestCloseTab} onnew={addTab} />
 
       <!-- Tam yol gösterilir: aynı adlı şablonlar farklı klasörlerde durabilir,
            sadece dosya adı hangi dosyayla çalıştığını söylemeye yetmez. -->
@@ -2161,6 +2163,8 @@ window.addEventListener('message', function(e) {
       </div>
 
       <Splitter direction="horizontal" bind:position={xsltHeight} min={40} />
+
+      <TabBar kind="xml" onselect={switchToTab} onclose={requestCloseTab} onnew={addTab} />
 
       <div class="panel-header">
         <span class="ph-kind">XML</span>

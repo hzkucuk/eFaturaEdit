@@ -370,6 +370,7 @@ export const es: Messages = {
 
   tabs: {
     newTab: 'Nueva',
+    defaultXml: '(datos por defecto)',
     newTitle: 'Nueva pestaña (Cmd/Ctrl+T)',
     opened: 'Nueva pestaña abierta',
     close: 'Cerrar pestaña',

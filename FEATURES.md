@@ -159,7 +159,11 @@ fatura sidecar'a beslenip karşılaştırıldı, tek fark eklenen sayfa kabı `<
   kaydetme, kaydetmeden önce syntax kontrolü (hata varsa imleç hatalı satıra gider), son 10 dosya listesi.
 - **Çoklu dosya sekmesi (v2.30.0):** Bir sekme = bir **çalışma**, yani bir XSLT+XML **çifti** ve o
   çiftin önizlemesi (pano başına ayrı sekme değil — dönüşümün girdisi zaten şablon + veridir).
-  Sekme şeridi editörlerin üstünde: dosya adı, kaydedilmemiş göstergesi (●), kapatma (×),
+  **Her panonun kendi şeridi vardır, ama şeritler evlidir:** XSLT şeridi şablon adlarını, XML şeridi
+  veri adlarını gösterir; ikisi de aynı sekme listesini ve aynı aktif sekmeyi işaret eder — XML
+  şeridinden sekme değiştirmek XSLT şeridini de taşır, şablon verisinden ayrılmaz. XSLT tek başına
+  açılıp varsayılan UBL-TR verisiyle eşlendiğinde XML sekmesi "(varsayılan veri)" yazar.
+  Sekmede: dosya adı, kaydedilmemiş göstergesi (●, hangi pano kirliyse orada), kapatma (×),
   sürükle-bırakla yeniden sıralama.
   - **Kısayollar:** `Cmd/Ctrl+T` yeni sekme · `Cmd/Ctrl+1…9` N'inci sekme ·
     `Ctrl+Tab` / `Ctrl+Shift+Tab` sonraki/önceki. Kapatma: × veya **orta tık**.

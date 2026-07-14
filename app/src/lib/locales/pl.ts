@@ -369,6 +369,7 @@ export const pl: Messages = {
 
   tabs: {
     newTab: 'Nowa',
+    defaultXml: '(dane domyślne)',
     newTitle: 'Nowa karta (Cmd/Ctrl+T)',
     opened: 'Otwarto nową kartę',
     close: 'Zamknij kartę',

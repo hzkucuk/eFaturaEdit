@@ -369,6 +369,7 @@ export const ru: Messages = {
 
   tabs: {
     newTab: 'Новая',
+    defaultXml: '(данные по умолчанию)',
     newTitle: 'Новая вкладка (Cmd/Ctrl+T)',
     opened: 'Открыта новая вкладка',
     close: 'Закрыть вкладку',

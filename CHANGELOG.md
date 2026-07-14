@@ -10,7 +10,12 @@ Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
   Bir sekme = bir **çalışma**: kendi XSLT'si, XML'i, önizlemesi ve kaydedilmemiş-değişiklik durumu.
   Uygulama zaten baştan sona çift üzerine kuruluydu (dönüşümün girdisi şablon + veri), sekme de
   çifti temsil eder — pano başına ayrı sekme değil.
-  - Editörlerin üstünde sekme şeridi: dosya adı, kaydedilmemiş göstergesi (●), kapatma (×).
+  - **Her panonun kendi şeridi var, ama şeritler evli:** XSLT panosunun şeridi şablon adlarını,
+    XML panosununki veri adlarını gösterir; ikisi de **aynı** sekme listesini ve aynı aktif sekmeyi
+    işaret eder. XML şeridinden 2. sekmeyi seçmek XSLT şeridini de 2'ye taşır — şablon verisinden
+    ayrılmaz. XSLT tek başına açılıp varsayılan UBL-TR verisiyle eşlendiğinde XML sekmesi
+    "(varsayılan veri)" yazar; boş sanılmasın.
+  - Sekmede dosya adı, kaydedilmemiş göstergesi (●, hangi pano kirliyse orada), kapatma (×).
   - **Kısayollar:** `Cmd/Ctrl+T` yeni sekme · `Cmd/Ctrl+1…9` N'inci sekmeye git ·
     `Ctrl+Tab` / `Ctrl+Shift+Tab` sonraki/önceki sekme. Kapatma: × düğmesi veya **orta tık**.
     (`Cmd+W` bilerek kullanılmadı: macOS'ta Tauri'nin varsayılan menüsündeki "Pencereyi Kapat"a

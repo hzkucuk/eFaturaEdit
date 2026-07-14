@@ -370,6 +370,7 @@ export const tr = {
 
   tabs: {
     newTab: 'Yeni',
+    defaultXml: '(varsayılan veri)',
     newTitle: 'Yeni sekme (Cmd/Ctrl+T)',
     opened: 'Yeni sekme açıldı',
     close: 'Sekmeyi kapat',

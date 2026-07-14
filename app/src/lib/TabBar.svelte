@@ -1,21 +1,48 @@
 <script lang="ts">
   /**
-   * Sekme şeridi — her sekme bir XSLT+XML çifti (bkz. editor-state.svelte.ts).
+   * Sekme şeridi. Her panonun (XSLT / XML) kendi şeridi vardır, <b>ama şeritler
+   * evlidir</b>: ikisi de aynı sekme listesini gösterir ve aynı aktif sekmeyi
+   * işaret eder. Bir sekme = bir XSLT+XML çifti (bkz. editor-state.svelte.ts),
+   * yani XML şeridinden 2. sekmeyi seçmek XSLT şeridini de 2'ye taşır — çift
+   * hiçbir zaman ayrılmaz.
    *
    * Şerit yalnızca gösterir ve olay yayar; sekme <b>değiştirme</b> mantığı
    * (CodeMirror'a içerik yazmak, dirty izleyiciyi susturmak) `+page.svelte`'de
    * durur — çünkü editör örnekleri orada yaşıyor.
    */
-  import { tabsState, tabTitle, isTabDirty, moveTab, type EditorTab } from './editor-state.svelte';
+  import { tabsState, isTabDirty, moveTab, type EditorTab } from './editor-state.svelte';
   import { m } from './i18n.svelte';
 
   interface Props {
+    /** Bu şerit hangi panonun dosya adlarını gösteriyor? */
+    kind: 'xslt' | 'xml';
     onselect: (id: number) => void;
     onclose: (id: number) => void;
     onnew: () => void;
   }
 
-  let { onselect, onclose, onnew }: Props = $props();
+  let { kind, onselect, onclose, onnew }: Props = $props();
+
+  function basename(path: string): string {
+    const i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    return i >= 0 ? path.slice(i + 1) : path;
+  }
+
+  /**
+   * Şeridin kendi panosuna ait dosya adı. XSLT tek başına açıldığında veri
+   * alanına paketli UBL-TR faturası yüklenir; diskte bir yolu yoktur ama boş da
+   * değildir — sekmede "(varsayılan veri)" diye görünür, boş sanılmasın.
+   */
+  function title(tab: EditorTab): string {
+    if (kind === 'xslt') return tab.xsltPath ? basename(tab.xsltPath) : m.tabs.newTab;
+    if (tab.xmlPath) return basename(tab.xmlPath);
+    return tab.xmlText ? m.tabs.defaultXml : m.tabs.newTab;
+  }
+
+  /** Kaydedilmemiş işareti şeridin KENDİ panosunu gösterir. */
+  function slotDirty(tab: EditorTab): boolean {
+    return kind === 'xslt' ? tab.xsltDirty : tab.xmlDirty;
+  }
 
   /** Sürüklenen sekmenin indeksi (yeniden sıralama). */
   let dragIndex = $state<number | null>(null);
@@ -89,8 +116,8 @@
       ondrop={(e) => onDrop(e, i)}
       ondragend={onDragEnd}
     >
-      <span class="tab-title">{tabTitle(tab, m.tabs.newTab)}</span>
-      {#if isTabDirty(tab)}
+      <span class="tab-title">{title(tab)}</span>
+      {#if slotDirty(tab)}
         <span class="tab-dirty" title={m.common.unsavedChanges}>●</span>
       {/if}
       <button
