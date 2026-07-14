@@ -123,6 +123,33 @@ kapanmıyordu. Iframe ile ana pencere arasındaki her etkileşim **postMessage k
 - **Tahminle üst üste tag atma.** Önce `workflow_dispatch` ile teşhis koşusu yaz, **ölç**, sonra düzelt.
 - Tauri, `light.exe` gibi alt araçların stderr'ini **yutar** → `tauri build --verbose` gerekir.
 
+### 10. Tahminle yazılan tanımlayıcı **hata vermez, sadece iş görmez** (2026-07-13/14)
+Bir günde **dört kez** aynı sınıf hata. Ortak nokta: bir ad/sayı uydurdum, hiçbir şey patlamadı,
+kod sessizce hiçbir şey yapmadı.
+- `.cm-gotoLine` diye bir CSS sınıfı **yok** (CodeMirror paneli `showDialog` ile kurar → `.cm-dialog`).
+  Yazdığım stil hiçbir kurala uymadı, "Satıra git" kutusu minicik kaldı.
+- `Cmd/Ctrl+Alt+Shift+[` diye bir katlama kısayolu **yok** (`foldAll` = `Ctrl+Alt+[`, mac'te de
+  **Ctrl** — `Cmd` değil). Yanlış kısayolu CHANGELOG + FEATURES + **5 dilin tooltip'ine** yazmıştım.
+- Kalem tablosunu **başlık metinlerini sayarak** 10 sütun sandım; `<td>`'ler sayılınca **11** çıktı
+  (Sıra No). Devir satırı yanlış sütuna düştü — kullanıcı ekran görüntüsü göndermese fark etmezdim.
+- UBL'de `xpath-default-namespace` bildirilmezse `/Invoice/cbc:ID` **hiçbir şey** eşleştirmez
+  (kök varsayılan namespace'tedir). Sıfır sonuç + sıfır hata = kullanıcı sebebi anlayamaz.
+
+**Kural:** Kütüphanenin ürettiği sınıf adı, keymap, sütun sayısı, namespace → **kaynaktan oku**
+(`node_modules/...`, `<td>` say, belgenin kökünü ayrıştır). Hatırladığın/beklediğin ada göre yazma.
+
+### 11. Ölçüm aracının kendisi de yalan söyler (bkz. 4)
+- `python3 check.py | grep ...; echo $?` → **grep'in** çıkış kodunu okur, Python'unkini değil.
+  Üç senaryo da "0" göründü; koruma çalışmıyor sanılabilirdi (ya da tersi).
+- Regresyon karşılaştırmasında `re.sub('</div>', '', h, count=N)` **ilk** `</div>`'leri siler —
+  belgedeki başka div'leri. "29 dosyanın hepsi değişti" dedi; oysa **hiçbiri** değişmemişti.
+  Az kalsın çalışan bir özelliği geri alıyordum.
+- İndirdiğin dosyanın **sandığın dosya olduğunu** doğrula: `latest`, CI koşarken **yarım**
+  `latest.json` döndürür (6/15 platform). Sabit girdiyle (`--pattern`, etiketle) ölç.
+
+**Kural:** Bir ölçüm "hepsi bozuk" ya da "hepsi temiz" diyorsa — fazla düzenli olan her sonuç gibi —
+**önce ölçüm aracını** doğrula.
+
 ---
 
 ## Mimari
@@ -216,10 +243,14 @@ dosya sistemine, ayarlara veya başka bir işleve doğrudan erişemez.
 4. `v*` etiketi `.github/workflows/release.yml`'i tetikler; **5 runner** (macOS arm64, macOS Intel,
    Linux x86_64, **Linux arm64**, Windows) derler ve tek bir public Release'e ekler.
 5. **BİTİNCE DOĞRULA:**
-   - `gh release view vX.Y.Z --json assets` → 4 platformun paketleri var mı?
+   - Workflow'daki **`verify` işi** (v2.28.0+) bunu artık kendi yapar: matris işlerinden biri
+     düşerse koşuyu **kırmızıya boyar**, `latest.json`'daki **15 platformu sayar**, imzaları ve
+     taslak durumunu denetler. `verify: success` görmeden yayını "tamam" sayma.
+   - Yine de gözünle bak: `gh run view <id> --json jobs` → **6 iş** (5 derleme + verify) yeşil mi?
    - `curl -sL .../releases/latest/download/latest.json` → **15 platform girdisi** var mı?
      (macOS ×2 · Windows ×3 · Linux x86_64 ×4 · Linux arm64 ×4 + 2 takma ad)
      Eksikse o platformdaki kullanıcılar güncellemeyi **hiç görmez** (sessiz başarısızlık).
+   - ⚠️ CI **koşarken** `latest.json` yarımdır (her runner bitirdikçe ekler). Koşu bitmeden ölçme.
 
 ### Release tuzakları
 - **macOS universal ikili üretilemez** (native-image tek mimari) — arm64 ve Intel ayrı `.dmg`.
