@@ -1,10 +1,11 @@
 {
-  "version": "2.31.0",
-  "generatedAt": "2026-07-14T12:07:17.6885560Z",
+  "version": "2.32.0",
+  "generatedAt": "2026-07-14T16:30:48.7710640Z",
   "source": "eFaturaEdit.Core",
   "files": [
     "snippets.json",
     "samples.json",
-    "completion.json"
+    "completion.json",
+    "skills.json"
   ]
 }

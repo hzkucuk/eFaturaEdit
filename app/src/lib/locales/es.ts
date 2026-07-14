@@ -257,6 +257,28 @@ export const es: Messages = {
     aiTemperature: 'Creatividad',
     aiTempDefault: 'Valor por defecto del proveedor',
 
+    aiSkills: 'Habilidades',
+    aiSkillsHint:
+      'Los paquetes de experiencia activados se añaden a las instrucciones del sistema del asistente. La selección es por proveedor: puedes activarlos todos en un modelo potente y ninguno en un modelo local con poco presupuesto de tokens.',
+    aiSkillsBuiltin: 'Paquetes incluidos',
+    aiSkillsCustom: 'Paquetes propios',
+    aiSkillsEmpty: 'Todavía no has escrito ninguna habilidad propia.',
+    aiSkillsNew: '+ Nueva habilidad',
+    aiSkillsCost: '{n} habilidades activas · añade ~{t} tokens por petición',
+    aiSkillsNone: 'Ninguna habilidad activa.',
+    aiSkillEdit: 'Editar',
+    aiSkillDelete: 'Eliminar',
+    aiSkillDeleteConfirm: '¿Eliminar la habilidad "{name}"?',
+    aiSkillId: 'Identificador',
+    aiSkillIdHint: 'Único y corto (p. ej. identidad-empresa)',
+    aiSkillName: 'Nombre',
+    aiSkillDesc: 'Descripción',
+    aiSkillPrompt: 'Instrucciones',
+    aiSkillPromptHint:
+      'Texto entregado al modelo. Se añade tal cual al final de las instrucciones del sistema.',
+    aiSkillSave: 'Guardar',
+    aiSkillCancel: 'Cancelar',
+
     about: 'Acerca de',
     appName: 'Editor de diseño de facturas electrónicas',
     version: 'Versión {v}',

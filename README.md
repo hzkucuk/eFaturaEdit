@@ -18,6 +18,7 @@ görmenizi sağlar.
 - **Cross-platform:** macOS, Windows, Linux — tek kod tabanı (Tauri v2 + SvelteKit).
 
 - **🤖 AI Asistan (BYOK)** — Claude / ChatGPT / Gemini / Ollama / NVIDIA ile XSLT/XML tasarımına yardım. Hedefli bul/değiştir düzenlemeleri, kendi kendine düzelten ajan modu, onay öncesi canlı önizleme; görsel/PDF/dosya ekleme (vision). Anahtarlar **OS anahtar zincirinde şifreli** saklanır, hiçbir anahtar gömülü/paylaşılı değildir.
+- **🧠 AI Yetenekleri (v2.32.0)** — Asistana uzmanlık paketleri eklenir: *modern & sanatsal tasarım*, *A4/baskı ustalığı*, *ileri XSLT 2.0/3.0*, *ileri XPath*, *baskı-güvenli modern CSS*, *önizlemede JavaScript*. Kendi paketini de yazabilirsin. Seçim **her sağlayıcı için ayrıdır** ve token maliyeti Ayarlar'da gösterilir. (Ayarlar → AI → Yetenekler)
 - **CSS Stilleri snippet kategorisi** — hazır metin/kutu/yerleşim/tablo/sayfa CSS kuralları.
 
 Detaylı liste için [FEATURES.md](FEATURES.md).

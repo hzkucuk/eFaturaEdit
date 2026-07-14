@@ -3,6 +3,36 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.32.0] — 2026-07-14 — AI Yetenekleri (Skill) — Sağlayıcı Başına Uzmanlık Paketleri
+
+### Eklenen
+- **AI yetenekleri (skill):** Asistana, adlandırılmış uzmanlık paketleri eklenebiliyor. Seçilen
+  paketlerin talimatı sistem promptunun sonuna `# EK YETENEKLER` başlığı altında eklenir —
+  yukarıdaki **kapsam kilidi ve çıktı biçimi kuralları her zaman üstündür**, yetenekler onların
+  yerine geçmez, üzerine derinlik ekler.
+- **Altı hazır paket** (Ayarlar → AI → Yetenekler):
+  - 🎨 **Modern & sanatsal tasarım** — tipografi ölçeği, renk/kontrast, boşluk ritmi, görsel hiyerarşi.
+  - 🎨 **A4 / baskı ustalığı** — `@page`, mm ölçüler, sayfa kırılımı, `<thead>` tekrarı, nakli yekûn
+    (devir satırının **bir kez** basılması dahil — v2.31.0'da düzeltilen hatanın kuralı pakete yazıldı).
+  - ⚙️ **XSLT 2.0/3.0 ileri** — `for-each-group`, `xsl:function`, sequence tipleri, mode, tunnel params.
+  - ⚙️ **XPath ileri** — eksenler, predicate, tip dönüşümleri ve **`xpath-default-namespace` tuzağı**
+    (UBL kökü varsayılan namespace'te olduğu için `/Invoice/cbc:ID` sessizce hiçbir şey eşleştirmez).
+  - ⚙️ **Modern CSS (baskı-güvenli)** — grid/flex'i baskıyı bozmadan kullanma; `print-color-adjust`.
+  - ⚙️ **Önizlemede JavaScript** — süsleme/etkileşim için; yapısal düzen ve hesap için **asla**
+    (baskıda JS çalışmaz).
+- **Kullanıcı yetenekleri:** Kendi paketini yazabilirsin (kimlik, ad, açıklama, talimat).
+  `$APPDATA/user-skills.json` içinde **ayrı** tutulur; hazır katalogla birleştirilip **üzerine yazılmaz**.
+- **Seçim sağlayıcı başınadır:** Güçlü bir modele altı paketi birden açarken, token bütçesi dar bir
+  yerel modele (Ollama) hiçbirini açmayabilirsin. Ayarlarda **seçili yeteneklerin token maliyeti**
+  gösterilir (altısı birden ≈ 3.700 token/istek).
+- Yetenekler sistem promptunun içinde kaldığı için **prompt önbelleğine dâhildir**; açıp kapatınca
+  önek bir kez yeniden yazılır, sonrasında yine cache'ten okunur.
+
+### Değişen
+- **AI istek günlüğüne `sistem N bayt` alanı eklendi** (`ai.rs`). "Yeteneği açtım ama işe yaramıyor"
+  şikâyeti ancak yeteneğin prompta **gerçekten girip girmediği** ölçülebilirse teşhis edilebilir —
+  bu sayı olmadan kör teşhis olurdu.
+
 ## [2.31.0] — 2026-07-14 — Nakli Yekûn Ayrı Şablona Taşındı
 
 ### Eklenen

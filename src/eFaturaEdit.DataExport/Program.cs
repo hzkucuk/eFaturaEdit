@@ -43,6 +43,7 @@ internal static class Program
             ExportSnippets(outputDir);
             ExportSamples(outputDir);
             ExportCompletion(outputDir);
+            ExportSkills(outputDir);
             ExportManifest(outputDir);
         }
         catch (Exception ex)
@@ -110,13 +111,30 @@ internal static class Program
         Console.WriteLine($"  ✓ completion.json    ({completion.XsltTags.Length} XSLT tag, {completion.XPathPaths.Length} XPath öneri)");
     }
 
+    private static void ExportSkills(string outputDir)
+    {
+        var skills = AiSkillCatalog.All
+            .Select(s => new AiSkillJson(
+                Id: s.Id,
+                Category: s.Category,
+                DisplayName: s.DisplayName,
+                Description: s.Description,
+                Prompt: s.Prompt))
+            .ToArray();
+
+        string path = Path.Combine(outputDir, "skills.json");
+        File.WriteAllText(path, JsonSerializer.Serialize(skills, JsonOptions));
+        int promptChars = skills.Sum(s => s.Prompt.Length);
+        Console.WriteLine($"  ✓ skills.json        ({skills.Length} yetenek, {promptChars} karakter prompt)");
+    }
+
     private static void ExportManifest(string outputDir)
     {
         var manifest = new ManifestJson(
-            Version: "2.31.0",
+            Version: "2.32.0",
             GeneratedAt: DateTime.UtcNow.ToString("O"),
             Source: "eFaturaEdit.Core",
-            Files: new[] { "snippets.json", "samples.json", "completion.json" });
+            Files: new[] { "snippets.json", "samples.json", "completion.json", "skills.json" });
 
         string path = Path.Combine(outputDir, "manifest.json");
         File.WriteAllText(path, JsonSerializer.Serialize(manifest, JsonOptions));
@@ -156,6 +174,13 @@ internal record CompletionItemJson(
     string Text,
     string Description,
     int ImageIndex);
+
+internal record AiSkillJson(
+    string Id,
+    string Category,
+    string DisplayName,
+    string Description,
+    string Prompt);
 
 internal record ManifestJson(
     string Version,

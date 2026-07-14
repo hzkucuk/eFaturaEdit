@@ -54,6 +54,13 @@ export interface AiProviderConfig {
   thinking: boolean;
   /** Yaratıcılık; `null` = sağlayıcı varsayılanı (istekte hiç gönderilmez). */
   temperature: number | null;
+  /**
+   * Etkin AI yeteneklerinin (skill) id'leri — hazır katalogdan ve kullanıcının
+   * kendi paketlerinden. Seçim SAĞLAYICI BAŞINA tutulur: güçlü bir modele altı
+   * paketi birden açarken, token bütçesi dar bir yerel modele hiçbirini
+   * açmayabilirsin. Boş liste = yeteneksiz (eski) davranış birebir korunur.
+   */
+  skills: string[];
 }
 
 /**
@@ -112,6 +119,7 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
     model: 'claude-sonnet-5',
     baseUrl: 'https://api.anthropic.com/v1',
     cachedModels: [],
+    skills: [],
     ...PARAM_DEFAULTS,
   },
   openai: {
@@ -119,6 +127,7 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
     model: 'gpt-4o',
     baseUrl: 'https://api.openai.com/v1',
     cachedModels: [],
+    skills: [],
     ...PARAM_DEFAULTS,
   },
   gemini: {
@@ -129,6 +138,7 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
     model: 'gemini-flash-latest',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     cachedModels: [],
+    skills: [],
     ...PARAM_DEFAULTS,
   },
   deepseek: {
@@ -137,6 +147,7 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
     model: 'deepseek-chat',
     baseUrl: 'https://api.deepseek.com/v1',
     cachedModels: [],
+    skills: [],
     ...PARAM_DEFAULTS,
   },
   ollama: {
@@ -144,6 +155,7 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
     model: 'llama3.1',
     baseUrl: 'http://localhost:11434/v1',
     cachedModels: [],
+    skills: [],
     ...PARAM_DEFAULTS,
   },
   nvidia: {
@@ -151,6 +163,7 @@ const AI_PROVIDER_DEFAULTS: Record<AiProvider, AiProviderConfig> = {
     model: 'meta/llama-3.1-70b-instruct',
     baseUrl: 'https://integrate.api.nvidia.com/v1',
     cachedModels: [],
+    skills: [],
     ...PARAM_DEFAULTS,
   },
 };
@@ -240,6 +253,10 @@ function loadInitial(): Settings {
             ...AI_PROVIDER_DEFAULTS[p],
             ...(parsed.aiProviders?.[p] ?? {}),
             cachedModels: [...(parsed.aiProviders?.[p]?.cachedModels ?? [])],
+            // Diziler her sağlayıcı için TAZE kopyalanır; ortak referans kalırsa
+            // bir sağlayıcıya eklenen yetenek diğerlerinde de görünür.
+            // Ayarları v2.31 ve öncesinde kaydetmiş kullanıcıda alan hiç yoktur → boş liste.
+            skills: [...(parsed.aiProviders?.[p]?.skills ?? [])],
           }),
         ]),
       ) as Record<AiProvider, AiProviderConfig>,

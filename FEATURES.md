@@ -69,8 +69,31 @@ Sağ panelde açılabilen, XSLT dosyasına **cerrahi müdahale** edebilen sohbet
   her AI çağrısında bağlantı için 15 sn / yanıt için 180 sn üst sınır vardır — sağlayıcı yanıt
   vermezse uygulama **sonsuza kadar beklemez**, anlamlı hata verir.
 - **Ölçülebilir çağrılar (v2.27.1):** Her AI isteği günlüğe yazılır — sağlayıcı, model, uç nokta,
-  bağlam boyutu, süre, sonuç ve gerçek hata gövdesi. **API anahtarı loglanmaz.**
-  (Ayarlar → Hakkında → "Günlük klasörünü aç")
+  **sistem promptu boyutu (v2.32.0)**, bağlam boyutu, süre, sonuç ve gerçek hata gövdesi.
+  **API anahtarı loglanmaz.** (Ayarlar → Hakkında → "Günlük klasörünü aç")
+
+### 🧠 AI Yetenekleri (Skill) — v2.32.0
+
+Asistana **adlandırılmış uzmanlık paketleri** eklenir. Seçilen paketlerin talimatı sistem promptunun
+sonuna `# EK YETENEKLER` başlığı altında iliştirilir. Tool-calling **gerektirmez** — bu yüzden altı
+sağlayıcının **hepsinde** aynı şekilde çalışır.
+
+- **Hazır paketler** (Core → `skills.json`, `npm run data:sync` ile üretilir):
+  - 🎨 **Modern & sanatsal tasarım** — tipografi ölçeği, renk/kontrast, boşluk ritmi, hiyerarşi,
+    `tabular-nums`, baskı kontrastı.
+  - 🎨 **A4 / baskı ustalığı** — `@page`, mm ölçüler, `page-break-inside: avoid`, `<thead>` tekrarı,
+    `print-color-adjust: exact`, nakli yekûn ve **devir satırının bir kez basılması**.
+  - ⚙️ **XSLT 2.0/3.0 ileri** — `for-each-group`, `xsl:function`, sequence tipleri, mode, tunnel params.
+  - ⚙️ **XPath ileri** — eksenler, predicate, tip dönüşümleri, **`xpath-default-namespace` tuzağı**.
+  - ⚙️ **Modern CSS (baskı-güvenli)** — kalem tablosu neden gerçek `<table>` olmalı; baskıda kırılanlar.
+  - ⚙️ **Önizlemede JavaScript** — süsleme/etkileşim serbest; yapısal düzen ve hesap **yasak**.
+- **Kullanıcı paketleri:** Kendi yeteneğini yazabilirsin (kimlik, ad, açıklama, talimat).
+  `$APPDATA/user-skills.json`'da **ayrı** tutulur — bundled katalogla birleştirilip üzerine yazılmaz.
+- **Seçim sağlayıcı başınadır** (`AiProviderConfig.skills`): güçlü modele hepsi, token bütçesi dar
+  yerel modele hiçbiri. Ayarlarda **token maliyeti** canlı gösterilir (altısı ≈ 3.700 token/istek).
+- **Kapsam kilidi korunur:** Yetenekler sistem promptunun kurallarının **yerine geçmez**; çelişkide
+  kapsam kilidi ve çıktı biçimi (SEARCH/REPLACE) kuralları üstündür.
+- Yetenekler sistem bölümünde kaldığı için **prompt önbelleğine dâhildir**.
 
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 

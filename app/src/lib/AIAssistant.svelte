@@ -36,6 +36,7 @@
     type AiTarget,
   } from '$lib/ai-suggestion';
   import { transformXml } from '$lib/xslt';
+  import { ensureUserSkillsLoaded, resolveSkills, skillBlock } from '$lib/user-skills.svelte';
   import { m, f } from '$lib/i18n.svelte';
 
   interface Props {
@@ -427,6 +428,14 @@ Kurallar:
     if (settings.aiProvider !== 'ollama' && !cfg.apiKey.trim()) {
       throw new Error(m.ai.needApiKey);
     }
+    // Kullanıcı yetenekleri diskten gelir. Yüklenmeden gönderirsek, kullanıcının
+    // açtığı bir yetenek promptta HİÇ yer almaz — hata da vermez. Bekle.
+    await ensureUserSkillsLoaded();
+    // Etkin yetenekler sistem promptunun SONUNA eklenir (dosya bağlamına değil):
+    // sistem bölümü Anthropic'te cache_control'ün kapsadığı önekte kalır, yani
+    // yetenekler de önbelleğe girer. Yetenek açılıp kapandığında önek bir kez
+    // yeniden yazılır, sonrasında yine cache'ten okunur.
+    const skillPrompt = SYSTEM_PROMPT + skillBlock(resolveSkills(cfg.skills));
     // Parametreler yalnızca sağlayıcı+model desteği varsa gönderilir; aksi
     // halde varsayılana düşer (thinking=false / temperature=None).
     const applies = (key: 'thinking' | 'temperature') =>
@@ -437,7 +446,7 @@ Kurallar:
         base_url: cfg.baseUrl,
         api_key: cfg.apiKey,
         model: cfg.model,
-        system_prompt: SYSTEM_PROMPT,
+        system_prompt: skillPrompt,
         cached_context: cachedContext,
         thinking: applies('thinking') && cfg.thinking,
         temperature: applies('temperature') ? cfg.temperature : null,

@@ -256,6 +256,28 @@ export const pl: Messages = {
     aiTemperature: 'Kreatywność',
     aiTempDefault: 'Domyślne ustawienie dostawcy',
 
+    aiSkills: 'Umiejętności',
+    aiSkillsHint:
+      'Włączone pakiety wiedzy są dołączane do instrukcji systemowej asystenta. Wybór jest osobny dla każdego dostawcy — w mocnym modelu możesz włączyć wszystkie, a w lokalnym modelu o ciasnym budżecie tokenów żadnego.',
+    aiSkillsBuiltin: 'Pakiety wbudowane',
+    aiSkillsCustom: 'Pakiety własne',
+    aiSkillsEmpty: 'Nie masz jeszcze własnych umiejętności.',
+    aiSkillsNew: '+ Nowa umiejętność',
+    aiSkillsCost: 'Aktywne umiejętności: {n} · dodaje ~{t} tokenów na żądanie',
+    aiSkillsNone: 'Żadna umiejętność nie jest włączona.',
+    aiSkillEdit: 'Edytuj',
+    aiSkillDelete: 'Usuń',
+    aiSkillDeleteConfirm: 'Usunąć umiejętność „{name}”?',
+    aiSkillId: 'Identyfikator',
+    aiSkillIdHint: 'Unikalny i krótki (np. tozsamosc-firmy)',
+    aiSkillName: 'Nazwa',
+    aiSkillDesc: 'Opis',
+    aiSkillPrompt: 'Instrukcje',
+    aiSkillPromptHint:
+      'Tekst przekazywany modelowi. Dołączany dosłownie na końcu instrukcji systemowej.',
+    aiSkillSave: 'Zapisz',
+    aiSkillCancel: 'Anuluj',
+
     about: 'O programie',
     appName: 'Edytor projektów e-faktur',
     version: 'Wersja {v}',

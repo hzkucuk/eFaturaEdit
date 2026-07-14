@@ -172,11 +172,15 @@ pub async fn ai_chat(request: AiChatRequest) -> Result<String, String> {
     // Dış ağ çağrısı: girdi boyutları, süre ve sonuç MUTLAKA loglanır. Anahtar
     // asla loglanmaz. Bu izler olmadan "yanıt gelmiyor" şikâyeti kör teşhistir.
     let attachments: usize = request.messages.iter().map(|m| m.attachments.len()).sum();
+    // `sistem N bayt`: etkin AI yetenekleri (skill) sistem promptunun sonuna eklenir.
+    // Bu sayı olmadan "yeteneği açtım ama işe yaramıyor" şikâyeti kör teşhistir —
+    // yeteneğin prompta GERÇEKTEN girip girmediği ancak buradan ölçülebilir.
     log::info!(
-        "[ai] istek — {} · {} · {} · bağlam {} bayt · {} mesaj · {} ek · thinking={} · temp={:?}",
+        "[ai] istek — {} · {} · {} · sistem {} bayt · bağlam {} bayt · {} mesaj · {} ek · thinking={} · temp={:?}",
         request.provider,
         request.model,
         safe_endpoint(&request.base_url),
+        request.system_prompt.len(),
         request.cached_context.len(),
         request.messages.len(),
         attachments,

@@ -42,6 +42,24 @@ export interface Completion {
   xPathPaths: CompletionItem[];
 }
 
+/**
+ * AI asistanına eklenebilen adlandırılmış talimat paketi ("yetenek").
+ *
+ * Seçilen yeteneklerin `prompt` metinleri sistem promptunun sonuna eklenir.
+ * Sağlayıcıdan bağımsızdır — tool-calling gerektirmez.
+ *
+ * Kullanıcının kendi yazdığı yetenekler aynı şekle uyar ama ayrı bir dosyada
+ * tutulur (bkz. `$lib/user-skills`), bundled katalogla birleştirilip üzerine
+ * yazılmaz.
+ */
+export interface AiSkill {
+  id: string;
+  category: string;
+  displayName: string;
+  description: string;
+  prompt: string;
+}
+
 export interface Manifest {
   version: string;
   generatedAt: string;

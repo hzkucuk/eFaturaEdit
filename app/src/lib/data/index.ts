@@ -7,13 +7,15 @@
 import snippetsJson from './snippets.json';
 import samplesJson from './samples.json';
 import completionJson from './completion.json';
+import skillsJson from './skills.json';
 import manifestJson from './manifest.json';
 
-import type { Snippet, Samples, Completion, Manifest } from './types';
+import type { Snippet, Samples, Completion, AiSkill, Manifest } from './types';
 
 export const snippets: Snippet[] = snippetsJson as Snippet[];
 export const samples: Samples = samplesJson as Samples;
 export const completion: Completion = completionJson as Completion;
+export const aiSkills: AiSkill[] = skillsJson as AiSkill[];
 export const manifest: Manifest = manifestJson as Manifest;
 
 /**

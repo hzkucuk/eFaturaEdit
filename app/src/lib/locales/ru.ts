@@ -256,6 +256,28 @@ export const ru: Messages = {
     aiTemperature: 'Креативность',
     aiTempDefault: 'По умолчанию провайдера',
 
+    aiSkills: 'Навыки',
+    aiSkillsHint:
+      'Включённые пакеты экспертизы добавляются к системной инструкции ассистента. Выбор задаётся отдельно для каждого провайдера — сильной модели можно включить все, а локальной модели с малым бюджетом токенов ни одного.',
+    aiSkillsBuiltin: 'Встроенные пакеты',
+    aiSkillsCustom: 'Свои пакеты',
+    aiSkillsEmpty: 'Вы ещё не создали собственных навыков.',
+    aiSkillsNew: '+ Новый навык',
+    aiSkillsCost: 'Включено навыков: {n} · добавляет ~{t} токенов к запросу',
+    aiSkillsNone: 'Навыки не включены.',
+    aiSkillEdit: 'Изменить',
+    aiSkillDelete: 'Удалить',
+    aiSkillDeleteConfirm: 'Удалить навык «{name}»?',
+    aiSkillId: 'Идентификатор',
+    aiSkillIdHint: 'Уникальный и короткий (например, firma-identity)',
+    aiSkillName: 'Название',
+    aiSkillDesc: 'Описание',
+    aiSkillPrompt: 'Инструкции',
+    aiSkillPromptHint:
+      'Текст, передаваемый модели. Добавляется дословно в конец системной инструкции.',
+    aiSkillSave: 'Сохранить',
+    aiSkillCancel: 'Отмена',
+
     about: 'О программе',
     appName: 'Редактор дизайна электронных счетов',
     version: 'Версия {v}',
