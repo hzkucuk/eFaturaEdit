@@ -3,6 +3,30 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.33.3] — 2026-07-15 — Atomik Yayın: Derleme Sırasındaki 404 Penceresi Kapatıldı
+
+> Yalnızca yayın altyapısı (CI) değişti — uygulama v2.33.2 ile **birebir aynıdır**, yeni özellik/düzeltme yoktur.
+
+### Düzeltilen
+- **Derleme sırasında ~30 dakikalık bir "güncelleme yok" penceresi vardı.** `tauri-action` release'i
+  derlemenin **başında** oluşturuyor; v2.33.2'de taslak değildi, dolayısıyla yeni sürüm o an "latest"
+  oluyordu — ama `latest.json` ancak matris bitip `verify` çalışınca (~30 dk sonra) yükleniyordu.
+  O aralıkta `/latest/download/latest.json` **404** dönüyordu; tam o sırada uygulamayı açan kullanıcı
+  güncellemeyi göremiyordu (hata da almadan "güncel" sanıyordu).
+- **Çözüm — atomik yayın:** Release artık derleme boyunca **taslak** tutuluyor (`releaseDraft: true`).
+  `verify` işi manifesti üretip **taslaktan indirerek 15 platform + imza** doğruladıktan **sonra**
+  `gh release edit --draft=false` ile yayınlıyor. `latest.json` yayın anında zaten yüklü olduğundan
+  geçiş **atomik**: `/latest` ya tam eski sürümü ya tam yeni sürümü gösterir — asla arada kalmaz.
+- **Fail-closed:** Doğrulama düşerse yayınlama adımına hiç gelinmez → release **taslak kalır**,
+  `/latest` derleme boyunca eski sağlam sürümü göstermeye devam eder. Kimse eksik/bozuk güncelleme almaz.
+
+### Notlar
+- Taslak davranışı **ölçülerek** doğrulandı (varsayılmadı): `gh release download` taslakta çalışıyor;
+  `gh release view --json publishedAt` taslakta **null** dönüyor (→ manifestin `pub_date`'i artık
+  `createdAt`'e düşüyor, yoksa null yazardı); `gh release edit --draft=false` gerçek komut.
+- Manifest üretici, `pub_date` fallback'iyle birlikte, ölçülen gerçek taslak değerleriyle yerelde
+  koşuldu → 15 platform, `pub_date` dolu.
+
 ## [2.33.2] — 2026-07-14 — `latest.json` Yarışı: Apple Silicon Güncellemeyi Görmüyordu
 
 ### Düzeltilen

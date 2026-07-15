@@ -182,7 +182,14 @@ jobs:
           includeUpdaterJson: false
           releaseName: 'e-Fatura Edit ${{ github.ref_name }}'
           releaseBody: ${{ steps.notes.outputs.body }}
-          releaseDraft: false
+          # ⚠️ TASLAK OLMALI (v2.33.3). `tauri-action` release'i derlemenin
+          # BAŞINDA oluşturuyor. Taslak DEĞİLSE, yeni sürüm o an "latest" olur ama
+          # `latest.json`'u ancak ~30 dk sonra `verify` yükler → o aralıkta
+          # `/latest/download/latest.json` = 404: kullanıcı güncellemeyi göremez.
+          # Taslak tutulunca `/latest` derleme boyunca ESKİ SAĞLAM sürümü gösterir;
+          # `verify` manifesti üretip DOĞRULADIKTAN sonra yayınlar → geçiş ATOMİK,
+          # ya tam ya hiç. (Taslaktan `gh release download` çalışıyor — ölçüldü.)
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
 
@@ -229,9 +236,13 @@ jobs:
           set -euo pipefail
           rm -rf manifest && mkdir manifest && cd manifest
 
-          # İmzalar release'ten indirilir (tauri her ürün için .sig üretti).
+          # İmzalar TASLAK release'ten indirilir (tauri her ürün için .sig üretti).
+          # `gh release download` taslakta çalışıyor — ölçüldü (v2.33.3).
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.sig'
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body,publishedAt > meta.json
+          # publishedAt TASLAKTA null döner (ölçüldü) → createdAt'e düşülür, yoksa
+          # manifestin pub_date'i null olur. (Updater kararı sürüme bakar, pub_date
+          # yalnızca gösterim; ama null yazmak yerine gerçek oluşturma zamanı yeğ.)
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body,publishedAt,createdAt > meta.json
 
           python3 - <<'PY'
           import json, os, re, sys, pathlib
@@ -275,7 +286,8 @@ jobs:
           manifest = {
               "version":   tag.lstrip('v'),
               "notes":     meta.get('body') or f"e-Fatura Edit {tag}",
-              "pub_date":  meta.get('publishedAt'),
+              # Taslakta publishedAt null → createdAt (ölçüldü, v2.33.3).
+              "pub_date":  meta.get('publishedAt') or meta.get('createdAt'),
               "platforms": platforms,
           }
 
@@ -332,7 +344,23 @@ jobs:
           sys.exit(1 if fail else 0)
           PY
 
-      - name: Release taslak (draft) olarak kalmasın
+      # Buraya ancak manifest üretimi (15 platform) VE taslaktaki manifestin canlı
+      # doğrulaması (15 + imzalı) GEÇTİYSE gelinir. Artık yayınlamak GÜVENLİ:
+      # latest.json zaten yüklü, dolayısıyla taslaktan çıkış ANINDA /latest hem yeni
+      # sürümü hem TAM manifesti gösterir — geçiş atomik, ya tam ya hiç.
+      # Doğrulama düşerse buraya hiç gelinmez → release TASLAK kalır, /latest eski
+      # sağlam sürümü göstermeye devam eder (fail-closed: kimse bozuk güncelleme almaz).
+      - name: Doğrulama geçti → release'i yayınla (taslaktan çıkar)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+          echo "✓ Taslaktan yayına alındı."
+
+      # Yayınladık diye canlı olduğunu VARSAYMA — son kez doğrula (ders 1).
+      - name: Yayın gerçekten canlı mı? (taslak değil)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
@@ -340,7 +368,7 @@ jobs:
           set -euo pipefail
           draft=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
           if [ "$draft" != "false" ]; then
-            echo "::error::Release taslak halde — 'latest' onu göstermez, güncelleme akışı sessizce durur."
+            echo "::error::Release hâlâ taslak — yayınlama başarısız, güncelleme akışı sessizce durur."
             exit 1
           fi
-          echo "✓ Yayın tam: 15 imzalı platform, taslak değil."
+          echo "✓ Yayın tam ve canlı: 15 imzalı platform, taslak değil."
