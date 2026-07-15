@@ -264,6 +264,8 @@ export const en: Messages = {
     language: 'Language',
     languageHint: 'Interface language. Applied immediately.',
     editTranslations: 'Edit translations',
+    autoCheckUpdates: 'Check for updates on startup',
+    autoCheckUpdatesHint: 'When off, only "Check now" looks for updates.',
 
     aiThinking: 'Deep thinking',
     aiThinkingHint: 'The model reasons step by step before answering — more accurate, but slower and pricier.',
@@ -484,6 +486,9 @@ export const en: Messages = {
 
   ai: {
     title: '🤖 AI Assistant',
+    modeSuggest: 'Suggest',
+    modeAgent: 'Folder Agent',
+    modeAgentTitle: 'VSCode-like agent: reads/writes files and runs commands in the folder you pick — every action needs approval.',
     modelBadgeTitle: 'Model in use — change it in Settings → AI Assistant.\nProvider: {provider}\nModel: {model}',
     newChat: 'New chat',
     prevChats: 'Previous chats',

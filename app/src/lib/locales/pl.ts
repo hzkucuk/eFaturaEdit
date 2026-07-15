@@ -264,6 +264,8 @@ export const pl: Messages = {
     language: 'Język',
     languageHint: 'Język interfejsu. Zmiana działa natychmiast.',
     editTranslations: 'Edytuj tłumaczenia',
+    autoCheckUpdates: 'Sprawdzaj aktualizacje przy starcie',
+    autoCheckUpdatesHint: 'Gdy wyłączone, tylko „Sprawdź teraz” szuka aktualizacji.',
 
     aiThinking: 'Głębokie myślenie',
     aiThinkingHint: 'Model rozumuje krok po kroku przed odpowiedzią — dokładniej, ale wolniej i drożej.',
@@ -485,6 +487,9 @@ export const pl: Messages = {
 
   ai: {
     title: '🤖 Asystent AI',
+    modeSuggest: 'Sugestia',
+    modeAgent: 'Agent folderu',
+    modeAgentTitle: 'Agent w stylu VSCode: czyta/zapisuje pliki i uruchamia polecenia w wybranym folderze — każda akcja wymaga zatwierdzenia.',
     modelBadgeTitle: 'Używany model — zmień w Ustawienia → Asystent AI.\nDostawca: {provider}\nModel: {model}',
     newChat: 'Nowy czat',
     prevChats: 'Poprzednie czaty',

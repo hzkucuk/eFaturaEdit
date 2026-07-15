@@ -203,6 +203,20 @@ Sebebi ayırt ederken **model adına bakıp tahmin yürütme** ("bu model vision
 kataloğunda destekleyen de var, addan bilinemez): **ne gönderdiğimize** bak (görsel gönderdik mi?) ve
 **yanıtta gerçekten hangi alanlar dolu**, onu **oku** (uydurma alan adı arama — ders 10).
 
+### 15. Sandbox "kilidi" bir yerde YALAN olabilir — bash klasöre kilitlenemez (v2.34.0)
+
+Klasör Ajanı'nda (opt-in dosya-erişimli mod) dosya araçları `guard()` ile köke gerçekten kilitlenir:
+her yol `canonicalize` edilip (`..`/symlink/mutlak kaçış çözülür) kök içinde mi denetlenir, koruma
+Rust sınırında, 5 birim testiyle kanıtlı. **Ama `agent_bash` için "sandbox=klasör" bir yalandır:**
+`cwd`'yi köke sabitlesek de komut `cd /` yapıp her yere gider; OS-düzeyi sandbox (konteyner/seccomp)
+Tauri'de yok. Bunu "klasöre kilitli" diye sunmak, projenin en çok korktuğu sessiz-yanlış-garanti
+sınıfıdır — bash'in tek gerçek koruması **onay kapısıdır** (kullanıcı komutu görür).
+
+**Kural:** Bir "sandbox/kilit/koruma" yazarken sor: **bu gerçekten zorlanabiliyor mu, yoksa iyi niyet
+mi?** Zorlanan koruma (guard: canonicalize+starts_with) ile zorlanamayan (bash cwd) **ayrı iki
+şeydir**; ikincisini birincisi gibi sunma. Zorlanamıyorsa, tek koruma neyse (onay) onu **görünür**
+kıl (UI'da sarı uyarı) ve dokümanda açıkça yaz. "cwd köke sabit" ≠ "klasör dışına çıkamaz."
+
 ---
 
 ## Mimari
@@ -225,8 +239,23 @@ Depo **iki bağlı parçadan** oluşur:
 > lisans/aktivasyon sistemiyle birlikte **kaldırıldı**. İstenmedikçe referans verme.
 
 **AI entegrasyonu:** Kullanıcının kendi API anahtarıyla (BYOK) çalışır; hiçbir anahtar gömülmez.
-AI çıktısı yalnızca **"önerilen değişiklik"** olarak sunulur ve **kullanıcı onayı olmadan uygulanmaz** —
-dosya sistemine, ayarlara veya başka bir işleve doğrudan erişemez.
+**İki mod vardır (`settings.aiMode`):**
+- **`suggest` (varsayılan, "Öneri"):** AI çıktısı yalnızca **"önerilen değişiklik"** olarak sunulur ve
+  **kullanıcı onayı olmadan uygulanmaz** — dosya sistemine, ayarlara veya başka bir işleve doğrudan
+  erişemez. Bu, projenin varsayılan güvenlik duruşudur.
+- **`agent` ("Klasör Ajanı", v2.34.0, opt-in):** VSCode-benzeri ajan modu. Kullanıcının açıkça açtığı
+  ve bir çalışma klasörü seçtiği durumda, model dosyaları **okur/yazar/düzenler** ve **kabuk komutu**
+  çalıştırır. **Bu, yukarıdaki "dosya sistemine erişemez" kuralına bilinçli, opt-in bir istisnadır.**
+  Aşağıdaki iki gerçeği asla gizleme (bkz. ders 15):
+  1. Dosya araçları (`agent_read/write/edit/list`, `agent_tools.rs`) **köke kilitlenir** — her yol
+     Rust'ta `guard()` ile `canonicalize` edilip kökün altında mı diye denetlenir (`..`/symlink/mutlak
+     kaçış reddedilir). Koruma frontend'e BIRAKILMAZ, Rust sınırındadır. 5 birim testiyle kanıtlı.
+  2. **`agent_bash` klasöre GERÇEKTEN kilitlenemez** — `cwd` sabit ama komut `cd /` yapıp kaçabilir;
+     OS-düzeyi sandbox (konteyner/seccomp) Tauri'de yok. Bash'in **tek gerçek koruması onay kapısıdır**
+     (kullanıcı komutu çalışmadan önce görür). UI bunu sarı bir uyarı bandıyla söyler; sen de öyle yap.
+
+Sağlayıcı: tool-calling Anthropic/OpenAI/Gemini'de çalışır; yerel modeller (Ollama/NVIDIA/DeepSeek)
+tool-calling'i model-bağımlı destekler, desteklemeyende sağlayıcı hatası kullanıcıya iletilir.
 
 ## Temel Kurallar
 - Sadece istenen bloğu değiştir; tüm dosyayı yeniden yazma.

@@ -719,6 +719,426 @@ async fn call_openai_compatible(req: &AiChatRequest) -> Result<String, String> {
     Ok(text.to_string())
 }
 
+// ─── Klasör Ajanı — tool-calling (Faz 1: Anthropic) ─────────────────────────
+//
+// "Öneri" modundan farkı: model ARAÇ çağırabilir (dosya oku/yaz/düzenle/listele).
+// Döngüyü frontend orkestra eder (onay/güven kapısı UI'da); Rust yalnızca (a) bu
+// tools-etkin çağrıyı, (b) sandbox-korumalı exec'i (agent_tools.rs) sağlar.
+
+/// Modele sunulan bir araç tanımı (frontend, sağlayıcıdan bağımsız gönderir).
+#[derive(Debug, Deserialize)]
+pub struct AgentTool {
+    pub name: String,
+    pub description: String,
+    /// JSON Schema (obje). Anthropic `input_schema`, OpenAI `parameters` olur.
+    pub input_schema: Value,
+}
+
+/// Sağlayıcıdan-bağımsız içerik bloğu. Frontend geçmişi bu nötr biçimde tutar;
+/// Rust her sağlayıcının kendi biçimine çevirir (Faz 2'de OpenAI/Gemini eklenince
+/// tek çeviri noktası burasıdır).
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum AgentBlock {
+    Text { text: String },
+    ToolUse { id: String, name: String, input: Value },
+    ToolResult {
+        tool_use_id: String,
+        content: String,
+        #[serde(default)]
+        is_error: bool,
+        /// Gemini `functionResponse`'u id değil ADLA eşler; frontend araç
+        /// çağrısından doldurur. Anthropic/OpenAI bunu yok sayar.
+        #[serde(default)]
+        name: String,
+    },
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AgentMessage {
+    pub role: String, // "user" | "assistant"
+    pub blocks: Vec<AgentBlock>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AgentRequest {
+    pub provider: String,
+    pub base_url: String,
+    pub api_key: String,
+    pub model: String,
+    pub system_prompt: String,
+    #[serde(default)]
+    pub cached_context: String,
+    pub tools: Vec<AgentTool>,
+    pub messages: Vec<AgentMessage>,
+}
+
+/// Modelin bu turda istediği bir araç çağrısı — frontend'e döner, o çalıştırır.
+#[derive(Debug, Serialize)]
+pub struct AgentToolCall {
+    pub id: String,
+    pub name: String,
+    pub input: Value,
+}
+
+/// Bir ajan turunun sonucu. `tool_calls` boş değilse döngü devam eder.
+#[derive(Debug, Serialize)]
+pub struct AgentResponse {
+    /// Modelin bu turdaki metin blokları (varsa) birleştirilmiş.
+    pub text: String,
+    pub tool_calls: Vec<AgentToolCall>,
+    /// "tool_use" | "end_turn" | "max_tokens" | ...
+    pub stop_reason: String,
+}
+
+#[tauri::command]
+pub async fn ai_agent(request: AgentRequest) -> Result<AgentResponse, String> {
+    log::info!(
+        "[ai] ajan turu — {} · {} · {} · sistem {} bayt · bağlam {} bayt · {} mesaj · {} araç",
+        request.provider,
+        request.model,
+        safe_endpoint(&request.base_url),
+        request.system_prompt.len(),
+        request.cached_context.len(),
+        request.messages.len(),
+        request.tools.len(),
+    );
+
+    let started = Instant::now();
+    let result = match request.provider.as_str() {
+        "anthropic" => call_anthropic_agent(&request).await,
+        "gemini" => call_gemini_agent(&request).await,
+        // openai, ollama, nvidia, deepseek — OpenAI Chat Completions tool-calling.
+        // (Yerel modeller tool-calling'i model-bağımlı destekler; desteklemeyende
+        // sağlayıcı hata döner ve o hata kullanıcıya iletilir.)
+        _ => call_openai_agent(&request).await,
+    };
+    let ms = started.elapsed().as_millis();
+    match &result {
+        Ok(r) => log::info!(
+            "[ai] ajan turu tamam — {} araç çağrısı, bitiş={}, {ms} ms",
+            r.tool_calls.len(),
+            r.stop_reason
+        ),
+        Err(e) => log::error!("[ai] ajan turu başarısız ({ms} ms): {e}"),
+    }
+    result
+}
+
+async fn call_anthropic_agent(req: &AgentRequest) -> Result<AgentResponse, String> {
+    let client = http_client()?;
+    let url = format!("{}/messages", req.base_url.trim_end_matches('/'));
+
+    // Nötr blokları Anthropic biçimine çevir.
+    let messages: Vec<Value> = req
+        .messages
+        .iter()
+        .map(|m| {
+            let content: Vec<Value> = m
+                .blocks
+                .iter()
+                .map(|b| match b {
+                    AgentBlock::Text { text } => json!({ "type": "text", "text": text }),
+                    AgentBlock::ToolUse { id, name, input } => {
+                        json!({ "type": "tool_use", "id": id, "name": name, "input": input })
+                    }
+                    AgentBlock::ToolResult { tool_use_id, content, is_error, .. } => json!({
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": content,
+                        "is_error": is_error,
+                    }),
+                })
+                .collect();
+            json!({ "role": m.role, "content": content })
+        })
+        .collect();
+
+    // System bölümü: statik prompt + (varsa) dosya bağlamı; cache_control ile
+    // önbelleğe girer (ai_chat ile aynı desen).
+    let mut system_blocks: Vec<Value> = vec![json!({ "type": "text", "text": req.system_prompt })];
+    if !req.cached_context.is_empty() {
+        system_blocks.push(json!({
+            "type": "text",
+            "text": req.cached_context,
+            "cache_control": { "type": "ephemeral" },
+        }));
+    } else {
+        system_blocks[0]["cache_control"] = json!({ "type": "ephemeral" });
+    }
+
+    let tools: Vec<Value> = req
+        .tools
+        .iter()
+        .map(|t| json!({ "name": t.name, "description": t.description, "input_schema": t.input_schema }))
+        .collect();
+
+    let body = json!({
+        "model": req.model,
+        "max_tokens": 8192,
+        "system": system_blocks,
+        "tools": tools,
+        "messages": messages,
+    });
+
+    let resp = client
+        .post(&url)
+        .header("x-api-key", &req.api_key)
+        .header("anthropic-version", "2023-06-01")
+        .json(&body)
+        .send()
+        .await
+        .map_err(send_error)?;
+
+    let status = resp.status();
+    let body = resp
+        .text()
+        .await
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
+    if !status.is_success() {
+        return Err(api_error("Claude API hatası", status, &body));
+    }
+
+    let json: Value =
+        serde_json::from_str(&body).map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
+    let stop = json["stop_reason"].as_str().unwrap_or("").to_string();
+    if stop == "refusal" {
+        return Err("İstek Claude tarafından güvenlik nedeniyle reddedildi.".into());
+    }
+
+    let mut text = String::new();
+    let mut tool_calls = Vec::new();
+    if let Some(blocks) = json["content"].as_array() {
+        for b in blocks {
+            match b["type"].as_str() {
+                Some("text") => {
+                    if let Some(t) = b["text"].as_str() {
+                        text.push_str(t);
+                    }
+                }
+                Some("tool_use") => {
+                    tool_calls.push(AgentToolCall {
+                        id: b["id"].as_str().unwrap_or_default().to_string(),
+                        name: b["name"].as_str().unwrap_or_default().to_string(),
+                        input: b["input"].clone(),
+                    });
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // max_tokens + araç çağrısı yoksa: kesik tur. Kullanıcıya söyle (kesik "tam
+    // dosya" önerisi dersi ajan hâli); ama araç çağrısı varsa döngü devam edebilir.
+    if stop == "max_tokens" && tool_calls.is_empty() && text.trim().is_empty() {
+        return Err(truncated_error(8192));
+    }
+
+    Ok(AgentResponse { text, tool_calls, stop_reason: stop })
+}
+
+/// OpenAI Chat Completions tool-calling (openai, ollama, nvidia, deepseek).
+async fn call_openai_agent(req: &AgentRequest) -> Result<AgentResponse, String> {
+    let client = http_client()?;
+    let url = format!("{}/chat/completions", req.base_url.trim_end_matches('/'));
+
+    let system_content = if req.cached_context.is_empty() {
+        req.system_prompt.clone()
+    } else {
+        format!("{}\n{}", req.system_prompt, req.cached_context)
+    };
+    let mut messages: Vec<Value> = vec![json!({ "role": "system", "content": system_content })];
+
+    // Nötr blokları OpenAI biçimine çevir. tool_result'lar AYRI `tool` mesajı olur;
+    // asistan turundaki text + tool_use'lar TEK mesajda (tool_calls[]) birleşir.
+    for m in &req.messages {
+        if m.role == "assistant" {
+            let mut text = String::new();
+            let mut tool_calls: Vec<Value> = Vec::new();
+            for b in &m.blocks {
+                match b {
+                    AgentBlock::Text { text: t } => text.push_str(t),
+                    AgentBlock::ToolUse { id, name, input } => tool_calls.push(json!({
+                        "id": id,
+                        "type": "function",
+                        "function": { "name": name, "arguments": input.to_string() },
+                    })),
+                    AgentBlock::ToolResult { .. } => {}
+                }
+            }
+            let mut msg = json!({ "role": "assistant" });
+            msg["content"] = if text.is_empty() { Value::Null } else { json!(text) };
+            if !tool_calls.is_empty() {
+                msg["tool_calls"] = json!(tool_calls);
+            }
+            messages.push(msg);
+        } else {
+            // user: text → user mesajı; tool_result → ayrı tool mesajı.
+            let mut text = String::new();
+            for b in &m.blocks {
+                match b {
+                    AgentBlock::Text { text: t } => text.push_str(t),
+                    AgentBlock::ToolResult { tool_use_id, content, .. } => {
+                        messages.push(json!({
+                            "role": "tool",
+                            "tool_call_id": tool_use_id,
+                            "content": content,
+                        }));
+                    }
+                    AgentBlock::ToolUse { .. } => {}
+                }
+            }
+            if !text.is_empty() {
+                messages.push(json!({ "role": "user", "content": text }));
+            }
+        }
+    }
+
+    let tools: Vec<Value> = req
+        .tools
+        .iter()
+        .map(|t| {
+            json!({
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": t.input_schema,
+                },
+            })
+        })
+        .collect();
+
+    let max_tokens_key = if req.provider == "openai" { "max_completion_tokens" } else { "max_tokens" };
+    let mut body = json!({ "model": req.model, "messages": messages, "tools": tools });
+    body[max_tokens_key] = json!(8192);
+
+    let mut builder = client.post(&url).json(&body);
+    if !req.api_key.is_empty() {
+        builder = builder.bearer_auth(&req.api_key);
+    }
+    let resp = builder.send().await.map_err(send_error)?;
+    let status = resp.status();
+    let body = resp
+        .text()
+        .await
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
+    if !status.is_success() {
+        return Err(api_error("API hatası", status, &body));
+    }
+    let json: Value =
+        serde_json::from_str(&body).map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
+
+    let msg = &json["choices"][0]["message"];
+    let finish = json["choices"][0]["finish_reason"].as_str().unwrap_or("").to_string();
+    let text = msg["content"].as_str().unwrap_or("").to_string();
+    let mut tool_calls = Vec::new();
+    if let Some(calls) = msg["tool_calls"].as_array() {
+        for c in calls {
+            let args_str = c["function"]["arguments"].as_str().unwrap_or("{}");
+            let input: Value = serde_json::from_str(args_str).unwrap_or_else(|_| json!({}));
+            tool_calls.push(AgentToolCall {
+                id: c["id"].as_str().unwrap_or_default().to_string(),
+                name: c["function"]["name"].as_str().unwrap_or_default().to_string(),
+                input,
+            });
+        }
+    }
+    if text.trim().is_empty() && tool_calls.is_empty() {
+        return Err(empty_error(&req.provider, &req.model, &finish, &body));
+    }
+    Ok(AgentResponse { text, tool_calls, stop_reason: finish })
+}
+
+/// Gemini tool-calling. `functionResponse` id değil ADLA eşleşir; nötr
+/// ToolResult'taki `name` alanı bu yüzden gereklidir.
+async fn call_gemini_agent(req: &AgentRequest) -> Result<AgentResponse, String> {
+    let client = http_client()?;
+    let url = format!(
+        "{}/models/{}:generateContent?key={}",
+        req.base_url.trim_end_matches('/'),
+        req.model,
+        req.api_key
+    );
+
+    let contents: Vec<Value> = req
+        .messages
+        .iter()
+        .map(|m| {
+            let role = if m.role == "assistant" { "model" } else { "user" };
+            let parts: Vec<Value> = m
+                .blocks
+                .iter()
+                .map(|b| match b {
+                    AgentBlock::Text { text } => json!({ "text": text }),
+                    AgentBlock::ToolUse { name, input, .. } => {
+                        json!({ "functionCall": { "name": name, "args": input } })
+                    }
+                    AgentBlock::ToolResult { name, content, .. } => json!({
+                        "functionResponse": { "name": name, "response": { "result": content } }
+                    }),
+                })
+                .collect();
+            json!({ "role": role, "parts": parts })
+        })
+        .collect();
+
+    let decls: Vec<Value> = req
+        .tools
+        .iter()
+        .map(|t| json!({ "name": t.name, "description": t.description, "parameters": t.input_schema }))
+        .collect();
+
+    let mut body = json!({
+        "contents": contents,
+        "tools": [{ "functionDeclarations": decls }],
+        "generationConfig": { "maxOutputTokens": 8192 },
+    });
+    let sys = if req.cached_context.is_empty() {
+        req.system_prompt.clone()
+    } else {
+        format!("{}\n{}", req.system_prompt, req.cached_context)
+    };
+    if !sys.is_empty() {
+        body["system_instruction"] = json!({ "parts": [{ "text": sys }] });
+    }
+
+    let resp = client.post(&url).json(&body).send().await.map_err(send_error)?;
+    let status = resp.status();
+    let body = resp
+        .text()
+        .await
+        .map_err(|e| format!("Yanıt okunamadı: {}", error_chain(&e)))?;
+    if !status.is_success() {
+        return Err(api_error("Gemini API hatası", status, &body));
+    }
+    let json: Value =
+        serde_json::from_str(&body).map_err(|e| format!("Yanıt çözümlenemedi ({status}): {e}"))?;
+
+    let finish = json["candidates"][0]["finishReason"].as_str().unwrap_or("").to_string();
+    let mut text = String::new();
+    let mut tool_calls = Vec::new();
+    if let Some(parts) = json["candidates"][0]["content"]["parts"].as_array() {
+        for (i, p) in parts.iter().enumerate() {
+            if let Some(t) = p["text"].as_str() {
+                text.push_str(t);
+            } else if let Some(fc) = p.get("functionCall") {
+                let name = fc["name"].as_str().unwrap_or_default().to_string();
+                // Gemini id vermez; frontend eşlemesi için sentetik id üret.
+                tool_calls.push(AgentToolCall {
+                    id: format!("gemini-{name}-{i}"),
+                    name,
+                    input: fc["args"].clone(),
+                });
+            }
+        }
+    }
+    if text.trim().is_empty() && tool_calls.is_empty() {
+        return Err(empty_error(&req.provider, &req.model, &finish, &body));
+    }
+    Ok(AgentResponse { text, tool_calls, stop_reason: finish })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

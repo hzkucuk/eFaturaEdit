@@ -265,6 +265,8 @@ export const es: Messages = {
     language: 'Idioma',
     languageHint: 'Idioma de la interfaz. Se aplica al instante.',
     editTranslations: 'Editar traducciones',
+    autoCheckUpdates: 'Buscar actualizaciones al iniciar',
+    autoCheckUpdatesHint: 'Si está desactivado, solo "Buscar ahora" comprueba actualizaciones.',
 
     aiThinking: 'Pensamiento profundo',
     aiThinkingHint: 'El modelo razona paso a paso antes de responder: más preciso, pero más lento y costoso.',
@@ -486,6 +488,9 @@ export const es: Messages = {
 
   ai: {
     title: '🤖 Asistente de IA',
+    modeSuggest: 'Sugerir',
+    modeAgent: 'Agente de carpeta',
+    modeAgentTitle: 'Agente tipo VSCode: lee/escribe archivos y ejecuta comandos en la carpeta elegida — cada acción requiere aprobación.',
     modelBadgeTitle: 'Modelo en uso — cámbialo en Ajustes → Asistente de IA.\nProveedor: {provider}\nModelo: {model}',
     newChat: 'Nuevo chat',
     prevChats: 'Chats anteriores',

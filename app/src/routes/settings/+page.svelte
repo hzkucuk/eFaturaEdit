@@ -763,6 +763,17 @@
           {/if}
         </span>
       </div>
+      <div class="row">
+        <label for="auto-update">{m.settings.autoCheckUpdates}</label>
+        <input
+          id="auto-update"
+          type="checkbox"
+          checked={settings.autoCheckUpdates}
+          onchange={(e) =>
+            updateSetting('autoCheckUpdates', (e.currentTarget as HTMLInputElement).checked)}
+        />
+        <span class="hint">{m.settings.autoCheckUpdatesHint}</span>
+      </div>
       <p class="hint">
         Türkiye e-Fatura / e-Arşiv / e-İrsaliye (UBL-TR) belgeleri için XSLT
         tasarım düzenleyicisi. Tam XSLT 1.0/2.0/3.0 (Saxon-HE), canlı önizleme,

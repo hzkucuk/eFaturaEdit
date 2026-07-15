@@ -1,3 +1,4 @@
+mod agent_tools;
 mod ai;
 mod xslt;
 
@@ -124,7 +125,13 @@ pub fn run() {
             xslt::log_dir,
             xslt::open_log_dir,
             ai::ai_chat,
-            ai::ai_list_models
+            ai::ai_list_models,
+            ai::ai_agent,
+            agent_tools::agent_read,
+            agent_tools::agent_write,
+            agent_tools::agent_edit,
+            agent_tools::agent_list,
+            agent_tools::agent_bash
         ])
         .setup(|app| {
             // macOS'ta uygulama menüsündeki "e-Fatura Edit → Hakkında" paneli.

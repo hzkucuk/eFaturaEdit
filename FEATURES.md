@@ -95,6 +95,27 @@ sağlayıcının **hepsinde** aynı şekilde çalışır.
   kapsam kilidi ve çıktı biçimi (SEARCH/REPLACE) kuralları üstündür.
 - Yetenekler sistem bölümünde kaldığı için **prompt önbelleğine dâhildir**.
 
+### 🧠 Klasör Ajanı — VSCode-benzeri ajan modu (v2.34.0, opt-in)
+
+AI panosunda **iki mod** vardır: **Öneri** (varsayılan, güvenli salt-öneri) ve **Klasör Ajanı**. Ajan
+modunda model seçilen bir **çalışma klasöründe** dosyalarla gerçekten çalışır — Cline/Cursor benzeri.
+
+- **Araçlar:** `read_file`, `list_dir`, `edit_file` (tek-eşleşmeli), `write_file`, `run_bash`
+  (klasörde kabuk komutu, cwd=kök), `run_xslt` (şablonu Saxon'dan geçirip render edilmiş HTML'i modele
+  gösterir — "bir öğe kaç kez basıldı" gibi doğrulamalar için, ders 12).
+- **Onay kapısı:** Her işlem, farkı/komutuyla birlikte onaydan geçer — **Onayla** · **Bu aracı hep izin
+  ver** (oturum) · **Bu klasöre güven** (kalıcı, `settings.agentTrustedFolders`) · **Reddet**.
+- **Sağlayıcı:** tool-calling Anthropic (Claude), OpenAI-uyumlu (OpenAI/Ollama/NVIDIA/DeepSeek) ve
+  Gemini'de çalışır; desteklemeyen yerel modelde sağlayıcı hatası kullanıcıya iletilir.
+- **Güvenlik (açıkça belgelenmiş):**
+  - **Dosya araçları köke KİLİTLİ:** her yol Rust'ta `guard()` ile `canonicalize` edilip kök içinde mi
+    denetlenir; `..`/symlink/mutlak-yol kaçışı reddedilir. **5 birim testiyle kanıtlı.** Koruma Rust
+    sınırında — frontend atlayamaz.
+  - **`run_bash` klasöre gerçekten kilitlenemez** (cwd sabit ama `cd /` kaçar; OS sandbox yok). Tek
+    koruması **onay kapısı** — UI komutu ham gösterir + **sarı uyarı bandı**. Bu, "cwd köke sabit" ile
+    "klasör dışına çıkamaz"ın aynı şey olmadığının açık kabulüdür (ders 15).
+  - Varsayılan **kapalı**; kullanıcı açıkça açar. BYOK korunur; anahtarlar OS anahtar zincirinde.
+
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 
 Önizlemede bir öğeye tıklayıp doğrudan biçimlendirme.

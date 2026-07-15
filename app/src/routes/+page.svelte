@@ -44,6 +44,7 @@
   import TabBar from '$lib/TabBar.svelte';
   import HelpModal from '$lib/HelpModal.svelte';
   import AIAssistant from '$lib/AIAssistant.svelte';
+  import AgentPanel from '$lib/AgentPanel.svelte';
   import UpdateModal from '$lib/UpdateModal.svelte';
   import { checkForUpdate } from '$lib/updater.svelte';
   import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
@@ -2164,7 +2165,10 @@ window.addEventListener('message', function(e) {
     installGlobalErrorLogging(); // yakalanmayan hatalar da diske düşsün
     // Güncelleme denetimi: açılışı bekletmesin diye ertelenir ve sessizdir
     // (internet yoksa veya dev modundaysak kullanıcıya hata gösterilmez).
-    setTimeout(() => void checkForUpdate(), 3000);
+    // Ayardan kapatılabilir; kapalıyken yalnızca Ayarlar → "Şimdi denetle" çalışır.
+    if (settings.autoCheckUpdates) {
+      setTimeout(() => void checkForUpdate(), 3000);
+    }
     if (showWelcome) {
       status(f(m.status.ready, { version: manifest.version, snippets: allSnippets.length, completions: xsltCompletions.length }));
     }
@@ -2434,15 +2438,34 @@ window.addEventListener('message', function(e) {
       <Splitter direction="horizontal" bind:position={aiPanelHeight} min={40} />
 
       <div class="ai-dock">
-        <AIAssistant
-          xsltPath={editorState.xsltPath}
-          xmlPath={editorState.xmlPath}
-          xsltText={editorState.xsltText}
-          xmlText={editorState.xmlText}
-          transformError={lastTransformError}
-          onApply={requestAiApply}
-          onEmbedImage={embedImageInXslt}
-        />
+        <!-- Hibrit mod seçici: Öneri (güvenli, salt-öneri) | Klasör Ajanı
+             (VSCode-benzeri, dosya okur/yazar, onay-kapılı). Varsayılan Öneri. -->
+        <div class="ai-mode-tabs">
+          <button
+            class="ai-mode-tab"
+            class:active={settings.aiMode !== 'agent'}
+            onclick={() => updateSetting('aiMode', 'suggest')}
+          >{m.ai.modeSuggest}</button>
+          <button
+            class="ai-mode-tab"
+            class:active={settings.aiMode === 'agent'}
+            onclick={() => updateSetting('aiMode', 'agent')}
+            title={m.ai.modeAgentTitle}
+          >{m.ai.modeAgent}</button>
+        </div>
+        {#if settings.aiMode === 'agent'}
+          <AgentPanel />
+        {:else}
+          <AIAssistant
+            xsltPath={editorState.xsltPath}
+            xmlPath={editorState.xmlPath}
+            xsltText={editorState.xsltText}
+            xmlText={editorState.xmlText}
+            transformError={lastTransformError}
+            onApply={requestAiApply}
+            onEmbedImage={embedImageInXslt}
+          />
+        {/if}
       </div>
     </aside>
 
@@ -3301,8 +3324,19 @@ window.addEventListener('message', function(e) {
   .snippets { display: grid; background: #fafbfc; overflow: hidden; }
   .app.dark .snippets { background: #252526; }
   .snippets-top { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
-  .ai-dock { overflow: hidden; min-height: 0; border-top: 1px solid #e5e7eb; }
+  .ai-dock { overflow: hidden; min-height: 0; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; }
   .app.dark .ai-dock { border-top-color: #3f3f46; }
+  .ai-mode-tabs { display: flex; gap: 2px; padding: 4px 6px 0; flex-shrink: 0; }
+  .ai-mode-tab {
+    padding: 3px 12px; border: 1px solid #cbd0d6; border-bottom: none;
+    border-radius: 5px 5px 0 0; background: #f3f4f6; cursor: pointer;
+    font-size: 12px; color: #6b7280;
+  }
+  .ai-mode-tab.active { background: #fff; color: #111; font-weight: 600; }
+  .app.dark .ai-mode-tab { background: #252526; border-color: #3f3f46; color: #9ca3af; }
+  .app.dark .ai-mode-tab.active { background: #1e1e1e; color: #e6e6e6; }
+  /* Mod tabları altındaki panel kalan yeri doldurur ve kendi içinde kayar. */
+  .ai-dock > :global(*:last-child) { flex: 1; min-height: 0; }
   .snippets-header { padding: 0.5rem; border-bottom: 1px solid #e5e7eb; background: #fff; }
   .app.dark .snippets-header { background: #2d2d30; border-bottom-color: #3f3f46; }
   .snippets-header h3 {

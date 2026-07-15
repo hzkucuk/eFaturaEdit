@@ -265,6 +265,8 @@ export const tr = {
     language: 'Dil',
     languageHint: 'Arayüz dili. Değişiklik anında uygulanır.',
     editTranslations: 'Çevirileri düzenle',
+    autoCheckUpdates: 'Açılışta güncelleme denetle',
+    autoCheckUpdatesHint: 'Kapalıyken yalnızca "Şimdi denetle" ile bakılır.',
 
     aiThinking: 'Derin düşünme',
     aiThinkingHint: 'Model yanıtlamadan önce adım adım akıl yürütür — daha isabetli, ancak daha yavaş ve pahalı.',
@@ -485,6 +487,9 @@ export const tr = {
 
   ai: {
     title: '🤖 AI Asistan',
+    modeSuggest: 'Öneri',
+    modeAgent: 'Klasör Ajanı',
+    modeAgentTitle: 'VSCode-benzeri ajan: seçtiğin klasörde dosyaları okur/yazar, komut çalıştırır — her işlem onaydan geçer.',
     modelBadgeTitle: 'Kullanılan model — Ayarlar → AI Asistan bölümünden değiştirebilirsiniz.\nSağlayıcı: {provider}\nModel: {model}',
     newChat: 'Yeni sohbet',
     prevChats: 'Önceki sohbetler',

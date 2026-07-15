@@ -3,6 +3,33 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.34.0] — 2026-07-15 — Klasör Ajanı (VSCode-benzeri) + Açılışta Güncelleme Ayarı
+
+### Eklenen
+- **🧠 Klasör Ajanı (opt-in ajan modu).** AI panosunda artık iki mod var: **Öneri** (mevcut, güvenli,
+  salt-öneri) ve **Klasör Ajanı** (yeni). Ajan modunda model seçtiğin bir **çalışma klasöründe**
+  dosyaları **okur / yazar / düzenler / listeler**, **kabuk komutu** çalıştırır ve **XSLT'yi render edip
+  çıktısını görür** — Cline/Cursor benzeri. Varsayılan **kapalı**; kullanıcı açıkça açar (`settings.aiMode`).
+  - **Her işlem onaydan geçer** (farkı/komutuyla): Onayla · Bu aracı hep izin ver · **Bu klasöre güven**
+    (kalıcı) · Reddet. Klasör güveni `settings.agentTrustedFolders`'ta saklanır.
+  - **Araçlar:** `read_file`, `list_dir`, `edit_file` (tek-eşleşme), `write_file`, `run_bash`, `run_xslt`
+    (şablonu Saxon'dan geçirip HTML'i modele gösterir — "kaç kez basıldı" gibi doğrulamalar için).
+  - **Sağlayıcı:** tool-calling Anthropic (Claude), OpenAI (+Ollama/NVIDIA/DeepSeek OpenAI-uyumlu) ve
+    Gemini'de çalışır. Tool-calling desteklemeyen yerel modelde sağlayıcı hatası kullanıcıya iletilir.
+- **⚙️ Açılışta güncelleme denetimi ayarı.** Ayarlar → Hakkında'da yeni toggle: "Açılışta güncelleme
+  denetle" (varsayılan açık). Kapalıyken yalnızca "Şimdi denetle" ile bakılır.
+
+### Güvenlik (bilinçli, açıkça belgelenmiş)
+- **Klasör Ajanı, "AI dosya sistemine erişemez" varsayılan kuralına opt-in bir istisnadır.** İki gerçek
+  gizlenmez:
+  - **Dosya araçları köke KİLİTLİDİR.** Her yol Rust'ta `guard()` ile `canonicalize` edilip kökün altında
+    mı denetlenir; `..`/symlink/mutlak-yol kaçışı **reddedilir**. Koruma frontend'e bırakılmaz, Rust
+    sınırındadır — **5 birim testiyle kanıtlı** (traversal, symlink kaçışı, mutlak kök-dışı → hepsi Err).
+  - **`run_bash` klasöre GERÇEKTEN kilitlenemez.** `cwd` köke sabit ama komut `cd /` yapıp çıkabilir;
+    OS-düzeyi sandbox Tauri'de yok. Bash'in **tek gerçek koruması onay kapısıdır** — UI komutu ham
+    gösterir ve **sarı uyarı bandıyla** bunu açıkça söyler. (Ders 15.)
+- API anahtarları yine OS anahtar zincirinde; ajan modu da BYOK.
+
 ## [2.33.3] — 2026-07-15 — Atomik Yayın: Derleme Sırasındaki 404 Penceresi Kapatıldı
 
 > Yalnızca yayın altyapısı (CI) değişti — uygulama v2.33.2 ile **birebir aynıdır**, yeni özellik/düzeltme yoktur.

@@ -182,6 +182,8 @@ export interface Settings {
   autoSave: boolean;
   autoSaveDelayMs: number;
   autocomplete: boolean;
+  /** Açılışta sessizce güncelleme denetle. Kapalıysa yalnızca Ayarlar → "Şimdi denetle" ile bakılır. */
+  autoCheckUpdates: boolean;
   previewZoom: number; // 0.5 - 2.0
   previewWidth: number | null; // null = full, 320/768/1200
   panelSizes: {
@@ -192,6 +194,10 @@ export interface Settings {
   };
   aiProvider: AiProvider;
   aiProviders: Record<AiProvider, AiProviderConfig>;
+  /** AI panosu modu. 'suggest' = güvenli salt-öneri (varsayılan); 'agent' = Klasör Ajanı (dosya okur/yazar). */
+  aiMode: 'suggest' | 'agent';
+  /** Klasör Ajanının "hep izin ver" dendiği güvenilir kök klasörler (kalıcı). */
+  agentTrustedFolders: string[];
 }
 
 const DEFAULTS: Settings = {
@@ -207,6 +213,7 @@ const DEFAULTS: Settings = {
   autoSave: false,
   autoSaveDelayMs: 3000,
   autocomplete: true,
+  autoCheckUpdates: true, // açılışta sessiz denetim varsayılan açık
   previewZoom: 1.0,
   previewWidth: null,
   panelSizes: {
@@ -217,6 +224,8 @@ const DEFAULTS: Settings = {
   },
   aiProvider: 'anthropic',
   aiProviders: AI_PROVIDER_DEFAULTS,
+  aiMode: 'suggest', // opt-in: Klasör Ajanı varsayılan KAPALI, kullanıcı açar
+  agentTrustedFolders: [],
 };
 
 const STORAGE_KEY = 'efaturaEdit.settings.v3';
