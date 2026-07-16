@@ -217,6 +217,43 @@ mi?** Zorlanan koruma (guard: canonicalize+starts_with) ile zorlanamayan (bash c
 şeydir**; ikincisini birincisi gibi sunma. Zorlanamıyorsa, tek koruma neyse (onay) onu **görünür**
 kıl (UI'da sarı uyarı) ve dokümanda açıkça yaz. "cwd köke sabit" ≠ "klasör dışına çıkamaz."
 
+**Not (2026-07-16, ölçüldü):** Bu ders `agent_bash` (Rust, v2.34.0) için **aynen geçerli**. Ama
+planlanan **Claude Code CLI motorunda** `--settings`'in `sandbox` anahtarı bash'i mac/Linux'ta
+**gerçekten** yazma-kilitliyor (Windows'ta sandbox yok, orada sorulacak). Yani "bash kilitlenemez"
+mutlak değil, **motora bağlı** — ama okuma hiçbir motorda kilitlenmiyor. Bkz. ders 17.
+
+### 16. Bir bayrağın yokluğu ≠ yeteneğin yokluğu — ölçtüm ama fazla genelledim (2026-07-15/16)
+
+Klasör Ajanı'na Claude Code motoru eklerken `claude --help`'te `--permission-prompt-tool`
+**olmadığını** ölçtüm; bu doğruydu. Ama oradan **"per-action onay köprüsü CLI'a kurulamaz"** sonucunu
+çıkardım ve Node Agent SDK sidecar'ına karar verdik: Node runtime (~+25 MB gzip), bun/SEA paketleme,
+5 platform, NDJSON çift-yönlü IPC katmanı. **Hepsi gereksizmiş.** Yetenek vardı, sadece başka
+mekanizmadaydı: `--settings` ile tanımlanan **PreToolUse hook** her araçta ateşliyor (Bash dahil 5/5
+ölçüldü), `deny` dosyayı diske yazdırmıyor, onay 75 sn bekletilebiliyor. Bir oturumluk plan, tek
+ölçümle tamamen düştü.
+
+**Kural:** "X bayrağı yok" ölçümünden "yetenek yok" sonucunu çıkarma — yokluk ölçümü **tek bir yolu**
+eler, yeteneği elemez. Karar bir **yokluğa** dayanıyorsa, aynı işi yapan **ikinci mekanizmayı** da ara
+(bayrak yoksa: ayar dosyası? hook? protokol? alt komut?). Özellikle o karar sana yeni bir
+runtime/bağımlılık/katman getiriyorsa: **maliyet ne kadar büyükse gerekçeyi o kadar sıkı ölç.**
+
+### 17. "Koruma devreye girdi" ≠ "korudu" — kaçış kapısını **diske bakarak** ölç (2026-07-16)
+
+CLI motorunda sandbox ölçerken `sandbox.enabled=true` + `filesystem.allowWrite=[kök]` ile bash'e
+`echo > /tmp/x` dedirttim. macOS `sandbox-exec` komutu **`operation not permitted`** ile kesti —
+ekranda koruma çalışıyordu. **Diskte dosya vardı.** Sebep: sandbox'lı komut düşünce Claude Code aynı
+komutu **sandbox'sız yeniden deniyor** ve izin istiyor; otomatik-onay veren hook kaçışı geçiriyor.
+`allowUnsandboxedCommands:false` ile kapandı (ölçüldü: /tmp'ye yazılamadı, kök içine yazıldı → hem
+korudu hem iş görüyor). Aynı gün ikinci yanılsama: sandbox **yazmayı** engelliyor, **okumayı
+engellemiyor** (`allowRead`/`allowManagedReadPathsOnly` denendi, değişmedi) — "klasöre kilitli" demek
+yarısı yalan olurdu.
+
+**Kural:** Korumanın **hata mesajını görmek**, korumanın **tuttuğunu** kanıtlamaz; kanıt **etkidedir**
+(dosya var mı? satır yazıldı mı?). Her koruma için sor: **geri düşüş / yeniden deneme yolu var mı?**
+(retry-unsandboxed, fallback, "izin iste" akışı) — koruma sessizce oradan delinir; hele otomatik onay
+varsa. Ve kapsamı **parça parça** ölç (yazma ✓ / okuma ✗ / ağ ?): "sandbox açık" tek başına garanti
+değildir, kullanıcıya **ölçtüğün kadarını** söyle.
+
 ---
 
 ## Mimari
