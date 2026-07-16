@@ -36,4 +36,16 @@ tauri-plugin-process = "2.3.1"
 tauri-plugin-log = "2.8.0"
 log = "0.4.33"
 tauri-plugin-clipboard-manager = "2"
+# Claude Code motoru (agent_cli.rs): ikili npm registry'den indirilir ve
+# AÇILMADAN ÖNCE sha512 ile doğrulanır (registry `dist.integrity`).
+# Hepsi saf-Rust — çapraz derlemede C bağımlılığı getirmesin.
+sha2 = "0.10"
+base64 = "0.22"
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+tar = "0.4"
 
+
+[dev-dependencies]
+# Yalnızca test için (ürüne girmez): agent_cli'nin indirme/doğrulama çekirdeğini
+# gerçek npm registry'ye karşı uçtan uca koşturmak için async runtime gerekiyor.
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

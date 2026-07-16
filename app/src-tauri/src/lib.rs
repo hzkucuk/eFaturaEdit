@@ -1,3 +1,4 @@
+mod agent_cli;
 mod agent_tools;
 mod ai;
 mod xslt;
@@ -131,7 +132,9 @@ pub fn run() {
             agent_tools::agent_write,
             agent_tools::agent_edit,
             agent_tools::agent_list,
-            agent_tools::agent_bash
+            agent_tools::agent_bash,
+            agent_cli::claude_engine_status,
+            agent_cli::claude_engine_install
         ])
         .setup(|app| {
             // macOS'ta uygulama menüsündeki "e-Fatura Edit → Hakkında" paneli.
