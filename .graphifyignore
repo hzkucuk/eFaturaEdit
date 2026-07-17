@@ -1,0 +1,13 @@
+# graphify indeksleme dışı — bilgi grafiğine girmemesi gerekenler.
+#
+# NEDEN AYRI DOSYA: .gitignore `packages/`'ı zaten ignore ediyor, ama graphify'ın
+# tarayıcısı .gitignore'daki negasyon (`!`) kalıpları yüzünden dizin budamasını
+# kapatıyor ve alt dosyalar yine toplanıyor (ölçüldü: 1.074 dosya sızdı).
+# Burada negasyon YOK — bu yüzden budama açık kalır.
+
+# Kaldırılmış WinForms/DevExpress uygulamasından kalan NuGet paketleri (2.6 GB).
+# CefSharp/FontAwesome/ICSharpCode kaynakları grafiğin %78'ini işgal ediyordu.
+packages/
+
+# Derleme çıktısı.
+Output/

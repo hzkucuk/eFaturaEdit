@@ -452,9 +452,238 @@ async fn install_to(
     Ok(())
 }
 
+// ── Motoru sürme: `--settings` + spawn ────────────────────────────────────────
+
+/// Hook onayı için CLI'a verilen bekleme payı (**saniye**, matcher düzeyinde —
+/// `HookCallbackMatcher.timeout`). Yardımcının kendi payı (570 sn) bunun ALTINDA:
+/// kararı biz verelim, CLI bizi öldürmesin. 75 sn'lik onay ölçüldü, sorunsuz bekledi.
+const HOOK_TIMEOUT_SEC: u32 = 600;
+
+/// `--settings` JSON'unu kur — **saf fonksiyon** (birim testli; bu JSON'daki bir hata
+/// sessizce ya kapıyı açar ya motoru işlemez kılar, ikisi de ölçülmeden fark edilmez).
+///
+/// `sandbox_destekli=false` (Windows) → `sandbox` anahtarı **hiç yazılmaz**.
+///
+/// ## Neden bu bayraklar (hepsi ölçüldü, 2026-07-16)
+/// - `allowUnsandboxedCommands:false` — **şart**. Varsayılan bırakılırsa sandbox komutu
+///   keser, Claude Code aynı komutu **sandbox'sız yeniden dener** ve izin ister; otomatik
+///   onaylayan bir hook kaçışı geçirir → dosya diske yazılır. "Sandbox kesti" mesajını
+///   görüp durmak yanlış sonuç verdirir (CLAUDE.md ders 17).
+/// - `failIfUnavailable:true` — Linux'ta `bubblewrap` yoksa **görünür hata**; sessizce
+///   sandbox'sız koşmak bu projede yasak (ders 3).
+/// - `autoAllowBashIfSandboxed:true` — bash'i yalnızca **gerçekten** sandbox'lıyken
+///   otomatik geçir. Windows'ta sandbox olmadığı için bu bayrak da verilmez → bash sorulur.
+///
+/// ⚠️ **`sandbox` YAZMAYI kilitler, OKUMAYI kilitlemez** (ölçüldü, `allowRead`/
+/// `allowManagedReadPathsOnly` denendi — değişmedi). Kullanıcıya "klasör dışına yazamaz"
+/// denebilir; **"okuyamaz" DENEMEZ.**
+fn build_settings_json(exe: &Path, socket_arg: &str, root: &Path, sandbox_destekli: bool) -> String {
+    // ⚠️ Hook komutu **kabuktan** geçer ve `productName` = "e-Fatura Edit" — BOŞLUKLU.
+    // Tırnaklanmazsa kabuk yolu boşlukta böler → yardımcı hiç çalışmaz → `default` modu
+    // her şeyi reddeder → "motor bozuk" görünür (sessiz-ish başarısızlık, ders 1).
+    let command = format!("{} --hook-helper {}", sh_quote(&exe.to_string_lossy()), sh_quote(socket_arg));
+
+    let mut settings = serde_json::json!({
+        "hooks": {
+            "PreToolUse": [{
+                "matcher": "*",
+                "timeout": HOOK_TIMEOUT_SEC,
+                "hooks": [{ "type": "command", "command": command }]
+            }]
+        }
+    });
+
+    if sandbox_destekli {
+        settings["sandbox"] = serde_json::json!({
+            "enabled": true,
+            "failIfUnavailable": true,
+            "allowUnsandboxedCommands": false,
+            "autoAllowBashIfSandboxed": true,
+            "filesystem": { "allowWrite": [root.to_string_lossy()] }
+        });
+    }
+    settings.to_string()
+}
+
+/// POSIX kabuğu için tek tırnakla kaçır. Windows'ta hook komutunu `cmd` çalıştırır;
+/// orada tek tırnak işe yaramaz → çift tırnak kullanılır.
+fn sh_quote(s: &str) -> String {
+    if cfg!(windows) {
+        format!("\"{}\"", s.replace('"', "\"\""))
+    } else {
+        format!("'{}'", s.replace('\'', r"'\''"))
+    }
+}
+
+/// Bu platformda `claude`'un sandbox'ı var mı?
+///
+/// **Windows'ta YOK** (ölçüldü/SDK şeması) → orada bash otomatik onaylanamaz, sorulur.
+/// Linux'ta `bubblewrap` gerekir; yoksa `failIfUnavailable:true` sayesinde motor
+/// **görünür** şekilde hata verir — sessizce korumasız koşmaz.
+fn sandbox_destekli() -> bool {
+    !cfg!(windows)
+}
+
+/// Motoru sür: `claude`'u onay kapısı bağlıyken çalıştır.
+///
+/// Kapı **spawn'dan ÖNCE** kurulur (adı önce biz kaparız — bkz. `HookGate::start`).
+/// Bu turda stdout **ham** toplanır; `stream-json` ayrıştırma bir sonraki adımda.
+///
+/// `helper_exe` = hook yardımcısı olarak çağrılacak ikili; üretimde
+/// [`helper_exe()`] (= bu uygulama). **Parametre olmasının sebebi:** entegrasyon
+/// testinde `current_exe()` *test* ikilisini gösterir; testin gerçek uygulamayı
+/// çağırabilmesi gerekiyor (ders 13: testin kendi kopyasını ölçme).
+///
+/// Bloke eder (süreç bitene kadar) — çağıran `spawn_blocking` kullanmalı.
+///
+/// ⛔ `--permission-mode bypassPermissions` **KULLANILMAZ**: ölçüldü, yardımcı yoksa
+/// veya çökerse ajan **serbest kalıyor** (fail-open). `default` = fail-closed taban.
+pub fn run_claude(
+    bin: &Path,
+    root: &Path,
+    prompt: &str,
+    helper_exe: &Path,
+    handler: crate::agent_hook::Handler,
+) -> Result<ClaudeRun, String> {
+    let gate = crate::agent_hook::HookGate::start(handler)
+        .map_err(|e| format!("Onay kapısı açılamadı: {e}"))?;
+    let settings = build_settings_json(helper_exe, gate.socket_arg(), root, sandbox_destekli());
+
+    // Dış süreç → giriş boyutu, süre, çıkış kodu, stderr **her zaman** loglanır
+    // (ders 5b: log'suz dış çağrı 2 saat "Düşünüyor…" gösterdi). Görev metni ve
+    // kullanıcı verisi loglanmaz — yalnızca boyutu.
+    log::info!(
+        "[motor] koşu başlıyor — ikili={} · kök={} · görev {} bayt · sandbox={} · ayar {} bayt",
+        bin.display(),
+        root.display(),
+        prompt.len(),
+        sandbox_destekli(),
+        settings.len()
+    );
+
+    let t0 = Instant::now();
+    let out = std::process::Command::new(bin)
+        .current_dir(root)
+        .arg("-p")
+        .arg(prompt)
+        .args(["--output-format", "stream-json", "--verbose"])
+        .args(["--permission-mode", "default"])
+        .arg("--settings")
+        .arg(&settings)
+        .output()
+        .map_err(|e| format!("Motor çalıştırılamadı: {e}"))?;
+
+    let sure = t0.elapsed();
+    let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
+    let stdout = String::from_utf8_lossy(&out.stdout).to_string();
+
+    // Çıkış kodu tanının yarısıdır (ders 2) — başarıda da yazılır ki "çalıştı ama boş
+    // döndü" durumu günlükten görülebilsin.
+    log::info!(
+        "[motor] koşu bitti — çıkış kodu {:?} · {} ms · stdout {} bayt",
+        out.status.code(),
+        sure.as_millis(),
+        stdout.len()
+    );
+    if !stderr.is_empty() {
+        log::warn!("[motor] stderr: {stderr}");
+    }
+
+    Ok(ClaudeRun { code: out.status.code(), stdout, stderr, ms: sure.as_millis() })
+}
+
+/// Hook yardımcısı olarak çağrılacak ikili = **bu uygulama** (`--hook-helper` modu).
+/// Ayrı bir yardımcı ikili shiplemiyoruz; `lib.rs::run()` argümanı en başta yakalar.
+pub fn helper_exe() -> Result<PathBuf, String> {
+    std::env::current_exe()
+        .map_err(|e| format!("Uygulama yolu bulunamadı (hook yardımcısı çağrılamaz): {e}"))
+}
+
+/// Bir motor koşusunun ham sonucu. (`stdout` = stream-json satırları; ayrıştırma sonraki adım.)
+#[derive(Debug)]
+pub struct ClaudeRun {
+    pub code: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
+    pub ms: u128,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `--settings`'i gerçekte olduğu gibi kur ve **ayrıştırarak** denetle
+    /// (dize içinde `contains` aramak, biçim değişince yalan söyler — ders 11).
+    fn ayarlar(sandbox: bool) -> serde_json::Value {
+        let json = build_settings_json(
+            // Gerçek dert: macOS'ta yol "/Applications/e-Fatura Edit.app/…" — BOŞLUKLU.
+            Path::new("/Applications/e-Fatura Edit.app/Contents/MacOS/e-Fatura Edit"),
+            "/tmp/efe-abc/h.sock",
+            Path::new("/tmp/proje kökü"),
+            sandbox,
+        );
+        serde_json::from_str(&json).expect("settings geçerli JSON değil")
+    }
+
+    fn hook_komutu(v: &serde_json::Value) -> String {
+        v["hooks"]["PreToolUse"][0]["hooks"][0]["command"].as_str().unwrap_or("").to_owned()
+    }
+
+    /// Boşluklu exe yolu tırnaklanmazsa kabuk onu böler → yardımcı hiç çalışmaz →
+    /// `default` her şeyi reddeder. Hata vermez, sadece motor işlemez (ders 10).
+    #[test]
+    fn hook_komutunda_bosluklu_yol_tirnaklanir() {
+        let cmd = hook_komutu(&ayarlar(true));
+        assert!(cmd.contains("--hook-helper"), "hook komutu eksik: {cmd}");
+
+        // Kabuğun gerçekte kaç parçaya böleceğini SAY: yol tek parça kalmalı.
+        // (Tırnaksız olsaydı "/Applications/e-Fatura" ilk parça olurdu.)
+        let ilk = cmd.split_whitespace().next().unwrap_or("");
+        assert!(
+            ilk.starts_with('\'') || ilk.starts_with('"'),
+            "exe yolu tırnaksız — boşlukta bölünür: {cmd}"
+        );
+        assert!(cmd.contains("e-Fatura Edit"), "exe yolu bozulmuş: {cmd}");
+    }
+
+    /// ⛔ Ölçüldü: `bypassPermissions` fail-open. Bu dizenin ayarlara/komuta
+    /// sızmadığını test **kilitler** — biri "kolaylık olsun" diye eklerse kırılır.
+    #[test]
+    fn bypass_permissions_asla_gecmez() {
+        let json = serde_json::to_string(&ayarlar(true)).unwrap();
+        assert!(!json.contains("bypassPermissions"), "fail-open mod ayarlara sızmış: {json}");
+    }
+
+    /// Sandbox'ın kaçış kapısı: varsayılan bırakılırsa Claude Code komutu sandbox'sız
+    /// YENİDEN dener ve otomatik onay onu geçirir → dosya diske yazılır (ölçüldü).
+    #[test]
+    fn sandbox_kacis_kapisi_kapali() {
+        let s = &ayarlar(true)["sandbox"];
+        assert_eq!(s["enabled"], true);
+        assert_eq!(s["allowUnsandboxedCommands"], false, "kaçış kapısı açık — koruma delinir");
+        assert_eq!(s["failIfUnavailable"], true, "sessiz sandbox'sız koşu yasak (ders 3)");
+        assert_eq!(s["autoAllowBashIfSandboxed"], true);
+        assert_eq!(s["filesystem"]["allowWrite"][0], "/tmp/proje kökü");
+    }
+
+    /// Windows'ta sandbox YOK → anahtar hiç yazılmamalı. Yazılsaydı
+    /// `failIfUnavailable:true` motoru **hiç açtırmazdı** (ya da sessizce yanlış
+    /// güvence verirdi: "bash kilitli" — değil, orada tek koruma onay kapısı).
+    #[test]
+    fn sandboxsuz_platformda_anahtar_yazilmaz() {
+        let v = ayarlar(false);
+        assert!(v.get("sandbox").is_none(), "sandbox'sız platformda anahtar yazılmış: {v}");
+        // Kapı yine de kurulu olmalı — onay her platformda şart.
+        assert!(hook_komutu(&v).contains("--hook-helper"), "hook kapısı düşmüş: {v}");
+    }
+
+    /// Matcher `*` = her araç (5/5 ateşlediği ölçüldü) ve timeout **saniye**.
+    #[test]
+    fn hook_her_araca_baglanir() {
+        let h = &ayarlar(true)["hooks"]["PreToolUse"][0];
+        assert_eq!(h["matcher"], "*");
+        assert_eq!(h["timeout"], 600);
+    }
 
     #[test]
     fn surum_ayristirma() {

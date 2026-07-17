@@ -43,6 +43,17 @@ sha2 = "0.10"
 base64 = "0.22"
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 tar = "0.4"
+# Onay kapısı IPC'si (agent_hook.rs): Claude Code motorunun PreToolUse hook'u ayrı
+# bir SÜREÇ olarak koşar ve kararı uygulamadan sormak zorundadır. std'de yalnızca
+# UnixListener var — Windows named pipe YOK. Bu crate ikisini tek API'de veriyor:
+# GenericFilePath (unix → UDS) / GenericNamespaced (Windows → named pipe).
+# Saf-Rust (libc + widestring), C toolchain getirmez → çapraz derleme bozulmaz.
+interprocess = "2.4.2"
+
+# Yalnızca unix: onay kapısına bağlanan sürecin gerçekten BİZ olduğumuzu doğrulamak
+# için `geteuid()` (agent_hook::serve). Windows'ta karşılığı pipe ACL'i + FIRST_PIPE_INSTANCE.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 
 [dev-dependencies]
