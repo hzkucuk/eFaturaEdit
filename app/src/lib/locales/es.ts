@@ -491,6 +491,8 @@ export const es: Messages = {
     modeSuggest: 'Sugerir',
     modeAgent: 'Agente de carpeta',
     modeAgentTitle: 'Agente tipo VSCode: lee/escribe archivos y ejecuta comandos en la carpeta elegida — cada acción requiere aprobación.',
+    modeClaude: 'Claude Code',
+    modeClaudeTitle: 'El motor real de Claude Code: trabaja en la carpeta elegida — cada acción requiere aprobación. Acceso: tu suscripción de Claude.ai o clave API de Anthropic.',
     modelBadgeTitle: 'Modelo en uso — cámbialo en Ajustes → Asistente de IA.\nProveedor: {provider}\nModelo: {model}',
     newChat: 'Nuevo chat',
     prevChats: 'Chats anteriores',

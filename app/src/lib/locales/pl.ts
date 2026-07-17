@@ -490,6 +490,8 @@ export const pl: Messages = {
     modeSuggest: 'Sugestia',
     modeAgent: 'Agent folderu',
     modeAgentTitle: 'Agent w stylu VSCode: czyta/zapisuje pliki i uruchamia polecenia w wybranym folderze — każda akcja wymaga zatwierdzenia.',
+    modeClaude: 'Claude Code',
+    modeClaudeTitle: 'Prawdziwy silnik Claude Code: działa w wybranym folderze — każda akcja wymaga zatwierdzenia. Logowanie: subskrypcja Claude.ai lub klucz API Anthropic.',
     modelBadgeTitle: 'Używany model — zmień w Ustawienia → Asystent AI.\nDostawca: {provider}\nModel: {model}',
     newChat: 'Nowy czat',
     prevChats: 'Poprzednie czaty',

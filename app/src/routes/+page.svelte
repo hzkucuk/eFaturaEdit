@@ -45,6 +45,7 @@
   import HelpModal from '$lib/HelpModal.svelte';
   import AIAssistant from '$lib/AIAssistant.svelte';
   import AgentPanel from '$lib/AgentPanel.svelte';
+  import ClaudePanel from '$lib/ClaudePanel.svelte';
   import UpdateModal from '$lib/UpdateModal.svelte';
   import { checkForUpdate } from '$lib/updater.svelte';
   import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
@@ -2438,12 +2439,13 @@ window.addEventListener('message', function(e) {
       <Splitter direction="horizontal" bind:position={aiPanelHeight} min={40} />
 
       <div class="ai-dock">
-        <!-- Hibrit mod seçici: Öneri (güvenli, salt-öneri) | Klasör Ajanı
-             (VSCode-benzeri, dosya okur/yazar, onay-kapılı). Varsayılan Öneri. -->
+        <!-- Motor seçici: Öneri (güvenli, salt-öneri) | Klasör Ajanı (BYOK, araç
+             döngüsü uygulamada) | Claude Code (gerçek `claude` ikilisi sürülür).
+             İkisi de opt-in ve onay-kapılı. Varsayılan Öneri. -->
         <div class="ai-mode-tabs">
           <button
             class="ai-mode-tab"
-            class:active={settings.aiMode !== 'agent'}
+            class:active={settings.aiMode === 'suggest'}
             onclick={() => updateSetting('aiMode', 'suggest')}
           >{m.ai.modeSuggest}</button>
           <button
@@ -2452,9 +2454,17 @@ window.addEventListener('message', function(e) {
             onclick={() => updateSetting('aiMode', 'agent')}
             title={m.ai.modeAgentTitle}
           >{m.ai.modeAgent}</button>
+          <button
+            class="ai-mode-tab"
+            class:active={settings.aiMode === 'claude'}
+            onclick={() => updateSetting('aiMode', 'claude')}
+            title={m.ai.modeClaudeTitle}
+          >{m.ai.modeClaude}</button>
         </div>
         {#if settings.aiMode === 'agent'}
           <AgentPanel />
+        {:else if settings.aiMode === 'claude'}
+          <ClaudePanel />
         {:else}
           <AIAssistant
             xsltPath={editorState.xsltPath}

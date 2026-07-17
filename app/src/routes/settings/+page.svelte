@@ -470,6 +470,26 @@
           {/each}
         </select>
       </div>
+      <p class="hint">
+        Not: <b>Claude Code</b> motoru bu sağlayıcı seçimini kullanmaz — kendi kimliğiyle
+        (Claude.ai aboneliği veya <code>ANTHROPIC_API_KEY</code>) çalışır.
+      </p>
+
+      <div class="row">
+        <label for="claude-system-bin">Claude Code: sistemdeki sürümü kullan</label>
+        <input
+          id="claude-system-bin"
+          type="checkbox"
+          checked={settings.claudeUseSystemBinary}
+          onchange={(e) =>
+            updateSetting('claudeUseSystemBinary', (e.currentTarget as HTMLInputElement).checked)}
+        />
+        <span class="hint">
+          Kapalıyken uygulama kendi sabit sürümünü indirir (~66 MB, davranışı ölçülmüş).
+          Açıkken PATH'teki <code>claude</code> kullanılır — sürümü çok eskiyse açıkça
+          reddedilir, sessizce kullanılmaz.
+        </span>
+      </div>
 
       {#if currentAiOption?.needsKey}
         <div class="row">

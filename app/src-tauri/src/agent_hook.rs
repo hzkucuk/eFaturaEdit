@@ -381,6 +381,110 @@ fn alloc_socket() -> std::io::Result<(String, Option<PathBuf>)> {
     Ok((format!("efe-{}.sock", uniq()), None))
 }
 
+// ── Tauri sargısı: kararı KULLANICIYA sor ─────────────────────────────────────
+
+/// Uygulamanın kullanıcıya sorarken beklediği süre. Yardımcının kendi payından
+/// (570 sn) **kısa**: kararı biz verelim, yardımcı bizi beklemekten vazgeçmesin.
+const UI_TIMEOUT: Duration = Duration::from_secs(540);
+
+/// Bekleyen onaylar: `id` → kararı iletecek kanal.
+///
+/// **Neden harita (tek slot değil):** aynı anda **3 onay uçuşta** olduğu ölçüldü —
+/// model salt-okunur araçları paralelleştiriyor. Tek slot olsaydı ikinci istek
+/// birincinin üzerine yazar ve bir araç **sessizce cevapsız** kalırdı.
+#[derive(Default)]
+pub struct GateState {
+    bekleyen: std::sync::Mutex<std::collections::HashMap<String, mpsc::Sender<HookDecision>>>,
+}
+
+/// Kapı isteğini **arayüze** taşıyan handler: olayı yay, kullanıcının kararını bekle.
+pub fn tauri_handler(app: tauri::AppHandle) -> Handler {
+    use tauri::{Emitter, Manager};
+    Arc::new(move |req: HookRequest| {
+        let id = uniq();
+        let (tx, rx) = mpsc::channel();
+
+        let state = app.state::<GateState>();
+        match state.bekleyen.lock() {
+            Ok(mut m) => {
+                m.insert(id.clone(), tx);
+            }
+            // Kilit zehirlenmişse soramayız → soramadığımızı onay sayamayız.
+            Err(e) => {
+                log::error!("[kapı] bekleyen listesi kilitlenemedi: {e}");
+                return HookDecision::Deny("Onay kuyruğuna erişilemedi.".into());
+            }
+        }
+
+        let yayin = app.emit(
+            "claude-hook-request",
+            serde_json::json!({
+                "id": id,
+                "arac": req.tool_name,
+                "girdi": req.tool_input,
+                "cwd": req.cwd,
+            }),
+        );
+        if let Err(e) = yayin {
+            log::error!("[kapı] onay isteği arayüze yayınlanamadı: {e}");
+            if let Ok(mut m) = state.bekleyen.lock() {
+                m.remove(&id);
+            }
+            // Kullanıcı soruyu GÖRMEDİ → "evet" sayılamaz.
+            return HookDecision::Deny("Onay penceresi açılamadı.".into());
+        }
+
+        let karar = match rx.recv_timeout(UI_TIMEOUT) {
+            Ok(k) => k,
+            Err(_) => HookDecision::Deny(format!(
+                "{} dakika içinde onaylanmadı — güvenli tarafta kalındı.",
+                UI_TIMEOUT.as_secs() / 60
+            )),
+        };
+        if let Ok(mut m) = state.bekleyen.lock() {
+            m.remove(&id);
+        }
+        karar
+    })
+}
+
+/// Arayüzün kararı: `izin=false` ise `sebep` kullanıcıya/modele gider.
+///
+/// Bilinmeyen `id` (koşu bitmiş, kullanıcı geç tıklamış) **hata değildir** — sessizce
+/// yok sayılır; kullanıcıya anlamsız bir hata göstermenin faydası yok.
+#[tauri::command]
+pub fn claude_hook_decide(
+    state: tauri::State<'_, GateState>,
+    id: String,
+    izin: bool,
+    sebep: String,
+) -> Result<(), String> {
+    let gonderici = state
+        .bekleyen
+        .lock()
+        .map_err(|e| format!("Onay kuyruğuna erişilemedi: {e}"))?
+        .get(&id)
+        .cloned();
+
+    let Some(tx) = gonderici else {
+        log::debug!("[kapı] karar geldi ama istek yok (id={id}) — koşu bitmiş olabilir");
+        return Ok(());
+    };
+
+    let karar = if izin {
+        HookDecision::Allow
+    } else {
+        HookDecision::Deny(if sebep.trim().is_empty() {
+            "Kullanıcı reddetti.".into()
+        } else {
+            sebep
+        })
+    };
+    // Alıcı gitmişse (zaman aşımı) sorun değil — yardımcı zaten deny aldı.
+    let _ = tx.send(karar);
+    Ok(())
+}
+
 // ── Testler ───────────────────────────────────────────────────────────────────
 
 #[cfg(test)]

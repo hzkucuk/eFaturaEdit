@@ -490,6 +490,8 @@ export const tr = {
     modeSuggest: 'Öneri',
     modeAgent: 'Klasör Ajanı',
     modeAgentTitle: 'VSCode-benzeri ajan: seçtiğin klasörde dosyaları okur/yazar, komut çalıştırır — her işlem onaydan geçer.',
+    modeClaude: 'Claude Code',
+    modeClaudeTitle: 'Gerçek Claude Code motoru: seçtiğin klasörde çalışır — her işlem onaydan geçer. Kimlik: Claude.ai aboneliğin veya Anthropic API anahtarın.',
     modelBadgeTitle: 'Kullanılan model — Ayarlar → AI Asistan bölümünden değiştirebilirsiniz.\nSağlayıcı: {provider}\nModel: {model}',
     newChat: 'Yeni sohbet',
     prevChats: 'Önceki sohbetler',

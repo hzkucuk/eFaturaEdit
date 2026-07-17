@@ -147,6 +147,8 @@ pub fn run() {
         // sessizce boş dönebiliyor — pano OS üzerinden okunur.
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(PendingOpen::default())
+        // Claude Code motorunun bekleyen onayları (aynı anda 3 olabilir — ölçüldü).
+        .manage(agent_hook::GateState::default())
         .invoke_handler(tauri::generate_handler![
             greet,
             open_devtools,
@@ -165,7 +167,9 @@ pub fn run() {
             agent_tools::agent_list,
             agent_tools::agent_bash,
             agent_cli::claude_engine_status,
-            agent_cli::claude_engine_install
+            agent_cli::claude_engine_install,
+            agent_cli::claude_agent_run,
+            agent_hook::claude_hook_decide
         ])
         .setup(|app| {
             // macOS'ta uygulama menüsündeki "e-Fatura Edit → Hakkında" paneli.

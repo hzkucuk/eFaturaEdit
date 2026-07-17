@@ -490,6 +490,8 @@ export const ru: Messages = {
     modeSuggest: 'Подсказка',
     modeAgent: 'Агент папки',
     modeAgentTitle: 'Агент в стиле VSCode: читает/пишет файлы и выполняет команды в выбранной папке — каждое действие требует подтверждения.',
+    modeClaude: 'Claude Code',
+    modeClaudeTitle: 'Настоящий движок Claude Code: работает в выбранной папке — каждое действие требует подтверждения. Вход: подписка Claude.ai или API-ключ Anthropic.',
     modelBadgeTitle: 'Используемая модель — измените в Настройки → ИИ-ассистент.\nПровайдер: {provider}\nМодель: {model}',
     newChat: 'Новый чат',
     prevChats: 'Предыдущие чаты',

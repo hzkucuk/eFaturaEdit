@@ -66,6 +66,10 @@ pub struct EngineStatus {
     pub system_version: Option<String>,
     /// İndirilecek/indirilmiş sabit sürüm (arayüzde gösterilir).
     pub pinned_version: String,
+    /// Bu platformda sandbox var mı? **Arayüz bunu tahmin etmemeli** — bilgilendirme
+    /// ekranının dürüstlüğü buna bağlı: `false` (Windows) ise "klasör dışına yazamaz"
+    /// **denemez**, orada tek koruma onay kapısıdır (CLAUDE.md ders 15).
+    pub sandbox: bool,
 }
 
 impl EngineStatus {
@@ -78,6 +82,7 @@ impl EngineStatus {
             reason: Some(reason.into()),
             system_version,
             pinned_version: PINNED_VERSION.into(),
+            sandbox: sandbox_destekli(),
         }
     }
 }
@@ -202,6 +207,7 @@ pub fn claude_engine_status(app: tauri::AppHandle, prefer_system: bool) -> Engin
                     reason: None,
                     system_version: system.clone(),
                     pinned_version: PINNED_VERSION.into(),
+            sandbox: sandbox_destekli(),
                 },
                 Err(why) => EngineStatus::none(why, system.clone()),
             },
@@ -232,6 +238,7 @@ pub fn claude_engine_status(app: tauri::AppHandle, prefer_system: bool) -> Engin
             reason: None,
             system_version: system,
             pinned_version: PINNED_VERSION.into(),
+            sandbox: sandbox_destekli(),
         },
         None => EngineStatus::none(
             "Kurulu motor çalıştırılamadı (dosya bozulmuş olabilir). \
@@ -806,7 +813,7 @@ pub fn helper_exe() -> Result<PathBuf, String> {
 }
 
 /// Bir motor koşusunun künyesi. İçerik `on_event` ile akmıştır; burada teşhis bilgisi var.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct ClaudeRun {
     pub code: Option<i32>,
     pub stderr: String,
@@ -815,6 +822,54 @@ pub struct ClaudeRun {
     pub satir: usize,
     /// Ayrıştırılamayan satır sayısı — **0 olmalı**; değilse sözleşme değişmiş demektir.
     pub cozulemeyen: usize,
+}
+
+/// Klasör Ajanı'nı **Claude Code motoruyla** sür (arayüzün girişi).
+///
+/// Her araç çağrısı `claude-hook-request` olayıyla kullanıcıya sorulur; akış
+/// `claude-agent-event` ile yayınlanır.
+///
+/// Bloke eden işi `spawn_blocking`'e alır — Tauri'nin async runtime'ını tutmaz.
+#[tauri::command]
+pub async fn claude_agent_run(
+    app: tauri::AppHandle,
+    kok: String,
+    gorev: String,
+    sistem_ikili: bool,
+) -> Result<ClaudeRun, String> {
+    // Kök gerçek bir klasör mü? `canonicalize` `..`/symlink'i çözer — sandbox'ın
+    // `allowWrite`'ına ham kullanıcı dizesi geçirmiyoruz.
+    let kok = std::fs::canonicalize(&kok)
+        .map_err(|e| format!("Çalışma klasörü açılamadı ({kok}): {e}"))?;
+    if !kok.is_dir() {
+        return Err("Çalışma klasörü bir dizin değil.".into());
+    }
+    if gorev.trim().is_empty() {
+        return Err("Görev boş.".into());
+    }
+
+    // Motor hazır değilse **sessizce başka bir şeye düşme** (ders 3) — sebebi söyle.
+    let durum = claude_engine_status(app.clone(), sistem_ikili);
+    if !durum.ready {
+        return Err(durum.reason.unwrap_or_else(|| "Claude Code motoru hazır değil.".into()));
+    }
+    let bin = PathBuf::from(durum.path.ok_or("Motor yolu bilinmiyor.")?);
+    let helper = helper_exe()?;
+
+    let app_olay = app.clone();
+    let handler = crate::agent_hook::tauri_handler(app.clone());
+
+    tauri::async_runtime::spawn_blocking(move || {
+        run_claude(&bin, &kok, &gorev, &helper, handler, &move |olay| {
+            use tauri::Emitter;
+            if let Err(e) = app_olay.emit("claude-agent-event", &olay) {
+                // Akış olayı düşerse arayüz sessizce donuk kalır — görünür kıl.
+                log::warn!("[motor] akış olayı yayınlanamadı: {e}");
+            }
+        })
+    })
+    .await
+    .map_err(|e| format!("Motor görevi çalıştırılamadı: {e}"))?
 }
 
 #[cfg(test)]

@@ -489,6 +489,8 @@ export const en: Messages = {
     modeSuggest: 'Suggest',
     modeAgent: 'Folder Agent',
     modeAgentTitle: 'VSCode-like agent: reads/writes files and runs commands in the folder you pick — every action needs approval.',
+    modeClaude: 'Claude Code',
+    modeClaudeTitle: 'The real Claude Code engine: works in the folder you pick — every action needs approval. Sign-in: your Claude.ai subscription or Anthropic API key.',
     modelBadgeTitle: 'Model in use — change it in Settings → AI Assistant.\nProvider: {provider}\nModel: {model}',
     newChat: 'New chat',
     prevChats: 'Previous chats',

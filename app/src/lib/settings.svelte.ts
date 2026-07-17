@@ -194,10 +194,21 @@ export interface Settings {
   };
   aiProvider: AiProvider;
   aiProviders: Record<AiProvider, AiProviderConfig>;
-  /** AI panosu modu. 'suggest' = güvenli salt-öneri (varsayılan); 'agent' = Klasör Ajanı (dosya okur/yazar). */
-  aiMode: 'suggest' | 'agent';
+  /**
+   * AI panosu modu.
+   * - `suggest` = güvenli salt-öneri (varsayılan; dosya sistemine erişmez)
+   * - `agent`   = Klasör Ajanı, BYOK motor (dosya okur/yazar; araç döngüsü uygulamada)
+   * - `claude`  = Klasör Ajanı, **Claude Code motoru** (`claude` ikilisi sürülür)
+   */
+  aiMode: 'suggest' | 'agent' | 'claude';
   /** Klasör Ajanının "hep izin ver" dendiği güvenilir kök klasörler (kalıcı). */
   agentTrustedFolders: string[];
+  /**
+   * Claude Code motoru: uygulamanın indirdiği sabit sürüm yerine **sistemdeki**
+   * `claude`'u kullan (gelişmiş). Sistemdeki sürüm de taban denetiminden geçer —
+   * sürüklenme sessiz davranış değişikliği demektir, o yüzden eskiyse reddedilir.
+   */
+  claudeUseSystemBinary: boolean;
 }
 
 const DEFAULTS: Settings = {
@@ -226,6 +237,7 @@ const DEFAULTS: Settings = {
   aiProviders: AI_PROVIDER_DEFAULTS,
   aiMode: 'suggest', // opt-in: Klasör Ajanı varsayılan KAPALI, kullanıcı açar
   agentTrustedFolders: [],
+  claudeUseSystemBinary: false, // varsayılan: sürümü BİZ sabitleriz (ölçülmüş davranış)
 };
 
 const STORAGE_KEY = 'efaturaEdit.settings.v3';
