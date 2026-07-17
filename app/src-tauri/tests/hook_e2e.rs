@@ -21,7 +21,7 @@
 //! *tuttuğunu* göstermez (CLAUDE.md ders 17: tam da böyle bir mesaj görülürken dosya
 //! diske yazılmıştı). Her assert dosyanın **varlığına** bakar.
 
-use app_lib::agent_cli::run_claude;
+use app_lib::agent_cli::{run_claude, ClaudeEvent};
 use app_lib::agent_hook::{HookDecision, HookRequest};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -60,10 +60,30 @@ fn sabit_kapi(
     })
 }
 
-fn sur(kok: &Path, gorev: &str, handler: Arc<dyn Fn(HookRequest) -> HookDecision + Send + Sync>) {
+/// Motoru sür; akan olayları da topla (akış gerçekten çalışıyor mu, onu da ölçelim).
+fn sur(
+    kok: &Path,
+    gorev: &str,
+    handler: Arc<dyn Fn(HookRequest) -> HookDecision + Send + Sync>,
+) -> Vec<ClaudeEvent> {
     let bin = claude_bin().expect("`claude` bulunamadı");
-    let sonuc = run_claude(&bin, kok, gorev, Path::new(APP_EXE), handler).expect("motor sürülemedi");
-    eprintln!("  [motor] çıkış kodu={:?} · {} ms", sonuc.code, sonuc.ms);
+    let olaylar = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let toplayici = olaylar.clone();
+
+    let sonuc = run_claude(&bin, kok, gorev, Path::new(APP_EXE), handler, &move |o: ClaudeEvent| {
+        eprintln!("  [akış] {o:?}");
+        toplayici.lock().unwrap().push(o);
+    })
+    .expect("motor sürülemedi");
+
+    eprintln!(
+        "  [motor] çıkış kodu={:?} · {} ms · {} satır ({} çözülemedi)",
+        sonuc.code, sonuc.ms, sonuc.satir, sonuc.cozulemeyen
+    );
+    // Sözleşme değişirse burası kırmızıya döner — sessizce boş akış yaymaktan iyidir.
+    assert_eq!(sonuc.cozulemeyen, 0, "stream-json satırı çözülemedi — sözleşme değişmiş olabilir");
+    let out = olaylar.lock().unwrap().clone();
+    out
 }
 
 /// **deny → dosya diskte OLMAMALI.** Kapının tek işi bu.
@@ -73,7 +93,7 @@ fn deny_diski_korur() {
     let kok = temp_root("deny");
     let sayac = Arc::new(AtomicUsize::new(0));
 
-    sur(
+    let olaylar = sur(
         &kok,
         "Bu klasörde rapor.txt adında bir dosya oluştur, içine tek satır 'merhaba' yaz.",
         sabit_kapi(HookDecision::Deny("Test reddi".into()), sayac.clone()),
@@ -84,6 +104,19 @@ fn deny_diski_korur() {
     let kalan: Vec<_> = std::fs::read_dir(&kok).unwrap().filter_map(Result::ok).collect();
     assert!(kalan.is_empty(), "kök boş değil, {} girdi var: {kalan:?}", kalan.len());
     assert!(sayac.load(Ordering::SeqCst) > 0, "hook hiç ateşlemedi — kapı devrede değil!");
+
+    // Akış da ölçülür: reddi **gerçek** stream-json'dan görebiliyor muyuz? Motor bu
+    // koşuda `is_error:false` ("success") diyor — asıl karne `reddedilen` listesi.
+    let bitti = olaylar.iter().find_map(|o| match o {
+        ClaudeEvent::Bitti { reddedilen, .. } => Some(reddedilen.clone()),
+        _ => None,
+    });
+    let reddedilen = bitti.expect("akışta `Bitti` olayı yok — ayrıştırma kopmuş");
+    assert!(!reddedilen.is_empty(), "reddettik ama akış boş `reddedilen` gösteriyor");
+    assert!(
+        reddedilen.iter().any(|r| r.tool_name == "Write"),
+        "reddedilen araç listede yok: {reddedilen:?}"
+    );
 
     let _ = std::fs::remove_dir_all(&kok);
 }
@@ -127,6 +160,7 @@ fn yardimci_yoksa_fail_closed() {
         "Bu klasörde rapor.txt adında bir dosya oluştur, içine 'merhaba' yaz.",
         &yok,
         sabit_kapi(HookDecision::Allow, sayac.clone()),
+        &|_o| {},
     )
     .expect("motor sürülemedi");
     eprintln!("  [motor] çıkış kodu={:?}", sonuc.code);

@@ -25,7 +25,7 @@
 //! tabanının altındaysa **açıkça reddedilir** (sessizce kullanılmaz).
 
 use base64::Engine as _;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha512};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -524,16 +524,177 @@ fn sandbox_destekli() -> bool {
     !cfg!(windows)
 }
 
-/// Motoru sür: `claude`'u onay kapısı bağlıyken çalıştır.
+// ── stream-json akışı ─────────────────────────────────────────────────────────
+
+/// Motorun akışından çıkan olay — arayüz bunları görür.
+///
+/// Alan/varyant adları **ölçülerek** belirlendi (gerçek `claude` 2.1.181 çıktısı,
+/// 2026-07-17); belgeden veya hatırlanandan değil (ders 10).
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(tag = "tur")]
+pub enum ClaudeEvent {
+    /// `system`/`init` — koşu başladı.
+    Baslangic { model: String, oturum: String },
+    /// `thinking` bloğu. **İçeriği taşınmıyor**: kullanıcıya değer katmıyor, günlüğe
+    /// düşerse gereksiz veri sızdırır. Yalnızca "çalışıyor" sinyali.
+    Dusunuyor,
+    /// `assistant` → `text`.
+    Metin { metin: String },
+    /// `assistant` → `tool_use`. Onay kapısı zaten sorar; bu, akışta göstermek için.
+    AracCagrisi { arac: String, girdi: serde_json::Value },
+    /// `user` → `tool_result`.
+    AracSonucu { hata: bool, icerik: String },
+    /// `result` — koşu bitti.
+    Bitti {
+        /// ⚠️ **`is_error`'a ALDANMA.** Ölçüldü: her araç reddedilse bile `subtype`
+        /// `"success"` ve `is_error` `false` gelir. "İş görüldü mü?" sorusunun cevabı
+        /// bu değil; [`Self::Bitti::reddedilen`] boş mu, ona bak.
+        basarili: bool,
+        sure_ms: u64,
+        ozet: Option<String>,
+        /// Kapının (yani kullanıcının) reddettiği araçlar — koşunun **gerçek** karnesi.
+        reddedilen: Vec<Reddedilen>,
+        maliyet_usd: Option<f64>,
+    },
+}
+
+/// `result.permission_denials[]` girdisi — ne engellendi.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Reddedilen {
+    #[serde(default)]
+    pub tool_name: String,
+    #[serde(default)]
+    pub tool_input: serde_json::Value,
+}
+
+/// stream-json'un bir satırı.
+///
+/// ⚠️ **`Diger` şart.** Ölçüldü: belgelenmemiş `rate_limit_event` satırı geliyor ve
+/// gelecekte yenileri eklenebilir. Bilinmeyen tipe hata verirsek motor, Anthropic yeni
+/// bir satır tipi ekler eklemez kırılır — üstelik sebebi anlaşılmaz olur.
+#[derive(Deserialize)]
+#[serde(tag = "type")]
+enum Satir {
+    #[serde(rename = "system")]
+    System {
+        #[serde(default)]
+        subtype: String,
+        #[serde(default)]
+        model: String,
+        #[serde(default)]
+        session_id: String,
+    },
+    #[serde(rename = "assistant")]
+    Assistant { message: Mesaj },
+    #[serde(rename = "user")]
+    User { message: Mesaj },
+    #[serde(rename = "result")]
+    Result {
+        #[serde(default)]
+        is_error: bool,
+        #[serde(default)]
+        duration_ms: u64,
+        #[serde(default)]
+        result: Option<String>,
+        #[serde(default)]
+        total_cost_usd: Option<f64>,
+        #[serde(default)]
+        permission_denials: Vec<Reddedilen>,
+    },
+    #[serde(other)]
+    Diger,
+}
+
+#[derive(Deserialize)]
+struct Mesaj {
+    #[serde(default)]
+    content: Vec<Blok>,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type")]
+enum Blok {
+    #[serde(rename = "thinking")]
+    Thinking,
+    #[serde(rename = "text")]
+    Text {
+        #[serde(default)]
+        text: String,
+    },
+    #[serde(rename = "tool_use")]
+    ToolUse {
+        #[serde(default)]
+        name: String,
+        #[serde(default)]
+        input: serde_json::Value,
+    },
+    #[serde(rename = "tool_result")]
+    ToolResult {
+        /// ⚠️ **`Option` şart** — ölçüldü: başarılı sonuçta `null` geliyor, `false` değil.
+        /// Düz `bool` yazılırsa ayrıştırma **çöker** ve tüm akış susar.
+        #[serde(default)]
+        is_error: Option<bool>,
+        #[serde(default)]
+        content: serde_json::Value,
+    },
+    #[serde(other)]
+    Diger,
+}
+
+/// Bir stream-json satırını olaylara çevir — **saf fonksiyon** (birim testli, gerçek
+/// yakalanmış satırlarla). Ayrıştırılamayan satır `Err`; çağıran **sayar ve loglar**,
+/// akışı öldürmez (tek bozuk satır yüzünden koşuyu kaybetmek fazla pahalı).
+fn parse_line(line: &str) -> Result<Vec<ClaudeEvent>, serde_json::Error> {
+    let satir: Satir = serde_json::from_str(line)?;
+    Ok(match satir {
+        Satir::System { subtype, model, session_id } if subtype == "init" => {
+            vec![ClaudeEvent::Baslangic { model, oturum: session_id }]
+        }
+        Satir::Assistant { message } | Satir::User { message } => message
+            .content
+            .into_iter()
+            .filter_map(|b| match b {
+                Blok::Thinking => Some(ClaudeEvent::Dusunuyor),
+                Blok::Text { text } => Some(ClaudeEvent::Metin { metin: text }),
+                Blok::ToolUse { name, input } => {
+                    Some(ClaudeEvent::AracCagrisi { arac: name, girdi: input })
+                }
+                Blok::ToolResult { is_error, content } => Some(ClaudeEvent::AracSonucu {
+                    hata: is_error.unwrap_or(false),
+                    // `content` metin de olabilir, blok dizisi de — ikisini de göster.
+                    icerik: match content {
+                        serde_json::Value::String(s) => s,
+                        other => other.to_string(),
+                    },
+                }),
+                Blok::Diger => None,
+            })
+            .collect(),
+        Satir::Result { is_error, duration_ms, result, total_cost_usd, permission_denials } => {
+            vec![ClaudeEvent::Bitti {
+                basarili: !is_error,
+                sure_ms: duration_ms,
+                ozet: result,
+                reddedilen: permission_denials,
+                maliyet_usd: total_cost_usd,
+            }]
+        }
+        // system/<init olmayan> ve rate_limit_event gibi bilgi satırları.
+        Satir::System { .. } | Satir::Diger => Vec::new(),
+    })
+}
+
+/// Motoru sür: `claude`'u onay kapısı bağlıyken çalıştır, akışı **satır satır** yay.
 ///
 /// Kapı **spawn'dan ÖNCE** kurulur (adı önce biz kaparız — bkz. `HookGate::start`).
-/// Bu turda stdout **ham** toplanır; `stream-json` ayrıştırma bir sonraki adımda.
 ///
 /// `helper_exe` = hook yardımcısı olarak çağrılacak ikili; üretimde
 /// [`helper_exe()`] (= bu uygulama). **Parametre olmasının sebebi:** entegrasyon
 /// testinde `current_exe()` *test* ikilisini gösterir; testin gerçek uygulamayı
 /// çağırabilmesi gerekiyor (ders 13: testin kendi kopyasını ölçme).
 ///
+/// `on_event` **satır geldikçe** çağrılır (`.output()` ile beklenseydi kullanıcı
+/// 12+ saniye boş ekrana bakardı — "Düşünüyor…" sendromu, ders 5b).
 /// Bloke eder (süreç bitene kadar) — çağıran `spawn_blocking` kullanmalı.
 ///
 /// ⛔ `--permission-mode bypassPermissions` **KULLANILMAZ**: ölçüldü, yardımcı yoksa
@@ -544,6 +705,7 @@ pub fn run_claude(
     prompt: &str,
     helper_exe: &Path,
     handler: crate::agent_hook::Handler,
+    on_event: &(dyn Fn(ClaudeEvent) + Send + Sync),
 ) -> Result<ClaudeRun, String> {
     let gate = crate::agent_hook::HookGate::start(handler)
         .map_err(|e| format!("Onay kapısı açılamadı: {e}"))?;
@@ -562,7 +724,7 @@ pub fn run_claude(
     );
 
     let t0 = Instant::now();
-    let out = std::process::Command::new(bin)
+    let mut child = std::process::Command::new(bin)
         .current_dir(root)
         .arg("-p")
         .arg(prompt)
@@ -570,26 +732,70 @@ pub fn run_claude(
         .args(["--permission-mode", "default"])
         .arg("--settings")
         .arg(&settings)
-        .output()
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
         .map_err(|e| format!("Motor çalıştırılamadı: {e}"))?;
 
+    // stderr AYRI thread'de boşaltılır. Tek thread'de stdout okurken stderr borusu
+    // dolarsa çocuk süreç yazamaz → **kilitlenir** ve ikimiz de sonsuza dek bekleriz.
+    // (Ders 2: dış süreçte önce drain et, sonra konuş.)
+    let stderr_pipe = child.stderr.take();
+    let stderr_thread = std::thread::spawn(move || {
+        let mut s = String::new();
+        if let Some(mut e) = stderr_pipe {
+            use std::io::Read;
+            let _ = e.read_to_string(&mut s);
+        }
+        s
+    });
+
+    let mut satir = 0usize;
+    let mut cozulemeyen = 0usize;
+    if let Some(stdout) = child.stdout.take() {
+        use std::io::BufRead;
+        for line in std::io::BufReader::new(stdout).lines() {
+            let line = match line {
+                Ok(l) => l,
+                Err(e) => {
+                    log::warn!("[motor] akış satırı okunamadı: {e}");
+                    break;
+                }
+            };
+            if line.trim().is_empty() {
+                continue;
+            }
+            satir += 1;
+            match parse_line(&line) {
+                Ok(olaylar) => olaylar.into_iter().for_each(on_event),
+                Err(e) => {
+                    cozulemeyen += 1;
+                    // Sebebi görünür kıl: sessizce yutulsa "motor bazen boş dönüyor"
+                    // diye teşhis edilemez bir şikâyete dönerdi (ders 14).
+                    log::warn!("[motor] satır ayrıştırılamadı ({e}) — ilk 200: {:.200}", line);
+                }
+            }
+        }
+    }
+
+    let status = child.wait().map_err(|e| format!("Motor beklenirken hata: {e}"))?;
     let sure = t0.elapsed();
-    let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
-    let stdout = String::from_utf8_lossy(&out.stdout).to_string();
+    let stderr = stderr_thread.join().unwrap_or_default().trim().to_string();
 
     // Çıkış kodu tanının yarısıdır (ders 2) — başarıda da yazılır ki "çalıştı ama boş
     // döndü" durumu günlükten görülebilsin.
     log::info!(
-        "[motor] koşu bitti — çıkış kodu {:?} · {} ms · stdout {} bayt",
-        out.status.code(),
+        "[motor] koşu bitti — çıkış kodu {:?} · {} ms · {} satır ({} çözülemedi)",
+        status.code(),
         sure.as_millis(),
-        stdout.len()
+        satir,
+        cozulemeyen
     );
     if !stderr.is_empty() {
         log::warn!("[motor] stderr: {stderr}");
     }
 
-    Ok(ClaudeRun { code: out.status.code(), stdout, stderr, ms: sure.as_millis() })
+    Ok(ClaudeRun { code: status.code(), stderr, ms: sure.as_millis(), satir, cozulemeyen })
 }
 
 /// Hook yardımcısı olarak çağrılacak ikili = **bu uygulama** (`--hook-helper` modu).
@@ -599,13 +805,16 @@ pub fn helper_exe() -> Result<PathBuf, String> {
         .map_err(|e| format!("Uygulama yolu bulunamadı (hook yardımcısı çağrılamaz): {e}"))
 }
 
-/// Bir motor koşusunun ham sonucu. (`stdout` = stream-json satırları; ayrıştırma sonraki adım.)
+/// Bir motor koşusunun künyesi. İçerik `on_event` ile akmıştır; burada teşhis bilgisi var.
 #[derive(Debug)]
 pub struct ClaudeRun {
     pub code: Option<i32>,
-    pub stdout: String,
     pub stderr: String,
     pub ms: u128,
+    /// Akıştan okunan satır sayısı.
+    pub satir: usize,
+    /// Ayrıştırılamayan satır sayısı — **0 olmalı**; değilse sözleşme değişmiş demektir.
+    pub cozulemeyen: usize,
 }
 
 #[cfg(test)]
@@ -683,6 +892,117 @@ mod tests {
         let h = &ayarlar(true)["hooks"]["PreToolUse"][0];
         assert_eq!(h["matcher"], "*");
         assert_eq!(h["timeout"], 600);
+    }
+
+    // ── stream-json ayrıştırma ────────────────────────────────────────────────
+    //
+    // Fixture'lar **gerçek `claude` 2.1.181 koşusundan kesildi** (2026-07-17), elle
+    // yazılmadı: uydurulmuş bir JSON'a karşı yeşil olan parser, gerçek akışta çöker
+    // ve testin kendi kopyasını ölçmüş oluruz (ders 13).
+
+    #[test]
+    fn init_satiri_baslangic_verir() {
+        let l = r#"{"type":"system","subtype":"init","model":"claude-opus-4-8","session_id":"1043f4d5","cwd":"/tmp","tools":["Bash"]}"#;
+        assert_eq!(
+            parse_line(l).unwrap(),
+            vec![ClaudeEvent::Baslangic { model: "claude-opus-4-8".into(), oturum: "1043f4d5".into() }]
+        );
+    }
+
+    #[test]
+    fn tool_use_ve_metin_okunur() {
+        let tu = r#"{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Write","input":{"file_path":"/tmp/not.txt","content":"test\n"}}]}}"#;
+        match &parse_line(tu).unwrap()[0] {
+            ClaudeEvent::AracCagrisi { arac, girdi } => {
+                assert_eq!(arac, "Write");
+                assert_eq!(girdi["file_path"], "/tmp/not.txt");
+            }
+            o => panic!("beklenmeyen olay: {o:?}"),
+        }
+
+        let tx = r#"{"type":"assistant","message":{"content":[{"type":"text","text":"`not.txt` dosyasını oluşturdum."}]}}"#;
+        assert_eq!(
+            parse_line(tx).unwrap(),
+            vec![ClaudeEvent::Metin { metin: "`not.txt` dosyasını oluşturdum.".into() }]
+        );
+    }
+
+    /// `thinking` bloğu **ölçüldü** (hafızadaki tip listesinde yoktu). İçeriği
+    /// taşımıyoruz ama satır sessizce düşmemeli — "çalışıyor" sinyali.
+    #[test]
+    fn thinking_blogu_dusunuyor_verir() {
+        let l = r#"{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"uzun düşünce","signature":"abc"}]}}"#;
+        assert_eq!(parse_line(l).unwrap(), vec![ClaudeEvent::Dusunuyor]);
+    }
+
+    /// ⚠️ Ölçülen tuzak: başarılı `tool_result`'ta `is_error` **null** gelir.
+    /// Düz `bool` yazılsaydı ayrıştırma çöker, tüm akış susardı.
+    #[test]
+    fn tool_result_is_error_null_cokmez() {
+        let l = r#"{"type":"user","message":{"content":[{"type":"tool_result","content":"Dosya yazıldı","is_error":null,"tool_use_id":"toolu_1"}]}}"#;
+        assert_eq!(
+            parse_line(l).unwrap(),
+            vec![ClaudeEvent::AracSonucu { hata: false, icerik: "Dosya yazıldı".into() }]
+        );
+    }
+
+    /// Reddettiğimiz sebep modele `is_error:true` ile ulaşıyor (gerçek deny koşusu).
+    #[test]
+    fn reddedilen_arac_sonucu_hata_olur() {
+        let l = r#"{"type":"user","message":{"content":[{"type":"tool_result","content":"Kullanıcı reddetti","is_error":true,"tool_use_id":"toolu_01Xtvik"}]}}"#;
+        assert_eq!(
+            parse_line(l).unwrap(),
+            vec![ClaudeEvent::AracSonucu { hata: true, icerik: "Kullanıcı reddetti".into() }]
+        );
+    }
+
+    /// ⚠️ **En önemli ölçüm:** her araç reddedilse bile `result` `is_error:false` der.
+    /// "İş görüldü mü?" sorusunun cevabı `reddedilen` listesidir — arayüz buna bakmalı.
+    #[test]
+    fn deny_kosusunda_basarili_ama_reddedilen_dolu() {
+        let l = r#"{"type":"result","subtype":"success","is_error":false,"duration_ms":8000,"stop_reason":"end_turn","permission_denials":[{"tool_name":"Write","tool_use_id":"toolu_01Xtvik","tool_input":{"file_path":"/tmp/gizli.txt","content":"x\n"}}],"total_cost_usd":0.05}"#;
+        match &parse_line(l).unwrap()[0] {
+            ClaudeEvent::Bitti { basarili, reddedilen, sure_ms, .. } => {
+                assert!(*basarili, "motor 'success' diyor — is_error'a aldanma tuzağı");
+                assert_eq!(*sure_ms, 8000);
+                assert_eq!(reddedilen.len(), 1, "asıl karne burada");
+                assert_eq!(reddedilen[0].tool_name, "Write");
+                assert_eq!(reddedilen[0].tool_input["file_path"], "/tmp/gizli.txt");
+            }
+            o => panic!("beklenmeyen olay: {o:?}"),
+        }
+    }
+
+    #[test]
+    fn basarili_kosuda_reddedilen_bos() {
+        let l = r#"{"type":"result","subtype":"success","is_error":false,"duration_ms":12061,"result":"Oluşturdum.","total_cost_usd":0.159401}"#;
+        assert_eq!(
+            parse_line(l).unwrap(),
+            vec![ClaudeEvent::Bitti {
+                basarili: true,
+                sure_ms: 12061,
+                ozet: Some("Oluşturdum.".into()),
+                reddedilen: vec![],
+                maliyet_usd: Some(0.159401),
+            }]
+        );
+    }
+
+    /// ⚠️ Ölçüldü: **belgelenmemiş** `rate_limit_event` satırı geliyor. Bilinmeyen tip
+    /// hata VERMEMELİ — yoksa Anthropic yeni bir satır ekler eklemez motor kırılır.
+    #[test]
+    fn bilinmeyen_satir_tipi_kirmaz() {
+        let l = r#"{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","rateLimitType":"five_hour"},"uuid":"4aede40d"}"#;
+        assert_eq!(parse_line(l).unwrap(), vec![], "bilinmeyen tip olaysız geçmeli");
+
+        // Gelecekte eklenecek varsayımsal bir tip de aynı şekilde geçmeli.
+        assert_eq!(parse_line(r#"{"type":"gelecekteki_tip","x":1}"#).unwrap(), vec![]);
+    }
+
+    /// Bozuk satır `Err` döner ki çağıran **sayıp loglasın** — sessizce yutulmaz.
+    #[test]
+    fn bozuk_satir_hata_verir() {
+        assert!(parse_line("{bu json degil").is_err());
     }
 
     #[test]
