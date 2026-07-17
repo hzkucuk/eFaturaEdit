@@ -174,7 +174,7 @@ fn cap(s: &[u8]) -> (String, bool) {
     }
 }
 
-fn kill_pid(pid: u32) {
+pub(crate) fn kill_pid(pid: u32) {
     #[cfg(unix)]
     let _ = std::process::Command::new("kill")
         .arg("-9")

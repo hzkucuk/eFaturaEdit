@@ -1,16 +1,18 @@
 <!--
   ClaudePanel — Klasör Ajanı'nın **Claude Code motoru** modu.
 
-  "Klasör Ajanı" (BYOK) modundan farkı: araç döngüsü uygulamada dönmez; `claude`
-  ikilisi kendi araçlarını çalıştırır, biz onay kapısıyız (PreToolUse hook).
+  Gerçek `claude` ikilisi seçtiğin klasörde sürülür; her araç çağrısı bir PreToolUse
+  hook üzerinden onay kuyruğundan geçer. Tasarım Claude Code arayüzüne benzer:
+  akan araç kartları (IN/OUT açılır, zaman+süre damgalı) + alt giriş barı
+  (durdur · slash · ekle · otomatik düzenle).
 
-  Onaylar KUYRUKTA gösterilir: aynı anda 3 onay uçuşta olabildiği ÖLÇÜLDÜ —
-  tek modal varsayımı bir aracı sessizce cevapsız bırakırdı.
+  Konuşma SÜRER: `sessionId` sonraki mesajda --resume ile geçer, model önceki turu hatırlar.
 -->
 <script lang="ts">
   import {
     claude,
     runClaude,
+    cancelClaude,
     resolveFirst,
     setClaudeRoot,
     resetClaudeChat,
@@ -21,15 +23,22 @@
   import { pickFolder } from '$lib/batch';
 
   let input = $state('');
+  let feedEl: HTMLDivElement | null = $state(null);
+  /** Açık (IN/OUT görünür) araç kartlarının feed index'leri. */
+  let acik = $state(new Set<number>());
 
-  // Motor durumunu yokla — panel açılınca VE ayar değişince.
-  //
-  // `if (!claude.engine)` ile korumak cazipti ama YANLIŞ olurdu: kullanıcı
-  // "sistemdeki sürümü kullan"ı açtığında durum tazelenmez, ekranda eski motor
-  // yazmaya devam ederdi (hata vermeden, sadece yanlış). Etki `claude.engine`'i
-  // OKUMADIĞI için yazması döngü kurmaz.
   $effect(() => {
-    void refreshEngine(settings.claudeUseSystemBinary);
+    if (!claude.engine) void refreshEngine(settings.claudeUseSystemBinary);
+  });
+
+  // Otomatik kaydırma: feed değişince dibe in — AMA kullanıcı yukarı kaydırdıysa
+  // rahatsız etme (dibe yakınsa kaydır, eşik 60px). Claude Code'daki gibi.
+  $effect(() => {
+    void claude.feed.length;
+    const el = feedEl;
+    if (!el) return;
+    const dibeYakin = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+    if (dibeYakin) queueMicrotask(() => (el.scrollTop = el.scrollHeight));
   });
 
   async function chooseFolder(): Promise<void> {
@@ -51,6 +60,22 @@
     }
   }
 
+  function toggleCard(i: number): void {
+    const s = new Set(acik);
+    s.has(i) ? s.delete(i) : s.add(i);
+    acik = s;
+  }
+
+  function saat(ts: number): string {
+    return new Date(ts).toLocaleTimeString('tr-TR', { hour12: false });
+  }
+  function tamTarih(ts: number): string {
+    return new Date(ts).toLocaleString('tr-TR');
+  }
+  function sure(ms?: number): string {
+    if (ms == null) return '';
+    return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} sn`;
+  }
   function mb(n: number): string {
     return `${(n / 1024 / 1024).toFixed(1)} MB`;
   }
@@ -66,15 +91,11 @@
         <div class="engine-title">Motor kuruluyor — {claude.install.phase}</div>
         {#if claude.install.total > 0}
           <progress value={claude.install.downloaded} max={claude.install.total}></progress>
-          <span class="engine-sub">
-            {mb(claude.install.downloaded)} / {mb(claude.install.total)}
-          </span>
+          <span class="engine-sub">{mb(claude.install.downloaded)} / {mb(claude.install.total)}</span>
         {/if}
       {:else}
         <div class="engine-title">Claude Code motoru hazır değil</div>
-        <p class="engine-sub">
-          {claude.engine?.reason ?? 'Motor durumu okunuyor…'}
-        </p>
+        <p class="engine-sub">{claude.engine?.reason ?? 'Motor durumu okunuyor…'}</p>
         {#if !settings.claudeUseSystemBinary}
           <button class="install" onclick={() => installEngine(settings.claudeUseSystemBinary)}>
             Motoru indir ({claude.engine?.pinned_version ?? '…'}) — ~66 MB
@@ -84,73 +105,89 @@
     </div>
   {/if}
 
-  <!-- Klasör -->
+  <!-- Klasör + oturum -->
   <div class="claude-root">
-    <button class="pick" onclick={chooseFolder}>📁 Çalışma klasörü seç…</button>
+    <button class="pick" onclick={chooseFolder}>📁 Klasör</button>
     {#if claude.root}
       <code class="root-path" title={claude.root}>{claude.root}</code>
-      <button class="reset" onclick={resetClaudeChat} disabled={claude.running}>
-        Sohbeti sıfırla
+      <button class="reset" onclick={resetClaudeChat} disabled={claude.running} title="Yeni oturum">
+        ＋ Yeni
       </button>
     {/if}
     {#if hazir}
       <span class="engine-badge" title={claude.engine?.path ?? ''}>
-        {claude.engine?.source === 'system' ? 'sistem' : 'motor'}
-        {claude.engine?.version ?? ''}
+        {claude.engine?.source === 'system' ? 'sistem' : 'motor'} {claude.engine?.version ?? ''}
       </span>
     {/if}
   </div>
 
-  <!--
-    BİLGİLENDİRME — dürüst olmak zorunda (CLAUDE.md ders 15/17).
-    "Klasör dışına yazamaz" doğru (sandbox varsa). "Okuyamaz" YANLIŞ olurdu:
-    sandbox okumayı engellemiyor, ölçüldü. Yazmadığımız cümle bilinçli.
-  -->
+  <!-- Bilgilendirme (dürüst — ders 15/17) -->
   {#if !claude.root}
     <div class="claude-hint">
       <p>
-        Bu modda gerçek <b>Claude Code</b> seçtiğin klasörde çalışır: dosyaları okur,
-        düzenler, oluşturur ve komut çalıştırır. <b>Her işlem senin onayından geçer</b> —
-        onaylamadığın hiçbir şey çalışmaz.
+        Gerçek <b>Claude Code</b> seçtiğin klasörde çalışır: dosyaları okur, düzenler, oluşturur,
+        komut çalıştırır. <b>Her işlem senin onayından geçer.</b>
       </p>
       <ul>
         {#if claude.engine?.sandbox}
-          <li>✅ Seçtiğin klasörün <b>dışına yazamaz</b> (işletim sistemi sandbox'ı).</li>
+          <li>✅ Klasörün <b>dışına yazamaz</b> (işletim sistemi sandbox'ı).</li>
         {:else}
-          <li>
-            ⚠️ Bu platformda sandbox <b>yok</b> — komutlar klasör dışına çıkabilir.
-            Tek koruma <b>onay kapısı</b>: komutu çalışmadan önce görürsün.
-          </li>
+          <li>⚠️ Bu platformda sandbox <b>yok</b> — komutlar klasör dışına çıkabilir; tek koruma onay kapısı.</li>
         {/if}
-        <li>
-          ⚠️ Diskteki <b>diğer dosyaları okuyabilir</b> — sandbox okumayı engellemiyor.
-        </li>
+        <li>⚠️ Diskteki <b>diğer dosyaları okuyabilir</b> — sandbox okumayı engellemiyor.</li>
         <li>🔑 Kimlik: Claude.ai aboneliğin veya Anthropic API anahtarın.</li>
       </ul>
       <p class="hint-foot">Başlamak için bir klasör seç.</p>
     </div>
   {/if}
 
-  <!-- Olay akışı -->
-  <div class="feed">
+  <!-- Akış -->
+  <div class="feed" bind:this={feedEl}>
     {#each claude.feed as item, i (i)}
       {#if item.kind === 'user'}
-        <div class="msg user">{item.text}</div>
+        <div class="row user">
+          <div class="msg user-msg">{item.text}</div>
+          <span class="ts" title={tamTarih(item.ts)}>{saat(item.ts)}</span>
+        </div>
       {:else if item.kind === 'assistant'}
-        <div class="msg assistant">{item.text}</div>
+        <div class="row">
+          <div class="msg assistant">{item.text}</div>
+          <span class="ts" title={tamTarih(item.ts)}>{saat(item.ts)}</span>
+        </div>
       {:else if item.kind === 'info'}
-        <div class="msg info">{item.text}</div>
-      {:else if item.kind === 'tool'}
-        <div class="msg tool" class:err={item.tool && item.tool.ok === false}>
-          <span class="tname">{item.tool?.name}</span>
-          <span class="tsum">{item.tool?.summary}</span>
-          <span class="tstat">{item.tool?.ok === false ? '✗' : item.tool?.ok ? '✓' : '…'}</span>
+        <div class="row">
+          <div class="msg info" class:thinking={item.text === '__thinking__'}>
+            {item.text === '__thinking__' ? 'Düşünüyor…' : item.text}
+          </div>
+          <span class="ts" title={tamTarih(item.ts)}>{saat(item.ts)}</span>
+        </div>
+      {:else if item.kind === 'tool' && item.tool}
+        <div class="tool-card" class:err={item.tool.ok === false}>
+          <button class="tool-head" onclick={() => toggleCard(i)}>
+            <span class="caret">{acik.has(i) ? '▾' : '▸'}</span>
+            <span class="tname">{item.tool.name}</span>
+            <span class="tsum" title={item.tool.summary}>{item.tool.summary}</span>
+            <span class="tstat">{item.tool.ok === false ? '✗' : item.tool.ok ? '✓' : '…'}</span>
+            {#if item.durationMs != null}<span class="tdur">{sure(item.durationMs)}</span>{/if}
+            <span class="ts" title={tamTarih(item.ts)}>{saat(item.ts)}</span>
+          </button>
+          {#if acik.has(i)}
+            {#if item.tool.in}
+              <div class="io"><span class="io-lbl">IN</span><pre>{item.tool.in}</pre></div>
+            {/if}
+            {#if item.tool.out}
+              <div class="io"><span class="io-lbl out">OUT</span><pre>{item.tool.out}</pre></div>
+            {/if}
+          {/if}
         </div>
       {:else if item.kind === 'error'}
-        <div class="msg err-msg">{item.text}</div>
+        <div class="row">
+          <div class="msg err-msg">{item.text}</div>
+          <span class="ts" title={tamTarih(item.ts)}>{saat(item.ts)}</span>
+        </div>
       {/if}
     {/each}
-    {#if claude.running && claude.queue.length === 0}
+    {#if claude.running && claude.queue.length === 0 && claude.feed.at(-1)?.text !== '__thinking__'}
       <div class="msg thinking">Çalışıyor…</div>
     {/if}
   </div>
@@ -159,50 +196,57 @@
     <div class="claude-err">{claude.error}</div>
   {/if}
 
-  <!-- Giriş -->
-  <div class="claude-input">
+  <!-- Alt giriş barı (Claude Code tarzı) -->
+  <div class="composer">
     <textarea
       bind:value={input}
       onkeydown={onKey}
       placeholder={!hazir
         ? 'Önce motoru kur'
         : claude.root
-          ? 'Ne yapmamı istersin? (⌘/Ctrl+Enter ile gönder)'
+          ? claude.running
+            ? 'Çalışıyor… (durdurabilirsin)'
+            : 'Ne yapmamı istersin? (⌘/Ctrl+Enter)'
           : 'Önce bir klasör seç'}
-      disabled={!claude.root || claude.running || !hazir}
+      disabled={!claude.root || !hazir}
       rows="2"
     ></textarea>
-    <button
-      class="send"
-      onclick={send}
-      disabled={!claude.root || claude.running || !hazir || !input.trim()}
-    >
-      {claude.running ? '…' : 'Gönder'}
-    </button>
+    <div class="composer-bar">
+      <button class="cbtn" title="Klasör seç / ekle" onclick={chooseFolder}>＋</button>
+      <button class="cbtn" title="Slash komutu (/compact, /clear…)" onclick={() => (input = '/' + input)}>
+        /
+      </button>
+      <label class="auto" title="Açıkken tüm araçlar otomatik onaylanır (mac/Linux'ta sandbox korur)">
+        <input type="checkbox" bind:checked={claude.autoApprove} />
+        <span>⟨⟩ Otomatik düzenle</span>
+      </label>
+      <span class="spacer"></span>
+      {#if claude.running}
+        <button class="stop" onclick={cancelClaude} title="Durdur">■ Durdur</button>
+      {:else}
+        <button class="send" onclick={send} disabled={!claude.root || !hazir || !input.trim()}>
+          Gönder
+        </button>
+      {/if}
+    </div>
   </div>
 </div>
 
-<!--
-  Onay modalı — KUYRUĞUN İLKİ. Arkada bekleyen varsa sayısı gösterilir; yoksa
-  kullanıcı kaç işlem beklediğini bilemez ve modal "takılmış" görünürdü.
--->
+<!-- Onay modalı — KUYRUĞUN İLKİ -->
 {#if claude.queue.length > 0}
   {@const p = claude.queue[0]}
   <div class="approve-overlay">
     <div class="approve">
       <div class="approve-title">
         İşlem onayı
-        {#if claude.queue.length > 1}
-          <span class="qcount">+{claude.queue.length - 1} bekliyor</span>
-        {/if}
+        {#if claude.queue.length > 1}<span class="qcount">+{claude.queue.length - 1} bekliyor</span>{/if}
       </div>
       <div class="approve-tool"><span class="tname">{p.arac}</span> — {p.ozet}</div>
       {#if p.arac === 'Bash'}
         <pre class="approve-body cmd">{String(p.girdi.command ?? '')}</pre>
         {#if !claude.engine?.sandbox}
           <p class="bash-warn">
-            ⚠️ Bu platformda sandbox yok: komut <b>klasör dışına çıkabilir</b>.
-            Gerçek koruma bu onaydır — ne yaptığını anladığından emin ol.
+            ⚠️ Bu platformda sandbox yok: komut <b>klasör dışına çıkabilir</b>. Gerçek koruma bu onaydır.
           </p>
         {/if}
       {:else if p.arac === 'Write' || p.arac === 'Edit'}
@@ -210,9 +254,7 @@
       {/if}
       <div class="approve-actions">
         <button class="ok" onclick={() => resolveFirst('allow')}>Onayla</button>
-        <button class="always" onclick={() => resolveFirst('always')}>
-          Bu aracı hep izin ver
-        </button>
+        <button class="always" onclick={() => resolveFirst('always')}>Bu aracı hep izin ver</button>
         <button class="deny" onclick={() => resolveFirst('deny')}>Reddet</button>
       </div>
     </div>
@@ -235,294 +277,148 @@
     border: 1px solid #ffe082;
     border-radius: 6px;
   }
-  .engine-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  .engine-sub {
-    color: #666;
-    font-size: 12px;
-    margin: 4px 0;
-  }
-  .engine-box progress {
-    width: 100%;
-    height: 6px;
-  }
+  .engine-title { font-weight: 600; margin-bottom: 4px; }
+  .engine-sub { color: #666; font-size: 12px; margin: 4px 0; }
+  .engine-box progress { width: 100%; height: 6px; }
   .install {
-    margin-top: 6px;
-    padding: 5px 10px;
-    border: 1px solid #c9a227;
-    background: #fff;
-    border-radius: 5px;
-    cursor: pointer;
+    margin-top: 6px; padding: 5px 10px; border: 1px solid #c9a227;
+    background: #fff; border-radius: 5px; cursor: pointer;
   }
 
   .claude-root {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 0;
-    flex-wrap: wrap;
+    display: flex; align-items: center; gap: 6px; padding: 6px 0; flex-wrap: wrap;
   }
-  .pick,
-  .reset {
-    padding: 4px 9px;
-    border: 1px solid #ccc;
-    background: #f7f7f7;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 12px;
+  .pick, .reset {
+    padding: 4px 9px; border: 1px solid #ccc; background: #f7f7f7;
+    border-radius: 5px; cursor: pointer; font-size: 12px; white-space: nowrap;
   }
   .root-path {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 11px;
-    color: #555;
+    flex: 1; min-width: 60px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; font-size: 11px; color: #555;
   }
   .engine-badge {
-    font-size: 11px;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
-    border-radius: 4px;
-    padding: 1px 5px;
+    font-size: 11px; color: #2e7d32; border: 1px solid #a5d6a7;
+    border-radius: 4px; padding: 1px 5px; white-space: nowrap;
   }
 
   .claude-hint {
-    padding: 10px 12px;
-    background: #f4f8ff;
-    border: 1px solid #cfe0ff;
-    border-radius: 6px;
-    color: #333;
-    line-height: 1.5;
+    padding: 10px 12px; background: #f4f8ff; border: 1px solid #cfe0ff;
+    border-radius: 6px; color: #333; line-height: 1.5;
   }
-  .claude-hint ul {
-    margin: 8px 0;
-    padding-left: 18px;
-  }
-  .claude-hint li {
-    margin: 3px 0;
-  }
-  .hint-foot {
-    margin: 6px 0 0;
-    color: #666;
-  }
+  .claude-hint ul { margin: 8px 0; padding-left: 18px; }
+  .claude-hint li { margin: 3px 0; }
+  .hint-foot { margin: 6px 0 0; color: #666; }
 
   .feed {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 6px 0;
+    flex: 1; min-height: 0; overflow-y: auto; display: flex;
+    flex-direction: column; gap: 5px; padding: 6px 2px; scroll-behavior: smooth;
   }
-  .msg {
-    padding: 6px 9px;
-    border-radius: 6px;
-    white-space: pre-wrap;
-    word-break: break-word;
+  .row { display: flex; align-items: flex-start; gap: 6px; }
+  .row.user { flex-direction: row-reverse; }
+  .msg { padding: 6px 9px; border-radius: 6px; white-space: pre-wrap; word-break: break-word; flex: 1; }
+  .user-msg { background: #e8f0fe; max-width: 85%; flex: 0 1 auto; }
+  .assistant { background: #f5f5f5; }
+  .info { background: #fff8e1; font-size: 12px; color: #6d4c41; }
+  .info.thinking, .msg.thinking { color: #888; font-style: italic; background: transparent; }
+  .ts { font-size: 10px; color: #aaa; white-space: nowrap; padding-top: 6px; }
+
+  .tool-card { border: 1px solid #e0e6e0; border-radius: 6px; overflow: hidden; background: #f7faf7; }
+  .tool-card.err { background: #fdecea; border-color: #f5c6c2; }
+  .tool-head {
+    display: flex; align-items: center; gap: 6px; width: 100%; padding: 5px 8px;
+    background: none; border: none; cursor: pointer; font: inherit; text-align: left;
   }
-  .msg.user {
-    background: #e8f0fe;
-    align-self: flex-end;
-    max-width: 85%;
+  .caret { color: #888; width: 10px; }
+  .tname { font-weight: 600; white-space: nowrap; }
+  .tsum { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #555; }
+  .tstat { white-space: nowrap; }
+  .tdur { font-size: 10px; color: #888; white-space: nowrap; }
+  .io { border-top: 1px solid #e0e6e0; padding: 4px 8px; }
+  .io-lbl {
+    display: inline-block; font-size: 10px; font-weight: 700; color: #888;
+    background: #eee; border-radius: 3px; padding: 0 4px; margin-bottom: 2px;
   }
-  .msg.assistant {
-    background: #f5f5f5;
+  .io-lbl.out { color: #1a5; background: #e3f5ea; }
+  .io pre {
+    margin: 2px 0 0; font-size: 11px; white-space: pre-wrap; word-break: break-word;
+    max-height: 260px; overflow: auto; background: #fff; padding: 5px; border-radius: 4px;
   }
-  .msg.info {
-    background: #fff8e1;
-    font-size: 12px;
-    color: #6d4c41;
-  }
-  .msg.thinking {
-    color: #888;
-    font-style: italic;
-  }
-  .msg.tool {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    background: #f0f7f0;
-    font-size: 12px;
-  }
-  .msg.tool.err {
-    background: #fdecea;
-  }
-  .tname {
-    font-weight: 600;
-  }
-  .tsum {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: #555;
-  }
-  .msg.err-msg,
-  .claude-err {
-    background: #fdecea;
-    color: #b3261e;
-    padding: 6px 9px;
-    border-radius: 6px;
+  .err-msg, .claude-err {
+    background: #fdecea; color: #b3261e; padding: 6px 9px; border-radius: 6px;
   }
 
-  .claude-input {
-    display: flex;
-    gap: 6px;
-    padding-top: 6px;
+  .composer {
+    border: 1px solid #ccc; border-radius: 8px; padding: 6px; background: #fff; margin-top: 4px;
   }
-  .claude-input textarea {
-    flex: 1;
-    resize: none;
-    font: inherit;
-    padding: 6px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+  .composer textarea {
+    width: 100%; resize: none; font: inherit; border: none; outline: none; padding: 2px 4px;
+    background: transparent;
   }
+  .composer-bar { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+  .cbtn {
+    width: 26px; height: 26px; border: 1px solid #ddd; background: #f7f7f7; border-radius: 6px;
+    cursor: pointer; font-size: 14px; line-height: 1; color: #555;
+  }
+  .auto {
+    display: flex; align-items: center; gap: 4px; font-size: 11px; color: #666; cursor: pointer;
+    user-select: none;
+  }
+  .spacer { flex: 1; }
   .send {
-    padding: 6px 14px;
-    border: none;
-    background: #1a73e8;
-    color: #fff;
-    border-radius: 5px;
-    cursor: pointer;
+    padding: 5px 14px; border: none; background: #1a73e8; color: #fff; border-radius: 6px; cursor: pointer;
   }
-  .send:disabled {
-    background: #b0c4de;
-    cursor: default;
+  .send:disabled { background: #b0c4de; cursor: default; }
+  .stop {
+    padding: 5px 14px; border: 1px solid #e0a; background: #fdecf4; color: #b3268a;
+    border-radius: 6px; cursor: pointer; font-weight: 600;
   }
 
   .approve-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 60;
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35);
+    display: flex; align-items: center; justify-content: center; z-index: 60;
   }
   .approve {
-    background: #fff;
-    border-radius: 8px;
-    padding: 16px;
-    width: min(620px, 92vw);
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    background: #fff; border-radius: 8px; padding: 16px; width: min(620px, 92vw);
+    max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   }
-  .approve-title {
-    font-weight: 700;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .approve-title { font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .qcount {
-    font-weight: 400;
-    font-size: 12px;
-    color: #8a6d3b;
-    background: #fff8e1;
-    border: 1px solid #ffe082;
-    border-radius: 10px;
-    padding: 1px 7px;
+    font-weight: 400; font-size: 12px; color: #8a6d3b; background: #fff8e1;
+    border: 1px solid #ffe082; border-radius: 10px; padding: 1px 7px;
   }
-  .approve-tool {
-    margin-bottom: 8px;
-  }
+  .approve-tool { margin-bottom: 8px; }
   .approve-body {
-    background: #f6f6f6;
-    padding: 8px;
-    border-radius: 5px;
-    font-size: 12px;
-    max-height: 240px;
-    overflow: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
+    background: #f6f6f6; padding: 8px; border-radius: 5px; font-size: 12px;
+    max-height: 240px; overflow: auto; white-space: pre-wrap; word-break: break-word;
   }
-  .approve-body.cmd {
-    background: #1e1e1e;
-    color: #eee;
-  }
+  .approve-body.cmd { background: #1e1e1e; color: #eee; }
   .bash-warn {
-    background: #fff8e1;
-    border: 1px solid #ffe082;
-    border-radius: 5px;
-    padding: 7px 9px;
-    font-size: 12px;
-    color: #6d4c41;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 5px;
+    padding: 7px 9px; font-size: 12px; color: #6d4c41;
   }
-  .approve-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-  }
+  .approve-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
   .approve-actions button {
-    padding: 6px 12px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    background: #f7f7f7;
-    cursor: pointer;
+    padding: 6px 12px; border-radius: 5px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer;
   }
-  .approve-actions .ok {
-    background: #1a73e8;
-    color: #fff;
-    border-color: #1a73e8;
-  }
-  .approve-actions .deny {
-    background: #fdecea;
-    color: #b3261e;
-    border-color: #f5c6c2;
-  }
+  .approve-actions .ok { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+  .approve-actions .deny { background: #fdecea; color: #b3261e; border-color: #f5c6c2; }
 
   :global(html.dark) .claude-root,
-  :global(html.dark) .msg.assistant {
-    color: #ddd;
-  }
-  :global(html.dark) .msg.assistant {
-    background: #2a2a2a;
-  }
-  :global(html.dark) .msg.user {
-    background: #1e3a5f;
-    color: #ddd;
-  }
-  :global(html.dark) .msg.tool {
-    background: #23301f;
-    color: #ddd;
-  }
-  :global(html.dark) .claude-hint {
-    background: #1e2a3a;
-    border-color: #2f4159;
-    color: #ddd;
-  }
-  :global(html.dark) .engine-box {
-    background: #33291a;
-    border-color: #5a4a2a;
-    color: #ddd;
-  }
-  :global(html.dark) .approve {
-    background: #222;
-    color: #ddd;
-  }
-  :global(html.dark) .approve-body {
-    background: #2a2a2a;
-  }
-  :global(html.dark) .claude-input textarea {
-    background: #2a2a2a;
-    color: #ddd;
-    border-color: #444;
-  }
+  :global(html.dark) .assistant { color: #ddd; }
+  :global(html.dark) .assistant { background: #2a2a2a; }
+  :global(html.dark) .user-msg { background: #1e3a5f; color: #ddd; }
+  :global(html.dark) .tool-card { background: #23301f; border-color: #35452f; }
+  :global(html.dark) .tool-head, :global(html.dark) .tname { color: #ddd; }
+  :global(html.dark) .io pre { background: #1a1a1a; color: #ddd; }
+  :global(html.dark) .claude-hint { background: #1e2a3a; border-color: #2f4159; color: #ddd; }
+  :global(html.dark) .engine-box { background: #33291a; border-color: #5a4a2a; color: #ddd; }
+  :global(html.dark) .composer { background: #222; border-color: #444; }
+  :global(html.dark) .composer textarea { color: #ddd; }
+  :global(html.dark) .approve { background: #222; color: #ddd; }
+  :global(html.dark) .approve-body { background: #2a2a2a; }
   :global(html.dark) .pick,
   :global(html.dark) .reset,
+  :global(html.dark) .cbtn,
   :global(html.dark) .install,
-  :global(html.dark) .approve-actions button {
-    background: #333;
-    color: #ddd;
-    border-color: #555;
-  }
+  :global(html.dark) .approve-actions button { background: #333; color: #ddd; border-color: #555; }
 </style>

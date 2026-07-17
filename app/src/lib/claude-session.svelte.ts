@@ -55,7 +55,20 @@ export interface EngineStatus {
 export interface ClaudeFeedItem {
   kind: 'user' | 'assistant' | 'tool' | 'error' | 'info';
   text: string;
-  tool?: { name: string; summary: string; ok?: boolean };
+  /** Olayın geldiği an (Date.now ms) — kartta HH:MM:SS, tooltip'te tam tarih. */
+  ts: number;
+  /** Bu adımın süresi (ms). Araç: çağrı→sonuç; düşünme: başla→sonraki olay. */
+  durationMs?: number;
+  /**
+   * Araç kartı. `in`/`out` = girdi (komut/dosya/içerik) ve çıktı (stdout/sonuç) —
+   * kullanıcı kartı açınca görür (Claude Code arayüzündeki IN/OUT gibi).
+   */
+  tool?: { name: string; summary: string; ok?: boolean; in?: string; out?: string };
+}
+
+/** Yeni feed item — zaman damgası otomatik. */
+function feedItem(item: Omit<ClaudeFeedItem, 'ts'>): ClaudeFeedItem {
+  return { ...item, ts: Date.now() };
 }
 
 /** Kuyrukta bekleyen bir onay. */
@@ -82,6 +95,18 @@ export const claude = $state({
   trusted: new Set<string>(),
   /** Son koşunun reddedilen araçları — "başarılı" yalanına karşı gerçek karne. */
   lastDenied: [] as string[],
+  /**
+   * Aktif oturumun `session_id`'si. `null` = yeni oturum. Sonraki `runClaude` bunu
+   * `--resume` ile geçirir → model önceki turları HATIRLAR (kullanıcının kırdığı senaryo).
+   */
+  sessionId: null as string | null,
+  /**
+   * Bu oturumda "Motor başladı" bir kez gösterildi mi? Resume turlarında tekrar
+   * göstermeyiz — kullanıcı her turda "yeni oturum" sanıyordu.
+   */
+  started: false,
+  /** Tüm araçlar otomatik onaylansın mı ("Otomatik düzenle" toggle'ı). */
+  autoApprove: false,
 });
 
 /** Bir araç çağrısı için insanca özet (onay kartında + akışta). */
@@ -111,18 +136,43 @@ function toolSummary(arac: string, girdi: Record<string, unknown>): string {
 // `hazir`'ı bekler — aksi halde koşunun ilk olayları dinleyici kurulmadan gelir
 // ve sessizce düşerdi (kullanıcı boş ekran görür, hata görmez).
 
+/** Araç girdisini IN olarak biçimle (komut ham, diğerleri JSON). */
+function toolIn(arac: string, girdi: Record<string, unknown>): string {
+  if (arac === 'Bash') return String(girdi.command ?? '');
+  return JSON.stringify(girdi, null, 2);
+}
+
+/**
+ * Açık "Düşünüyor…" göstergesini kapat — süresini hesaplayıp "Düşündü — Xs" yapar
+ * (Claude Code arayüzündeki "Thought for 14s" gibi). Açık gösterge yoksa hiçbir şey yapmaz.
+ */
+function kapatDusunme(): void {
+  const son = claude.feed.at(-1);
+  if (son?.kind === 'info' && son.text === '__thinking__') {
+    son.durationMs = Date.now() - son.ts;
+    son.text = `Düşündü — ${(son.durationMs / 1000).toFixed(1)} sn`;
+  }
+}
+
+/** Bir araç kartına sonucu bağla + süresini hesapla (çağrı→sonuç). */
+function attachResult(hata: boolean, icerik: string): void {
+  const son = [...claude.feed].reverse().find((f) => f.kind === 'tool' && f.tool);
+  if (!son?.tool) return;
+  son.tool.ok = !hata;
+  son.tool.out = icerik;
+  son.durationMs = Date.now() - son.ts;
+}
+
 async function baglan(): Promise<void> {
   await listen<{ id: string; arac: string; girdi: Record<string, unknown> }>(
     'claude-hook-request',
     (e) => {
       const { id, arac, girdi } = e.payload;
       const ozet = toolSummary(arac, girdi);
-
-      // "Hep izin ver" denmiş araç: kuyruğa koymadan geç.
-      if (claude.trusted.has(arac)) {
+      // "Hep izin ver" / "Otomatik düzenle" → kuyruğa koymadan geç.
+      if (claude.autoApprove || claude.trusted.has(arac)) {
         void decide(id, true);
-        claude.feed.push({ kind: 'tool', text: '', tool: { name: arac, summary: ozet } });
-        return;
+        return; // araç kartı AracCagrisi olayında eklenir
       }
       claude.queue.push({ id, arac, girdi, ozet });
     },
@@ -132,34 +182,52 @@ async function baglan(): Promise<void> {
     const o = e.payload;
     switch (o.tur) {
       case 'Baslangic':
-        claude.feed.push({ kind: 'info', text: `Motor başladı — ${o.model}` });
+        claude.sessionId = o.oturum; // sonraki tur --resume ile devam
+        // "Motor başladı" YALNIZCA ilk turda (resume spam'i kullanıcıyı yanılttı).
+        if (!claude.started) {
+          claude.started = true;
+          claude.feed.push(feedItem({ kind: 'info', text: `Motor başladı — ${o.model}` }));
+        }
         break;
       case 'Dusunuyor':
-        break; // İçeriği taşımıyoruz; "çalışıyor" göstergesi zaten var.
+        // "Düşünüyor" göstergesi: bir kez ekle, süresi sonraki olayda kapanır.
+        if (claude.feed.at(-1)?.text !== '__thinking__') {
+          claude.feed.push(feedItem({ kind: 'info', text: '__thinking__' }));
+        }
+        break;
       case 'Metin':
-        if (o.metin.trim()) claude.feed.push({ kind: 'assistant', text: o.metin });
+        kapatDusunme();
+        if (o.metin.trim()) claude.feed.push(feedItem({ kind: 'assistant', text: o.metin }));
         break;
       case 'AracCagrisi':
-        claude.feed.push({
-          kind: 'tool',
-          text: '',
-          tool: { name: o.arac, summary: toolSummary(o.arac, o.girdi) },
-        });
+        kapatDusunme();
+        claude.feed.push(
+          feedItem({
+            kind: 'tool',
+            text: '',
+            tool: {
+              name: o.arac,
+              summary: toolSummary(o.arac, o.girdi),
+              in: toolIn(o.arac, o.girdi),
+            },
+          }),
+        );
         break;
-      case 'AracSonucu': {
-        const son = [...claude.feed].reverse().find((f) => f.kind === 'tool' && f.tool);
-        if (son?.tool) son.tool.ok = !o.hata;
+      case 'AracSonucu':
+        attachResult(o.hata, o.icerik);
         break;
-      }
       case 'Bitti':
+        kapatDusunme();
         // ⚠️ `basarili`'ya ALDANMA: ölçüldü — her araç reddedilse bile motor
         // "success" der. Kullanıcıya doğruyu söylemek için `reddedilen`e bakılır.
         claude.lastDenied = o.reddedilen.map((r) => r.tool_name);
         if (claude.lastDenied.length > 0) {
-          claude.feed.push({
-            kind: 'info',
-            text: `Koşu bitti — ${claude.lastDenied.length} işlem reddedildiği için yapılmadı (${claude.lastDenied.join(', ')}).`,
-          });
+          claude.feed.push(
+            feedItem({
+              kind: 'info',
+              text: `Koşu bitti — ${claude.lastDenied.length} işlem reddedildiği için yapılmadı (${claude.lastDenied.join(', ')}).`,
+            }),
+          );
         }
         break;
     }
@@ -226,33 +294,60 @@ export async function resolveFirst(
   await decide(p.id, karar !== 'deny');
 }
 
-/** Görevi Claude Code motoruyla sür. */
+/**
+ * Görevi Claude Code motoruyla sür.
+ *
+ * `claude.sessionId` doluysa `--resume` ile **önceki turlar sürdürülür** (model hatırlar).
+ * Giriş `/clear` ise claude'a gönderilmez — yeni oturum açılır (Claude Code sözleşmesi).
+ */
 export async function runClaude(gorev: string, sistemIkili: boolean): Promise<void> {
-  if (claude.running || !claude.root || !gorev.trim()) return;
+  const metin = gorev.trim();
+  if (claude.running || !claude.root || !metin) return;
+
+  // /clear = yeni oturum (claude'a gitmez, bizde session_id'yi sıfırlar).
+  if (metin === '/clear') {
+    resetClaudeChat();
+    return;
+  }
+
   await hazir; // dinleyiciler kurulmadan koşu başlarsa ilk olaylar düşer
 
   claude.error = '';
   claude.lastDenied = [];
-  claude.feed.push({ kind: 'user', text: gorev });
+  claude.feed.push(feedItem({ kind: 'user', text: metin }));
   claude.running = true;
   try {
     await invoke<unknown>('claude_agent_run', {
       kok: claude.root,
-      gorev,
+      gorev: metin,
       sistemIkili,
+      resumeSession: claude.sessionId, // null = yeni oturum
     });
   } catch (e) {
     claude.error = String((e as Error)?.message ?? e);
-    claude.feed.push({ kind: 'error', text: claude.error });
+    claude.feed.push(feedItem({ kind: 'error', text: claude.error }));
   } finally {
     claude.running = false;
     claude.queue = []; // koşu bitti; bekleyen onaylar artık cevapsız
   }
 }
 
+/** Uçuştaki koşuyu durdur — çalışan `claude` sürecini öldürür. */
+export async function cancelClaude(): Promise<void> {
+  try {
+    await invoke('claude_agent_cancel');
+    claude.feed.push(feedItem({ kind: 'info', text: 'Durduruldu.' }));
+  } catch (e) {
+    claude.error = String((e as Error)?.message ?? e);
+  }
+}
+
+/** Yeni oturum: feed'i ve session_id'yi sıfırla (bağlam sıfırdan başlar). */
 export function resetClaudeChat(): void {
   if (claude.running) return;
   claude.feed = [];
   claude.error = '';
   claude.lastDenied = [];
+  claude.sessionId = null;
+  claude.started = false;
 }

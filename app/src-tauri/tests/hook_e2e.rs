@@ -70,10 +70,19 @@ fn sur(
     let olaylar = Arc::new(std::sync::Mutex::new(Vec::new()));
     let toplayici = olaylar.clone();
 
-    let sonuc = run_claude(&bin, kok, gorev, Path::new(APP_EXE), handler, &move |o: ClaudeEvent| {
-        eprintln!("  [akış] {o:?}");
-        toplayici.lock().unwrap().push(o);
-    })
+    let sonuc = run_claude(
+        &bin,
+        kok,
+        gorev,
+        Path::new(APP_EXE),
+        handler,
+        None, // resume yok — her test taze oturum
+        &|_pid| {},
+        &move |o: ClaudeEvent| {
+            eprintln!("  [akış] {o:?}");
+            toplayici.lock().unwrap().push(o);
+        },
+    )
     .expect("motor sürülemedi");
 
     eprintln!(
@@ -160,6 +169,8 @@ fn yardimci_yoksa_fail_closed() {
         "Bu klasörde rapor.txt adında bir dosya oluştur, içine 'merhaba' yaz.",
         &yok,
         sabit_kapi(HookDecision::Allow, sayac.clone()),
+        None,
+        &|_pid| {},
         &|_o| {},
     )
     .expect("motor sürülemedi");

@@ -149,6 +149,8 @@ pub fn run() {
         .manage(PendingOpen::default())
         // Claude Code motorunun bekleyen onayları (aynı anda 3 olabilir — ölçüldü).
         .manage(agent_hook::GateState::default())
+        // Uçuştaki motor koşusunun pid'i — "Durdur" bununla süreci öldürür.
+        .manage(agent_cli::ActiveRun::default())
         .invoke_handler(tauri::generate_handler![
             greet,
             open_devtools,
@@ -169,6 +171,7 @@ pub fn run() {
             agent_cli::claude_engine_status,
             agent_cli::claude_engine_install,
             agent_cli::claude_agent_run,
+            agent_cli::claude_agent_cancel,
             agent_hook::claude_hook_decide
         ])
         .setup(|app| {

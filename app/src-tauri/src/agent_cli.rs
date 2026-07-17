@@ -704,14 +704,24 @@ fn parse_line(line: &str) -> Result<Vec<ClaudeEvent>, serde_json::Error> {
 /// 12+ saniye boş ekrana bakardı — "Düşünüyor…" sendromu, ders 5b).
 /// Bloke eder (süreç bitene kadar) — çağıran `spawn_blocking` kullanmalı.
 ///
+/// `resume` = önceki `session_id`; verilirse `--resume` ile **bağlam taşınır** (ölçüldü:
+/// model önceki turu hatırlıyor). `--resume` `--settings`'i de aldığından onay kapısı/sandbox
+/// resume'da da korunur (ölçüldü: deny diski korudu).
+///
+/// `on_spawn(pid)` süreç doğar doğmaz **bir kez** çağrılır — çağıran pid'i saklayıp
+/// [`claude_agent_cancel`] ile durdurabilir.
+///
 /// ⛔ `--permission-mode bypassPermissions` **KULLANILMAZ**: ölçüldü, yardımcı yoksa
 /// veya çökerse ajan **serbest kalıyor** (fail-open). `default` = fail-closed taban.
+#[allow(clippy::too_many_arguments)]
 pub fn run_claude(
     bin: &Path,
     root: &Path,
     prompt: &str,
     helper_exe: &Path,
     handler: crate::agent_hook::Handler,
+    resume: Option<&str>,
+    on_spawn: &(dyn Fn(u32) + Send + Sync),
     on_event: &(dyn Fn(ClaudeEvent) + Send + Sync),
 ) -> Result<ClaudeRun, String> {
     let gate = crate::agent_hook::HookGate::start(handler)
@@ -722,27 +732,34 @@ pub fn run_claude(
     // (ders 5b: log'suz dış çağrı 2 saat "Düşünüyor…" gösterdi). Görev metni ve
     // kullanıcı verisi loglanmaz — yalnızca boyutu.
     log::info!(
-        "[motor] koşu başlıyor — ikili={} · kök={} · görev {} bayt · sandbox={} · ayar {} bayt",
+        "[motor] koşu başlıyor — ikili={} · kök={} · görev {} bayt · sandbox={} · resume={} · ayar {} bayt",
         bin.display(),
         root.display(),
         prompt.len(),
         sandbox_destekli(),
+        resume.is_some(),
         settings.len()
     );
 
     let t0 = Instant::now();
-    let mut child = std::process::Command::new(bin)
-        .current_dir(root)
+    let mut cmd = std::process::Command::new(bin);
+    cmd.current_dir(root)
         .arg("-p")
         .arg(prompt)
         .args(["--output-format", "stream-json", "--verbose"])
         .args(["--permission-mode", "default"])
         .arg("--settings")
-        .arg(&settings)
+        .arg(&settings);
+    if let Some(sid) = resume {
+        cmd.arg("--resume").arg(sid);
+    }
+    let mut child = cmd
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
         .map_err(|e| format!("Motor çalıştırılamadı: {e}"))?;
+
+    on_spawn(child.id());
 
     // stderr AYRI thread'de boşaltılır. Tek thread'de stdout okurken stderr borusu
     // dolarsa çocuk süreç yazamaz → **kilitlenir** ve ikimiz de sonsuza dek bekleriz.
@@ -824,10 +841,18 @@ pub struct ClaudeRun {
     pub cozulemeyen: usize,
 }
 
+/// Uçuştaki tek motor koşusunun pid'i — [`claude_agent_cancel`] bununla durdurur.
+///
+/// Tek slot yeterli: arayüz aynı anda tek koşu sürüyor (`claude.running` guard'ı). Yeni
+/// koşu başlarken pid yazılır, bitince temizlenir.
+#[derive(Default)]
+pub struct ActiveRun(pub std::sync::Mutex<Option<u32>>);
+
 /// Klasör Ajanı'nı **Claude Code motoruyla** sür (arayüzün girişi).
 ///
 /// Her araç çağrısı `claude-hook-request` olayıyla kullanıcıya sorulur; akış
-/// `claude-agent-event` ile yayınlanır.
+/// `claude-agent-event` ile yayınlanır. `resume_session` verilirse önceki oturum
+/// **sürdürülür** (bağlam taşınır).
 ///
 /// Bloke eden işi `spawn_blocking`'e alır — Tauri'nin async runtime'ını tutmaz.
 #[tauri::command]
@@ -836,6 +861,7 @@ pub async fn claude_agent_run(
     kok: String,
     gorev: String,
     sistem_ikili: bool,
+    resume_session: Option<String>,
 ) -> Result<ClaudeRun, String> {
     // Kök gerçek bir klasör mü? `canonicalize` `..`/symlink'i çözer — sandbox'ın
     // `allowWrite`'ına ham kullanıcı dizesi geçirmiyoruz.
@@ -857,19 +883,58 @@ pub async fn claude_agent_run(
     let helper = helper_exe()?;
 
     let app_olay = app.clone();
+    let app_pid = app.clone();
     let handler = crate::agent_hook::tauri_handler(app.clone());
 
-    tauri::async_runtime::spawn_blocking(move || {
-        run_claude(&bin, &kok, &gorev, &helper, handler, &move |olay| {
-            use tauri::Emitter;
-            if let Err(e) = app_olay.emit("claude-agent-event", &olay) {
-                // Akış olayı düşerse arayüz sessizce donuk kalır — görünür kıl.
-                log::warn!("[motor] akış olayı yayınlanamadı: {e}");
-            }
-        })
+    let sonuc = tauri::async_runtime::spawn_blocking(move || {
+        run_claude(
+            &bin,
+            &kok,
+            &gorev,
+            &helper,
+            handler,
+            resume_session.as_deref(),
+            &move |pid| {
+                // Durdur düğmesi bu pid'i öldürür.
+                if let Ok(mut slot) = app_pid.state::<ActiveRun>().0.lock() {
+                    *slot = Some(pid);
+                }
+            },
+            &move |olay| {
+                use tauri::Emitter;
+                if let Err(e) = app_olay.emit("claude-agent-event", &olay) {
+                    // Akış olayı düşerse arayüz sessizce donuk kalır — görünür kıl.
+                    log::warn!("[motor] akış olayı yayınlanamadı: {e}");
+                }
+            },
+        )
     })
     .await
-    .map_err(|e| format!("Motor görevi çalıştırılamadı: {e}"))?
+    .map_err(|e| format!("Motor görevi çalıştırılamadı: {e}"));
+
+    // Koşu bitti (başarı/hata/iptal fark etmez) — pid'i temizle ki durdur eski koşuyu
+    // vurmasın (ölçülmemiş ama açık yarış: bitmiş koşunun pid'i başka sürece düşebilir).
+    if let Ok(mut slot) = app.state::<ActiveRun>().0.lock() {
+        *slot = None;
+    }
+    sonuc?
+}
+
+/// Uçuştaki motor koşusunu durdur — çalışan `claude` sürecini öldürür.
+///
+/// Süreç ölünce stdout kapanır → [`run_claude`]'un okuma döngüsü biter → koşu döner.
+/// Bilinmeyen/bitmiş koşu (pid yok) **hata değildir** — sessizce geçer.
+#[tauri::command]
+pub fn claude_agent_cancel(state: tauri::State<'_, ActiveRun>) -> Result<(), String> {
+    let pid = state.0.lock().map_err(|e| format!("Durdurma kilidi: {e}"))?.take();
+    match pid {
+        Some(pid) => {
+            log::info!("[motor] koşu durduruluyor — pid {pid}");
+            crate::agent_tools::kill_pid(pid);
+            Ok(())
+        }
+        None => Ok(()),
+    }
 }
 
 #[cfg(test)]
