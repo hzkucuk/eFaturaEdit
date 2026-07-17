@@ -44,6 +44,24 @@ const PINNED_VERSION: &str = "2.1.211";
 
 const REGISTRY: &str = "https://registry.npmjs.org";
 
+/// `--append-system-prompt` ile modele eklenen bağlam. Modele **nerede olduğunu** söyler:
+/// bir terminal değil, bir masaüstü XSLT/XML editörünün içindesin. En pahalı yanlış
+/// anlama buydu (kullanıcı: "bizim editörde açamaması çok manidar") — model kendini
+/// terminal sanıp `open` deniyor, sandbox `procNotFound` veriyordu. İki şeyi netleştirir:
+/// (1) GUI/tarayıcı açılamaz, (2) dosyayı göstermek için `open_in_editor` MCP aracı var.
+const SYSTEM_CONTEXT: &str = "\
+Sen 'e-Fatura Edit' adlı bir masaüstü uygulamasının içinde, 'Klasör Ajanı' modunda çalışıyorsun. \
+Bu uygulama Türkiye e-Fatura / e-Arşiv / e-İrsaliye (UBL-TR) için bir XSLT/XML dizayn editörüdür. \
+Bir terminal aracı değilsin; kullanıcının editör penceresinin içindesin.\n\
+- Grafik arayüz veya tarayıcı AÇAMAZSIN: `open`, `xdg-open`, `start` gibi komutlar sandbox'ta \
+engellidir — bunları deneme, hata verirler.\n\
+- Ürettiğin veya düzenlediğin bir dosyayı kullanıcıya göstermek için `open_in_editor` aracını \
+(MCP) kullan ve dosyanın MUTLAK yolunu ver. Bu, dosyayı uygulamanın editör sekmesinde açar. \
+Yalnızca .xslt, .xsl ve .xml dosyaları açılabilir.\n\
+- Bir XSLT şablonu veya XML örneği oluşturduktan sonra onu `open_in_editor` ile açman beklenir.\n\
+- Klasör dışına yazamazsın; yazma denemesi güvenlik nedeniyle reddedilir.\n\
+- Tüm yanıtlarını Türkçe ver.";
+
 /// Ağ zaman aşımları — çıplak `Client::new()` YASAK (CLAUDE.md ders 5b:
 /// timeout'suz istek 2 saat "Düşünüyor…" gösterdi).
 const CONNECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
@@ -721,12 +739,26 @@ pub fn run_claude(
     helper_exe: &Path,
     handler: crate::agent_hook::Handler,
     resume: Option<&str>,
+    mcp: Option<crate::agent_mcp::McpSetup>,
     on_spawn: &(dyn Fn(u32) + Send + Sync),
     on_event: &(dyn Fn(ClaudeEvent) + Send + Sync),
 ) -> Result<ClaudeRun, String> {
     let gate = crate::agent_hook::HookGate::start(handler)
         .map_err(|e| format!("Onay kapısı açılamadı: {e}"))?;
     let settings = build_settings_json(helper_exe, gate.socket_arg(), root, sandbox_destekli());
+
+    // MCP editör köprüsü (opsiyonel — e2e testleri None geçer, hook/sandbox'a odaklanır).
+    // `_bridge` koşu boyunca yaşamalı: Drop soketi silince model artık editör açamaz.
+    let _bridge;
+    let mut mcp_config: Option<String> = None;
+    if let Some(m) = mcp {
+        let b = crate::agent_mcp::EditorBridge::start(m.open_handler)
+            .map_err(|e| format!("Editör köprüsü açılamadı: {e}"))?;
+        mcp_config = Some(crate::agent_mcp::build_mcp_config(&m.exe, b.socket_arg()));
+        _bridge = Some(b);
+    } else {
+        _bridge = None;
+    }
 
     // Dış süreç → giriş boyutu, süre, çıkış kodu, stderr **her zaman** loglanır
     // (ders 5b: log'suz dış çağrı 2 saat "Düşünüyor…" gösterdi). Görev metni ve
@@ -748,8 +780,15 @@ pub fn run_claude(
         .arg(prompt)
         .args(["--output-format", "stream-json", "--verbose"])
         .args(["--permission-mode", "default"])
+        .arg("--append-system-prompt")
+        .arg(SYSTEM_CONTEXT)
         .arg("--settings")
         .arg(&settings);
+    if let Some(cfg) = &mcp_config {
+        // MCP `command` doğrudan çalıştırılır (kabuk yok) → boşluklu ikili yolu tırnak
+        // GEREKTİRMEZ (hook komutundan farkı — o kabuktan geçtiği için tırnaklıydı).
+        cmd.arg("--mcp-config").arg(cfg);
+    }
     if let Some(sid) = resume {
         cmd.arg("--resume").arg(sid);
     }
@@ -884,7 +923,27 @@ pub async fn claude_agent_run(
 
     let app_olay = app.clone();
     let app_pid = app.clone();
-    let handler = crate::agent_hook::tauri_handler(app.clone());
+    let app_open = app.clone();
+    let handler = crate::agent_hook::tauri_handler(app.clone(), kok.clone());
+
+    // MCP: `open_in_editor` → editör olayı yay. Uzantı denetimi BURADA (Rust) — model
+    // desteklenmeyen uzantı verirse net bir hata alsın (sekme açma frontend'de yapılır).
+    let open_handler: crate::agent_mcp::OpenHandler = std::sync::Arc::new(move |path: String| {
+        let ext = Path::new(&path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        if !matches!(ext.as_str(), "xslt" | "xsl" | "xml") {
+            return Err(format!(
+                "Yalnızca .xslt/.xsl/.xml editörde açılabilir (verilen uzantı: '{ext}')."
+            ));
+        }
+        app_open
+            .emit("claude-open-in-editor", &path)
+            .map_err(|e| format!("Editör olayı yayınlanamadı: {e}"))
+    });
+    let mcp = crate::agent_mcp::McpSetup { exe: helper.clone(), open_handler };
 
     let sonuc = tauri::async_runtime::spawn_blocking(move || {
         run_claude(
@@ -894,6 +953,7 @@ pub async fn claude_agent_run(
             &helper,
             handler,
             resume_session.as_deref(),
+            Some(mcp),
             &move |pid| {
                 // Durdur düğmesi bu pid'i öldürür.
                 if let Ok(mut slot) = app_pid.state::<ActiveRun>().0.lock() {

@@ -77,6 +77,7 @@ fn sur(
         Path::new(APP_EXE),
         handler,
         None, // resume yok — her test taze oturum
+        None, // mcp yok — hook/sandbox'a odaklan
         &|_pid| {},
         &move |o: ClaudeEvent| {
             eprintln!("  [akış] {o:?}");
@@ -170,6 +171,7 @@ fn yardimci_yoksa_fail_closed() {
         &yok,
         sabit_kapi(HookDecision::Allow, sayac.clone()),
         None,
+        None, // mcp yok
         &|_pid| {},
         &|_o| {},
     )
@@ -208,5 +210,54 @@ fn sandbox_bash_kok_disina_yazamaz() {
     assert!(kok.join("iceri.txt").exists(), "bash kök İÇİNE de yazamadı — motor iş görmüyor");
 
     let _ = std::fs::remove_file(&disari);
+    let _ = std::fs::remove_dir_all(&kok);
+}
+
+/// **MCP editör köprüsü uçtan uca:** gerçek `claude` + `--mcp-config` ile **gerçek app
+/// ikilisi** `--mcp-server` modunda → model `open_in_editor` çağırınca köprümüze düşüyor mu?
+///
+/// Python spike (`scratchpad/mcp-spike`) protokolün doğruluğunu gösterdi; bu test aynı şeyi
+/// **ship edilecek ikiliyle** kanıtlar (ders 13: test kopyasını değil gerçeği ölç).
+#[test]
+#[ignore = "gerçek claude + kimlik ister"]
+fn mcp_open_in_editor_kopruye_dusuyor() {
+    let kok = temp_root("mcp");
+    let bin = claude_bin().expect("`claude` bulunamadı");
+    let sayac = Arc::new(AtomicUsize::new(0));
+
+    // open_in_editor çağrısında köprünün handler'ına düşen yollar.
+    let acilanlar = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+    let a = acilanlar.clone();
+    let mcp = app_lib::agent_mcp::McpSetup {
+        exe: PathBuf::from(APP_EXE),
+        open_handler: Arc::new(move |path: String| {
+            a.lock().unwrap().push(path);
+            Ok(())
+        }),
+    };
+
+    let sonuc = run_claude(
+        &bin,
+        &kok,
+        "Bu klasörde net.xslt adında küçük bir XSLT dosyası oluştur, sonra onu \
+open_in_editor aracıyla editörde aç. Kısa yanıt ver.",
+        Path::new(APP_EXE),
+        sabit_kapi(HookDecision::Allow, sayac.clone()),
+        None,
+        Some(mcp),
+        &|_pid| {},
+        &|o: ClaudeEvent| eprintln!("  [akış] {o:?}"),
+    )
+    .expect("motor sürülemedi");
+    eprintln!("  [motor] çıkış kodu={:?} · {} ms", sonuc.code, sonuc.ms);
+
+    let acilan = acilanlar.lock().unwrap().clone();
+    assert!(
+        acilan.iter().any(|p| p.ends_with("net.xslt")),
+        "open_in_editor köprüye düşmedi — açılanlar: {acilan:?}"
+    );
+    // İş de görüldü mü: dosya gerçekten yazıldı mı (kanıt diskte).
+    assert!(kok.join("net.xslt").exists(), "net.xslt yazılmadı");
+
     let _ = std::fs::remove_dir_all(&kok);
 }

@@ -131,7 +131,7 @@ fn cli_deny(reason: impl AsRef<str>) -> String {
 /// - **unix:** dosya yolu → UDS. ⚠️ macOS'ta `sun_path` **104 bayt**; aşarsa dinleyici
 ///   *hiç* ayağa kalkmaz (ölçüldü). Bu yüzden yol `/tmp` altında ve kısa tutulur.
 /// - **Windows:** ad → named pipe (`\\.\pipe\…`). Dosya yolu yok.
-fn build_name(arg: &str) -> std::io::Result<Name<'_>> {
+pub(crate) fn build_name(arg: &str) -> std::io::Result<Name<'_>> {
     #[cfg(windows)]
     {
         use interprocess::local_socket::{GenericNamespaced, ToNsName};
@@ -151,7 +151,7 @@ fn build_name(arg: &str) -> std::io::Result<Name<'_>> {
 /// koşarken `AlreadyExists` verdi — saat çözünürlüğü aynı süreçteki iki kapıyı ayırmaya
 /// yetmiyor). Üretimde karşılığı: kullanıcı iki oturumu aynı anda başlatınca kapı
 /// kurulamaz. Sayaç **süreç içini**, pid+zaman **süreçler arasını** ayırır.
-fn uniq() -> String {
+pub(crate) fn uniq() -> String {
     static SAYAC: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let n = SAYAC.fetch_add(1, Ordering::SeqCst);
     let nanos = std::time::SystemTime::now()
@@ -359,7 +359,7 @@ fn serve(stream: Stream, handler: &Handler) {
 
 /// Soket adını (ve unix'te 0700 dizinini) ayır.
 #[cfg(not(windows))]
-fn alloc_socket() -> std::io::Result<(String, Option<PathBuf>)> {
+pub(crate) fn alloc_socket() -> std::io::Result<(String, Option<PathBuf>)> {
     use std::os::unix::fs::DirBuilderExt;
 
     // ⚠️ `std::env::temp_dir()` KULLANILMAZ: macOS'ta `/var/folders/xx/…/T/` döner ve
@@ -376,7 +376,7 @@ fn alloc_socket() -> std::io::Result<(String, Option<PathBuf>)> {
 }
 
 #[cfg(windows)]
-fn alloc_socket() -> std::io::Result<(String, Option<PathBuf>)> {
+pub(crate) fn alloc_socket() -> std::io::Result<(String, Option<PathBuf>)> {
     // Named pipe — dosya sistemi yolu yok, temizlenecek dizin de yok.
     Ok((format!("efe-{}.sock", uniq()), None))
 }
@@ -397,10 +397,55 @@ pub struct GateState {
     bekleyen: std::sync::Mutex<std::collections::HashMap<String, mpsc::Sender<HookDecision>>>,
 }
 
+/// Kapıda **kullanıcıya sormadan** verilebilecek karar (kısa devre); `None` = normal onay akışı.
+///
+/// İki iş yapar:
+/// 1. **Kök kilidi (güvenlik):** `Write`/`Edit`/`MultiEdit` hedefi kök DIŞINDAysa **otomatik
+///    `Deny`**. ⚠️ NEDEN: OS sandbox'ı yerleşik dosya araçlarını **kısıtlamıyor** (yalnız Bash'i —
+///    2026-07-17 ölçüldü). Sandbox'a güvenip "klasör dışına yazamaz" demek sessiz-yanlış-garanti
+///    olurdu (ders 15/17). Gerçek, zorlanabilir kilit burada: `agent_tools::guard()` yolu
+///    `canonicalize` edip (`..`/symlink/mutlak kaçış çözülür) kök altında mı bakar.
+/// 2. **MCP editör araçları:** `mcp__…` güvenli bir UI eylemidir (dosyayı editör sekmesinde aç) —
+///    **otomatik `Allow`**, kullanıcıyı her açışta durdurmayız. (Yalnız kendi sunucumuzu
+///    kaydettiğimiz için tüm `mcp__` araçları bizimdir.)
+///
+/// Read/Bash/Grep/Glob buraya düşmez → normal onay akışına gider (Bash'te yol yok, ders 15).
+fn kapida_karar(
+    tool_name: &str,
+    tool_input: &serde_json::Value,
+    root: &std::path::Path,
+) -> Option<HookDecision> {
+    if tool_name.starts_with("mcp__") {
+        return Some(HookDecision::Allow);
+    }
+    let path_key = match tool_name {
+        "Write" | "Edit" | "MultiEdit" => "file_path",
+        "NotebookEdit" => "notebook_path",
+        _ => return None,
+    };
+    let path = tool_input.get(path_key).and_then(|v| v.as_str())?;
+    match crate::agent_tools::guard(&root.to_string_lossy(), path) {
+        Ok(_) => None, // kök içi → kullanıcı yine de onaylasın
+        Err(_) => Some(HookDecision::Deny(format!(
+            "Klasör dışına yazma engellendi (güvenlik): {path}"
+        ))),
+    }
+}
+
 /// Kapı isteğini **arayüze** taşıyan handler: olayı yay, kullanıcının kararını bekle.
-pub fn tauri_handler(app: tauri::AppHandle) -> Handler {
+///
+/// `root` = koşunun (canonicalize edilmiş) çalışma klasörü — kök kilidinin dayanağı.
+pub fn tauri_handler(app: tauri::AppHandle, root: PathBuf) -> Handler {
     use tauri::{Emitter, Manager};
     Arc::new(move |req: HookRequest| {
+        // Önce kapıda otomatik karar (kök dışı yazma → deny · MCP editör → allow).
+        // Kullanıcıyı ne gereksiz durdururuz ne de güvenlik boşluğu bırakırız.
+        if let Some(k) = kapida_karar(&req.tool_name, &req.tool_input, &root) {
+            if let HookDecision::Deny(ref r) = k {
+                log::warn!("[kapı] otomatik reddedildi ({}): {r}", req.tool_name);
+            }
+            return k;
+        }
         let id = uniq();
         let (tx, rx) = mpsc::channel();
 
@@ -555,6 +600,67 @@ mod tests {
         let gate = HookGate::start(Arc::new(|_r| HookDecision::Allow)).unwrap();
         let out = hook_exchange(b"{bu json degil", gate.socket_arg(), Duration::from_secs(5));
         assert_eq!(karar(&out), "deny", "bozuk istek allow aldı: {out}");
+    }
+
+    // ── Kök kilidi + MCP auto-allow (kapida_karar) ──────────────────────────────
+    // ⚠️ Bu, ölçülmüş sessiz-yanlış-garantinin (sandbox yerleşik Write'ı kesmiyor,
+    //    2026-07-17) gerçek düzeltmesi — kilit Rust sınırında zorlanır.
+
+    fn ti(path: &str) -> serde_json::Value {
+        serde_json::json!({ "file_path": path })
+    }
+
+    #[test]
+    fn kok_ici_yazma_kullaniciya_sorulur() {
+        let root = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let hedef = root.join("kok-ici-dosya.xslt");
+        // None = kısa devre yok → normal onay akışına (kullanıcı görsün) gider.
+        assert_eq!(
+            kapida_karar("Write", &ti(&hedef.to_string_lossy()), &root),
+            None
+        );
+    }
+
+    #[test]
+    fn kok_disi_yazma_otomatik_reddedilir() {
+        let root = std::fs::canonicalize(std::env::temp_dir())
+            .unwrap()
+            .join("efe-kok-alt");
+        std::fs::create_dir_all(&root).unwrap();
+        let root = std::fs::canonicalize(&root).unwrap();
+        // Kökün ÜSTÜNE yazmaya çalış — reddedilmeli.
+        let disari = root.parent().unwrap().join("efe-disari.xslt");
+        match kapida_karar("Write", &ti(&disari.to_string_lossy()), &root) {
+            Some(HookDecision::Deny(_)) => {}
+            other => panic!("kök dışı yazma reddedilmedi: {other:?}"),
+        }
+        // `..` ile kaçış da reddedilmeli.
+        match kapida_karar("Edit", &ti("../kacis.xslt"), &root) {
+            Some(HookDecision::Deny(_)) => {}
+            other => panic!("`..` kaçışı reddedilmedi: {other:?}"),
+        }
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn mcp_araci_otomatik_izinli() {
+        let root = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        assert_eq!(
+            kapida_karar("mcp__efe-editor__open_in_editor", &serde_json::json!({"path":"/x"}), &root),
+            Some(HookDecision::Allow),
+            "MCP editör aracı otomatik izinli olmalı"
+        );
+    }
+
+    #[test]
+    fn okuma_ve_bash_kapida_karar_almaz() {
+        let root = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        // Read/Bash kök kilidine takılmaz (Bash'te yol yok, ders 15) → normal akış.
+        assert_eq!(kapida_karar("Read", &ti("/etc/hosts"), &root), None);
+        assert_eq!(
+            kapida_karar("Bash", &serde_json::json!({"command":"ls /"}), &root),
+            None
+        );
     }
 
     /// **Ölçülen gerçek:** aynı anda 3 onay uçuşta olabilir. Handler'ı bekleterek

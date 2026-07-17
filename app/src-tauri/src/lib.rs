@@ -4,6 +4,7 @@
 // entegrasyon testi de yalnızca public yüzeyi görür.
 pub mod agent_cli;
 pub mod agent_hook;
+pub mod agent_mcp;
 mod agent_tools;
 mod ai;
 mod xslt;
@@ -80,18 +81,20 @@ fn take_opened_files(state: tauri::State<'_, PendingOpen>) -> Vec<String> {
     }
 }
 
-/// `--hook-helper <soket>` argümanını yakala.
+/// `--<flag> <değer>` (veya `--<flag>=<değer>`) biçiminde bir argümanı yakala.
 ///
-/// Claude Code motorunun PreToolUse hook'u **bu ikiliyi** ayrı bir süreç olarak çağırır
-/// (ayrı yardımcı ikili shiplememek için). O modda uygulama değil, küçük bir boru olmalıyız.
-fn hook_helper_arg() -> Option<String> {
+/// Claude Code motoru **bu ikiliyi** iki ayrı yardımcı modda çağırır (ayrı ikili
+/// shiplememek için): `--hook-helper <soket>` (onay kapısı) ve `--mcp-server <soket>`
+/// (editör köprüsü MCP sunucusu). Her iki modda da Tauri **hiç başlatılmaz**, süreç
+/// yalnızca bir borudur.
+fn flag_value(flag: &str) -> Option<String> {
+    let esitli = format!("{flag}=");
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
-        if a == "--hook-helper" {
+        if a == flag {
             return args.next();
         }
-        // `--hook-helper=/tmp/…` biçimi de kabul (kabuk alışkanlığı).
-        if let Some(v) = a.strip_prefix("--hook-helper=") {
+        if let Some(v) = a.strip_prefix(&esitli) {
             return Some(v.to_owned());
         }
     }
@@ -100,11 +103,16 @@ fn hook_helper_arg() -> Option<String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // ⚠️ HER ŞEYDEN ÖNCE. Bu modda Tauri **hiç başlatılmaz**: pencere açılmaz, eklenti
-    // kurulmaz, günlük dosyası kilitlenmez. Yardımcı yalnızca stdin→soket→stdout yapar
+    // ⚠️ HER ŞEYDEN ÖNCE. Bu modlarda Tauri **hiç başlatılmaz**: pencere açılmaz, eklenti
+    // kurulmaz, günlük dosyası kilitlenmez. Yardımcı yalnızca stdin↔soket↔stdout yapar
     // ve çıkar. Builder'dan sonraya koyulursa her araç çağrısında bir GUI açılırdı.
-    if let Some(socket) = hook_helper_arg() {
+    if let Some(socket) = flag_value("--hook-helper") {
         agent_hook::hook_helper_main(&socket);
+        return;
+    }
+    // MCP editör köprüsü sunucusu (stdio JSON-RPC ↔ EditorBridge soketi).
+    if let Some(socket) = flag_value("--mcp-server") {
+        agent_mcp::mcp_server_main(&socket);
         return;
     }
 

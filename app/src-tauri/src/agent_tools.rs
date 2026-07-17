@@ -26,7 +26,7 @@ use std::path::{Path, PathBuf};
 ///
 /// `target` göreli ise köke eklenir; mutlaksa olduğu gibi denenir (ama yine
 /// kök denetiminden geçer, yani kök dışı mutlak yol da reddedilir).
-fn guard(root: &str, target: &str) -> Result<PathBuf, String> {
+pub(crate) fn guard(root: &str, target: &str) -> Result<PathBuf, String> {
     let root = std::fs::canonicalize(root)
         .map_err(|e| format!("Çalışma klasörü çözümlenemedi ({root}): {e}"))?;
 
