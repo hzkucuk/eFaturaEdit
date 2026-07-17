@@ -3,6 +3,32 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.35.0] — 2026-07-17 — Klasör Ajanı'na Üçüncü Motor: Gerçek Claude Code
+
+### Eklenen
+- **🤖 Claude Code motoru (opt-in, üçüncü mod).** AI panosunda artık üç mod var: **Öneri** (güvenli,
+  salt-öneri), **Klasör Ajanı** (BYOK, araç döngüsü uygulamada) ve **Claude Code** (yeni). Bu modda
+  gerçek `claude` ikilisi seçtiğin çalışma klasöründe sürülür — dosyaları okur/yazar/düzenler, komut
+  çalıştırır. Mevcut iki mod aynen kalır; varsayılan yine **Öneri**.
+  - **Her işlem onaydan geçer.** Onay bir **PreToolUse hook** üzerinden uygulamaya gelir; Onayla · Bu
+    aracı hep izin ver · Reddet. **Aynı anda birden çok onay** (ölçüldü: 3 eşzamanlı) bir **kuyrukta**
+    gösterilir — arkada bekleyen sayısı görünür.
+  - **Kimlik:** Claude.ai aboneliğin **veya** Anthropic API anahtarın (BYOK). Sağlayıcı seçimi bu modda
+    kullanılmaz; `claude` kendi kimliğiyle çalışır.
+  - **Dağıtım:** ikili kuruluma **gömülmez** (66 MB) — motor ilk kullanımda indirilir ve **açılmadan
+    önce sha512 ile doğrulanır**. Gelişmiş ayarda sistemdeki `claude` da kabul edilir (sürüm tabanı
+    denetimiyle; çok eskiyse **açıkça reddedilir**, sessizce kullanılmaz).
+
+### Güvenlik (bilinçli, açıkça belgelenmiş)
+- **Onay kapısı fail-closed.** `--permission-mode default` kullanılır (ölçüldü: `bypassPermissions`
+  yardımcı çökerse ajanı serbest bırakıyor — fail-open). Onay köprüsü kurulamazsa, kullanıcı soruyu
+  görmediyse veya zaman aşarsa → **reddedilir**.
+- **Sandbox (mac/Linux) klasör dışına yazmayı engeller** ama **okumayı engellemez** — bilgilendirme
+  ekranı bunu **dürüstçe** söyler ("dışarı yazamaz ✓ / diğer dosyaları okuyabilir ⚠️"). Windows'ta
+  sandbox yoktur; orada bash'in tek koruması onay kapısıdır ve komut çalışmadan önce sorulur. (Ders 15/17.)
+- **Sessiz sürüm sürüklenmesi yok:** indirilen sürüm sabittir; hook/stream-json sözleşmesi ölçülmüş
+  sürümle doğrulanır.
+
 ## [2.34.0] — 2026-07-15 — Klasör Ajanı (VSCode-benzeri) + Açılışta Güncelleme Ayarı
 
 ### Eklenen

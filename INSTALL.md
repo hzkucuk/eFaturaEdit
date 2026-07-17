@@ -34,6 +34,13 @@ eFaturaEditSolution.sln
 | Xcode Command Line Tools | macOS derlemesi için |
 | WebKitGTK 4.1 + GTK3 (Linux derlemesi için) | `libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev` |
 
+> **Çalışma-zamanı, opsiyonel — Claude Code motoru (v2.35.0).** Bu opt-in mod için ek bir
+> **derleme** bağımlılığı yoktur (Rust tarafındaki `interprocess`/`sha2`/`flate2`/`tar` saf-Rust'tır,
+> otomatik derlenir). Yalnızca **Linux'ta** motorun bash sandbox'ı `bubblewrap` gerektirir; kurulu
+> değilse motor sandbox'sız çalışmaz, **görünür bir hata verir** (sessizce korumasız koşmaz). Kur:
+> `sudo apt install bubblewrap` (Debian/Ubuntu). macOS'ta yerleşik `sandbox-exec` kullanılır;
+> Windows'ta sandbox yoktur (orada bash her seferinde onaya sunulur).
+
 ## npm Paketleri (Tauri App)
 
 | Paket | Amaç |

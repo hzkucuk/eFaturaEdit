@@ -97,8 +97,9 @@ sağlayıcının **hepsinde** aynı şekilde çalışır.
 
 ### 🧠 Klasör Ajanı — VSCode-benzeri ajan modu (v2.34.0, opt-in)
 
-AI panosunda **iki mod** vardır: **Öneri** (varsayılan, güvenli salt-öneri) ve **Klasör Ajanı**. Ajan
-modunda model seçilen bir **çalışma klasöründe** dosyalarla gerçekten çalışır — Cline/Cursor benzeri.
+AI panosunda **üç mod** vardır: **Öneri** (varsayılan, güvenli salt-öneri), **Klasör Ajanı** (BYOK,
+araç döngüsü uygulamada) ve **Claude Code** (aşağıda). Klasör Ajanı modunda model seçilen bir **çalışma
+klasöründe** dosyalarla gerçekten çalışır — Cline/Cursor benzeri.
 
 - **Araçlar:** `read_file`, `list_dir`, `edit_file` (tek-eşleşmeli), `write_file`, `run_bash`
   (klasörde kabuk komutu, cwd=kök), `run_xslt` (şablonu Saxon'dan geçirip render edilmiş HTML'i modele
@@ -115,6 +116,25 @@ modunda model seçilen bir **çalışma klasöründe** dosyalarla gerçekten ça
     koruması **onay kapısı** — UI komutu ham gösterir + **sarı uyarı bandı**. Bu, "cwd köke sabit" ile
     "klasör dışına çıkamaz"ın aynı şey olmadığının açık kabulüdür (ders 15).
   - Varsayılan **kapalı**; kullanıcı açıkça açar. BYOK korunur; anahtarlar OS anahtar zincirinde.
+
+### 🤖 Claude Code motoru — Klasör Ajanı'nın üçüncü modu (v2.35.0, opt-in)
+
+Klasör Ajanı'nda sağlayıcı seçimi yerine **gerçek Claude Code** (`claude` ikilisi) sürülür. Araç
+döngüsü uygulamada dönmez — `claude` kendi araçlarını (Read/Write/Edit/Bash/Grep/Glob) çalıştırır,
+uygulama **onay kapısıdır**.
+
+- **Onay = PreToolUse hook.** Ölçülerek seçildi (Node SDK değil): hook `--settings` ile tanımlanır,
+  Bash dahil her araçta ateşler. Onay bir **kuyrukta** gösterilir — **aynı anda 3 onay** uçuşta
+  olabildiği ölçüldü, tek modal bir aracı sessizce cevapsız bırakırdı.
+- **Fail-closed.** `--permission-mode default` (⛔ `bypassPermissions` değil — ölçüldü: yardımcı
+  çökünce ajanı serbest bırakıyor). Köprü kurulamaz / kullanıcı görmez / zaman aşarsa → **reddedilir**.
+- **Kimlik:** Claude.ai aboneliği **veya** Anthropic API anahtarı. Sağlayıcı seçimi bu modda kullanılmaz.
+- **Dağıtım:** ikili gömülmez (66 MB); ilk kullanımda indirilir ve **açılmadan önce sha512** ile
+  doğrulanır. Gelişmiş ayarda sistemdeki `claude` da kabul (sürüm tabanı denetimiyle; eskiyse
+  **açıkça reddedilir**).
+- **Güvenlik — dürüst sınırlar (ders 15/17):** sandbox (mac/Linux) klasör dışına **yazmayı** engeller,
+  **okumayı engellemez** — bilgilendirme ekranı bunu açıkça söyler. Windows'ta sandbox yok; orada bash
+  sorulur.
 
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 
