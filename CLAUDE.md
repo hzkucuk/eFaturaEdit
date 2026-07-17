@@ -254,6 +254,27 @@ yarısı yalan olurdu.
 varsa. Ve kapsamı **parça parça** ölç (yazma ✓ / okuma ✗ / ağ ?): "sandbox açık" tek başına garanti
 değildir, kullanıcıya **ölçtüğün kadarını** söyle.
 
+### 18. Ölçülmüş bir liste **envanter değil, örnektir** — ve "başarılı" alanı yalan söyleyebilir (2026-07-17)
+
+Ders 16'nın kardeşi: orada bir **yokluktan** fazla genellemiştim; burada bir **listeyi tam sanmıştım.**
+stream-json'u ayrıştırırken elimde kendi ölçtüğüm tip listesi vardı (`system`/`assistant`/`user`/
+`result`). Yazmadan önce gerçek çıktıyı yeniden ölçtüm — **liste eksikti:** belgelenmemiş bir
+`rate_limit_event` satırı ve `assistant` içinde `thinking` bloğu da geliyordu. Liste yanlış değildi;
+**o koşuda görülenlerin** listesiydi. Aynı ölçümde iki sessiz tuzak daha çıktı:
+- `tool_result.is_error` başarıda **`null`** gelir (`false` değil). Düz `bool` yazılsaydı satır
+  çözülemez, **tüm akış sessizce susardı** — ekranda hata değil, boşluk.
+- **`result.is_error` her araç reddedilse bile `false`** ve `subtype` `"success"`. Canlı ölçüm:
+  `basarili:true` + `reddedilen:[Write]` — hiçbir şey yazılmamışken "başarılı". Arayüz o alana
+  baksaydı kullanıcıya "tamamdır" derdi. Gerçek karne `permission_denials[]`.
+
+**Kural:** Bir dış sözleşmenin (JSON tipi, enum, alan, hata kodu) **gözlemlenmiş** listesini kapalı
+küme sayma — gözlem örnektir. Ayrıştırıcıya daima **bilinmeyen-değeri-geçir** yolu koy
+(`#[serde(other)]`, `default`) ve **bilinmeyeni say + logla**: sessizce yutulan satır, "motor bazen boş
+dönüyor" gibi teşhis edilemez bir şikâyete dönüşür. Boolean alanlarda `Option` tercih et — `null`,
+`false` demek değildir. Ve bir alanın **adına göre anlam verme** (`is_error`, `success`, `ok`): "iş
+görüldü mü?" sorusunu hangi alanın cevapladığını **ölç**; sağlayıcının "başarı"sı seninkiyle aynı
+olmayabilir.
+
 ---
 
 ## Mimari
