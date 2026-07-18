@@ -3,9 +3,14 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
-## [2.36.0] — 2026-07-18 — Claude Code motoru: editör entegrasyonu + kök kilidi
+## [2.36.0] — 2026-07-18 — Claude Code motoru: editör entegrasyonu + süreklilik + kök kilidi
 
 ### Eklenen
+- **💬 Konuşma sürekliliği.** Claude Code modunda her mesaj artık **aynı oturumu sürdürür**
+  (`--resume`): model önceki turları hatırlar ("az önce oluşturduğun dosyayı aç" çalışır). "＋ Yeni"
+  ile taze oturum açılır. **■ Durdur** düğmesiyle çalışan görev iptal edilir. Akış **otomatik**
+  en alta iner ("dibe yapış"; yukarı kaydırınca rahatsız etmez). Araç kartları **IN/OUT açılır**,
+  her adımda **saat + süre** ("Düşündü — Xs").
 - **📂 Editör entegrasyonu.** Claude Code motoru artık ürettiği/düzenlediği `.xslt`/`.xsl`/`.xml`
   dosyasını **uygulamanın kendi editör sekmesinde açabiliyor**. Bir XSLT/XML editörünün içindeki AI'nın
   dosyayı editörde gösterememesi tuhaftı — motor kendini "terminal" sanıp `open` deniyordu (sandbox'ta
