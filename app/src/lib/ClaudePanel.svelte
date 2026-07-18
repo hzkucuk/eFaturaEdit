@@ -36,14 +36,22 @@
     if (!claude.engine) void refreshEngine(settings.claudeUseSystemBinary);
   });
 
-  // Otomatik kaydırma: feed değişince dibe in — AMA kullanıcı yukarı kaydırdıysa
-  // rahatsız etme (dibe yakınsa kaydır, eşik 60px). Claude Code'daki gibi.
-  $effect(() => {
-    void claude.feed.length;
+  // Otomatik kaydırma — "dibe yapış" deseni: kullanıcı elle yukarı kaydırana kadar
+  // en altta kal. Eski hâli "zaten dibe yakınsa kaydır" idi; ilk yükte scrollTop=0
+  // olduğu için hiç dibe inmiyordu (içerik en üstte kalıp altı kesiliyordu).
+  let dibeYapis = $state(true);
+  function feedKaydir(): void {
     const el = feedEl;
     if (!el) return;
-    const dibeYakin = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
-    if (dibeYakin) queueMicrotask(() => (el.scrollTop = el.scrollHeight));
+    dibeYapis = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  }
+  $effect(() => {
+    void claude.feed.length;
+    void claude.feed.at(-1)?.tool?.out; // araç sonucu gelince de dibe in
+    void claude.queue.length;
+    const el = feedEl;
+    if (!el || !dibeYapis) return;
+    queueMicrotask(() => (el.scrollTop = el.scrollHeight));
   });
 
   async function chooseFolder(): Promise<void> {
@@ -149,7 +157,7 @@
   {/if}
 
   <!-- Akış -->
-  <div class="feed" bind:this={feedEl}>
+  <div class="feed" bind:this={feedEl} onscroll={feedKaydir}>
     {#each claude.feed as item, i (i)}
       {#if item.kind === 'user'}
         <div class="row user">
@@ -325,9 +333,10 @@
   .hint-foot { margin: 6px 0 0; color: #666; }
 
   .feed {
-    flex: 1; min-height: 0; overflow-y: auto; display: flex;
+    flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex;
     flex-direction: column; gap: 5px; padding: 6px 2px; scroll-behavior: smooth;
   }
+  .feed > * { max-width: 100%; }
   .row { display: flex; align-items: flex-start; gap: 6px; }
   .row.user { flex-direction: row-reverse; }
   .msg { padding: 6px 9px; border-radius: 6px; white-space: pre-wrap; word-break: break-word; flex: 1; }
@@ -342,9 +351,10 @@
   .tool-head {
     display: flex; align-items: center; gap: 6px; width: 100%; padding: 5px 8px;
     background: none; border: none; cursor: pointer; font: inherit; text-align: left;
+    min-width: 0;
   }
-  .caret { color: #888; width: 10px; }
-  .tname { font-weight: 600; white-space: nowrap; }
+  .caret { color: #888; width: 10px; flex-shrink: 0; }
+  .tname { font-weight: 600; white-space: nowrap; flex-shrink: 0; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
   .tsum { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #555; }
   .tstat { white-space: nowrap; }
   .tdur { font-size: 10px; color: #888; white-space: nowrap; }

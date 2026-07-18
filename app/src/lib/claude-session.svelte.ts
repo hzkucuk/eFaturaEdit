@@ -126,9 +126,21 @@ function toolSummary(arac: string, girdi: Record<string, unknown>): string {
       return `ara: ${s('pattern')}`;
     case 'Grep':
       return `içerik ara: ${s('pattern')}`;
+    case 'mcp__efe-editor__open_in_editor':
+      return `editörde aç: ${s('path')}`;
     default:
       return arac;
   }
+}
+
+/**
+ * Kart başlığında gösterilecek **kısa** araç adı. MCP araçlarının gerçek adı çok uzun
+ * (`mcp__efe-editor__open_in_editor`) — dar panelde başlığı taşırıp düzeni bozuyordu.
+ */
+function toolDisplayName(arac: string): string {
+  if (arac === 'mcp__efe-editor__open_in_editor') return '📂 Editörde aç';
+  if (arac.startsWith('mcp__')) return arac.split('__').pop() ?? arac;
+  return arac;
 }
 
 // ─── Olay köprüsü ──────────────────────────────────────────────────────────
@@ -221,7 +233,7 @@ async function baglan(): Promise<void> {
             kind: 'tool',
             text: '',
             tool: {
-              name: o.arac,
+              name: toolDisplayName(o.arac),
               summary: toolSummary(o.arac, o.girdi),
               in: toolIn(o.arac, o.girdi),
               path: toolPath(o.arac, o.girdi),
