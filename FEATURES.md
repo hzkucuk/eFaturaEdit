@@ -142,6 +142,15 @@ uygulama **onay kapısıdır**.
   (ölçüldü: OS sandbox'ı yalnız `bash`'i kısıtlıyor, yerleşik dosya araçlarını değil; her platformda
   geçerli). Bash mac/Linux'ta sandbox'lı, Windows'ta onaya bağlı. **Okuma engellenmez** — bilgilendirme
   ekranı hepsini açıkça söyler.
+- **💬 Süreklilik + oturum geçmişi (v2.36/2.37):** konuşma `--resume` ile sürer (model önceki turları
+  hatırlar); her kök için önceki oturumlar **kalıcı** listelenir (daraltılabilir "🕘 Geçmiş"), tıkla→devam.
+  **■ Durdur** çalışan görevi iptal eder; akış otomatik en alta iner.
+- **🧠 Model + efor (v2.37):** Ayarlar'dan model (Opus/Sonnet/Haiku) ve düşünme eforu (Düşük/Orta/Yüksek);
+  boş = `claude` varsayılanı. Slash `claude`'a geçer, `/clear` yeni oturum.
+- **🖥️ Terminal sekmesi (v2.37, ileri kullanıcı, opt-in):** gerçek interaktif `claude` TUI'si bir PTY'de
+  (xterm.js). ⚠️ **Açıkça etiketli ham mod:** interaktif claude fail-closed kilidimizi tutmadığı
+  (ölçüldü) için burada klasör kilidi **garanti değildir** — tek koruma claude'un kendi onay promptları.
+  Ana panel güvenli/önerilen mod kalır.
 
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 

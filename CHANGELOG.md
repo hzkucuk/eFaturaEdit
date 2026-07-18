@@ -3,6 +3,28 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.37.0] — 2026-07-18 — Claude Code motoru: oturum geçmişi, model/efor, ham Terminal
+
+### Eklenen
+- **🕘 Çoklu oturum geçmişi.** Claude Code panelinde her çalışma klasörü için önceki oturumlar
+  **kalıcı** olarak saklanır (daraltılabilir "Geçmiş" listesi, varsayılan kapalı). Bir oturuma tıkla →
+  akış geri gelir ve sonraki mesaj **kaldığı yerden devam** eder (`--resume`). 🗑 ile silinir. Oturum
+  kimliği = claude'un `session_id`'si (ölçüldü: `--resume` boyunca sabit).
+- **🧠 Model + düşünme eforu seçimi.** Ayarlar → AI'da Claude Code için **model** (Opus/Sonnet/Haiku
+  veya varsayılan) ve **efor** (Düşük/Orta/Yüksek veya varsayılan) seçilebilir; boş bırakılırsa
+  `claude`'un kendi varsayılanı kullanılır. Slash komutları (`/compact` vb.) doğrudan `claude`'a geçer;
+  `/clear` yeni oturum açar.
+- **🖥️ "Terminal" sekmesi (ileri kullanıcı, opt-in).** Gerçek interaktif `claude` arayüzü uygulamanın
+  içinde bir PTY'de (xterm.js) — kendi TUI'si, kendi araç onaylarıyla.
+
+### Güvenlik — dürüst sınır (ölçüldü)
+- **Terminal sekmesi AÇIKÇA "ham claude" olarak etiketlidir.** Ölçtük (2026-07-18, diske bakılarak):
+  interaktif modda uygulamanın fail-closed **hook+sandbox kilidi TUTMUYOR** — `claude` kendi izin
+  akışıyla klasör dışına yazabildi. Bu yüzden Terminal sekmesinde bu ayarlar **hiç verilmez** (yalan
+  güvenlik hissi yaratmamak için) ve sekme büyük sarı bir bantla *"klasör kilidi burada garanti değil;
+  tek koruma claude'un kendi onay promptlarıdır"* der. **Ana Claude Code paneli** (`-p`, fail-closed)
+  güvenli ve **önerilen** mod olarak kalır. (Ders 15/17.)
+
 ## [2.36.0] — 2026-07-18 — Claude Code motoru: editör entegrasyonu + süreklilik + kök kilidi
 
 ### Eklenen
