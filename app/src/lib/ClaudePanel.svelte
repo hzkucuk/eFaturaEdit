@@ -18,9 +18,28 @@
     resetClaudeChat,
     refreshEngine,
     installEngine,
+    loadClaudeSession,
   } from '$lib/claude-session.svelte';
+  import {
+    listClaudeSessions,
+    deleteClaudeSession,
+    type ClaudeHistorySession,
+  } from '$lib/claude-history.svelte';
   import { settings } from '$lib/settings.svelte';
   import { pickFolder } from '$lib/batch';
+
+  /** Geçmiş paneli açık mı (daraltılabilir; varsayılan kapalı). */
+  let historyOpen = $state(false);
+  /** Bu kök için kayıtlı oturumlar (en yeni üstte). */
+  const gecmis = $derived(listClaudeSessions(claude.root));
+
+  function secOturum(s: ClaudeHistorySession): void {
+    loadClaudeSession(s);
+    historyOpen = false;
+  }
+  function histZaman(ts: number): string {
+    return new Date(ts).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
+  }
 
   // Bir dosya yolunu ana editör sekmesinde açar (+page.svelte'in openPaths'i).
   // Modelin `open_in_editor` MCP çağrısı zaten olayla otomatik açar; bu düğme,
@@ -133,6 +152,31 @@
       </span>
     {/if}
   </div>
+
+  <!-- Oturum geçmişi (kök başına, daraltılabilir; varsayılan kapalı) -->
+  {#if claude.root}
+    <div class="history">
+      <button class="hist-toggle" onclick={() => (historyOpen = !historyOpen)}>
+        <span class="caret">{historyOpen ? '▾' : '▸'}</span> 🕘 Geçmiş
+        {#if gecmis.length > 0}<span class="hist-count">{gecmis.length}</span>{/if}
+      </button>
+      {#if historyOpen}
+        <div class="hist-list">
+          {#each gecmis as s (s.id)}
+            <div class="hist-item" class:active={claude.sessionId === s.id}>
+              <button class="hist-load" onclick={() => secOturum(s)} disabled={claude.running} title={s.baslik}>
+                <span class="hist-title">{s.baslik}</span>
+                <span class="hist-time">{histZaman(s.updatedAt)}</span>
+              </button>
+              <button class="hist-del" onclick={() => deleteClaudeSession(s.id)} title="Sil">🗑</button>
+            </div>
+          {:else}
+            <p class="hist-empty">Bu klasörde kayıtlı oturum yok.</p>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
 
   <!-- Bilgilendirme (dürüst — ders 15/17) -->
   {#if !claude.root}
@@ -324,6 +368,39 @@
     border-radius: 4px; padding: 1px 5px; white-space: nowrap;
   }
 
+  .history { margin: 2px 0 4px; }
+  .hist-toggle {
+    display: flex; align-items: center; gap: 5px; width: 100%; padding: 3px 4px;
+    background: none; border: none; cursor: pointer; font: inherit; font-size: 12px;
+    color: #555; text-align: left;
+  }
+  .hist-count {
+    font-size: 10px; background: #e0e6f0; color: #445; border-radius: 8px; padding: 0 6px;
+  }
+  .hist-list {
+    display: flex; flex-direction: column; gap: 2px; max-height: 160px; overflow-y: auto;
+    padding: 2px 0 2px 14px;
+  }
+  .hist-item { display: flex; align-items: center; gap: 4px; }
+  .hist-item.active .hist-load { background: #e8f0fe; border-color: #a5c8ff; }
+  .hist-load {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start;
+    gap: 1px; padding: 4px 7px; border: 1px solid #e2e2e2; background: #fafafa;
+    border-radius: 5px; cursor: pointer; font: inherit; text-align: left;
+  }
+  .hist-load:disabled { cursor: default; opacity: 0.6; }
+  .hist-title {
+    font-size: 12px; color: #333; max-width: 100%; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .hist-time { font-size: 10px; color: #999; }
+  .hist-del {
+    flex-shrink: 0; border: none; background: none; cursor: pointer; font-size: 12px;
+    opacity: 0.5; padding: 2px 4px;
+  }
+  .hist-del:hover { opacity: 1; }
+  .hist-empty { font-size: 11px; color: #999; padding: 4px 7px; margin: 0; }
+
   .claude-hint {
     padding: 10px 12px; background: #f4f8ff; border: 1px solid #cfe0ff;
     border-radius: 6px; color: #333; line-height: 1.5;
@@ -443,6 +520,11 @@
   :global(html.dark) .tool-head, :global(html.dark) .tname { color: #ddd; }
   :global(html.dark) .io pre { background: #1a1a1a; color: #ddd; }
   :global(html.dark) .open-editor { background: #1e2f4a; border-color: #2f4159; color: #9dc0ff; }
+  :global(html.dark) .hist-toggle { color: #bbb; }
+  :global(html.dark) .hist-count { background: #33415a; color: #cdd; }
+  :global(html.dark) .hist-load { background: #2a2a2a; border-color: #444; }
+  :global(html.dark) .hist-title { color: #ddd; }
+  :global(html.dark) .hist-item.active .hist-load { background: #1e3a5f; border-color: #2f4159; }
   :global(html.dark) .claude-hint { background: #1e2a3a; border-color: #2f4159; color: #ddd; }
   :global(html.dark) .engine-box { background: #33291a; border-color: #5a4a2a; color: #ddd; }
   :global(html.dark) .composer { background: #222; border-color: #444; }

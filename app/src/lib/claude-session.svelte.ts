@@ -19,6 +19,7 @@
  */
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { saveClaudeSession, type ClaudeHistorySession } from '$lib/claude-history.svelte';
 
 /** Rust `ClaudeEvent` ile birebir (`#[serde(tag = "tur")]`). */
 type ClaudeEvent =
@@ -357,7 +358,27 @@ export async function runClaude(gorev: string, sistemIkili: boolean): Promise<vo
   } finally {
     claude.running = false;
     claude.queue = []; // koşu bitti; bekleyen onaylar artık cevapsız
+    // Oturumu geçmişe kaydet — kimlik = session_id (Baslangic'te dolar). İlk turda
+    // yeni kayıt, sonraki resume turlarında aynı id güncellenir.
+    if (claude.sessionId) {
+      saveClaudeSession({ id: claude.sessionId, kok: claude.root, feed: claude.feed });
+    }
   }
+}
+
+/**
+ * Kayıtlı bir oturumu geri yükle: feed + session_id geri gelir, sonraki mesaj
+ * `--resume` ile bağlamı sürdürür. Koşu sürerken yükleme yapılmaz.
+ */
+export function loadClaudeSession(s: ClaudeHistorySession): void {
+  if (claude.running) return;
+  claude.root = s.kok;
+  // Derin kopya — kayıttaki feed'i doğrudan ekrana bağlayıp sonra mutasyonla kirletme.
+  claude.feed = s.feed.map((f) => ({ ...f, tool: f.tool ? { ...f.tool } : undefined }));
+  claude.sessionId = s.id;
+  claude.started = true; // resume → "Motor başladı" spam'ini bastır
+  claude.error = '';
+  claude.lastDenied = [];
 }
 
 /** Uçuştaki koşuyu durdur — çalışan `claude` sürecini öldürür. */
