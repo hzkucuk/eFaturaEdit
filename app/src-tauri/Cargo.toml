@@ -49,6 +49,11 @@ tar = "0.4"
 # GenericFilePath (unix → UDS) / GenericNamespaced (Windows → named pipe).
 # Saf-Rust (libc + widestring), C toolchain getirmez → çapraz derleme bozulmaz.
 interprocess = "2.4.2"
+# Faz D — "Terminal" sekmesi: ham interaktif `claude`'u gerçek bir PTY'de sürer
+# (kendi TUI'si, kendi izin sistemi). ⚠️ Bu modda bizim fail-closed hook+sandbox
+# garantimiz TUTMAZ (ölçüldü 2026-07-18: interaktif claude sandbox'ı kendi izin
+# akışıyla atlıyor) — sekme AÇIKÇA "ham claude, klasör kilidi garanti değil" etiketli.
+portable-pty = "0.9"
 
 # Yalnızca unix: onay kapısına bağlanan sürecin gerçekten BİZ olduğumuzu doğrulamak
 # için `geteuid()` (agent_hook::serve). Windows'ta karşılığı pipe ACL'i + FIRST_PIPE_INSTANCE.

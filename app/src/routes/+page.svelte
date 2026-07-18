@@ -46,6 +46,7 @@
   import AIAssistant from '$lib/AIAssistant.svelte';
   import AgentPanel from '$lib/AgentPanel.svelte';
   import ClaudePanel from '$lib/ClaudePanel.svelte';
+  import ClaudeTerminal from '$lib/ClaudeTerminal.svelte';
   import UpdateModal from '$lib/UpdateModal.svelte';
   import { checkForUpdate } from '$lib/updater.svelte';
   import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
@@ -2469,11 +2470,19 @@ window.addEventListener('message', function(e) {
             onclick={() => updateSetting('aiMode', 'claude')}
             title={m.ai.modeClaudeTitle}
           >{m.ai.modeClaude}</button>
+          <button
+            class="ai-mode-tab"
+            class:active={settings.aiMode === 'terminal'}
+            onclick={() => updateSetting('aiMode', 'terminal')}
+            title="Ham interaktif claude (kendi güvenliğiyle — klasör kilidi garanti değil)"
+          >Terminal</button>
         </div>
         {#if settings.aiMode === 'agent'}
           <AgentPanel />
         {:else if settings.aiMode === 'claude'}
           <ClaudePanel onOpenInEditor={(path) => void openPaths([path])} />
+        {:else if settings.aiMode === 'terminal'}
+          <ClaudeTerminal />
         {:else}
           <AIAssistant
             xsltPath={editorState.xsltPath}

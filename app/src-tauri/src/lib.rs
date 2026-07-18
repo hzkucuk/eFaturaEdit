@@ -5,6 +5,7 @@
 pub mod agent_cli;
 pub mod agent_hook;
 pub mod agent_mcp;
+mod agent_terminal;
 mod agent_tools;
 mod ai;
 mod xslt;
@@ -159,6 +160,8 @@ pub fn run() {
         .manage(agent_hook::GateState::default())
         // Uçuştaki motor koşusunun pid'i — "Durdur" bununla süreci öldürür.
         .manage(agent_cli::ActiveRun::default())
+        // Faz D "Terminal" sekmesi: uçuştaki ham `claude` PTY oturumu.
+        .manage(agent_terminal::TerminalState::default())
         .invoke_handler(tauri::generate_handler![
             greet,
             open_devtools,
@@ -180,7 +183,11 @@ pub fn run() {
             agent_cli::claude_engine_install,
             agent_cli::claude_agent_run,
             agent_cli::claude_agent_cancel,
-            agent_hook::claude_hook_decide
+            agent_hook::claude_hook_decide,
+            agent_terminal::claude_terminal_start,
+            agent_terminal::claude_terminal_write,
+            agent_terminal::claude_terminal_resize,
+            agent_terminal::claude_terminal_kill
         ])
         .setup(|app| {
             // macOS'ta uygulama menüsündeki "e-Fatura Edit → Hakkında" paneli.

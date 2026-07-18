@@ -200,7 +200,7 @@ export interface Settings {
    * - `agent`   = Klasör Ajanı, BYOK motor (dosya okur/yazar; araç döngüsü uygulamada)
    * - `claude`  = Klasör Ajanı, **Claude Code motoru** (`claude` ikilisi sürülür)
    */
-  aiMode: 'suggest' | 'agent' | 'claude';
+  aiMode: 'suggest' | 'agent' | 'claude' | 'terminal';
   /** Klasör Ajanının "hep izin ver" dendiği güvenilir kök klasörler (kalıcı). */
   agentTrustedFolders: string[];
   /**
