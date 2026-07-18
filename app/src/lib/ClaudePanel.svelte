@@ -22,6 +22,11 @@
   import { settings } from '$lib/settings.svelte';
   import { pickFolder } from '$lib/batch';
 
+  // Bir dosya yolunu ana editör sekmesinde açar (+page.svelte'in openPaths'i).
+  // Modelin `open_in_editor` MCP çağrısı zaten olayla otomatik açar; bu düğme,
+  // model aracı çağırmadan yalnız Write/Edit yaptığında manuel köprüdür.
+  let { onOpenInEditor }: { onOpenInEditor?: (path: string) => void } = $props();
+
   let input = $state('');
   let feedEl: HTMLDivElement | null = $state(null);
   /** Açık (IN/OUT görünür) araç kartlarının feed index'leri. */
@@ -129,12 +134,14 @@
         komut çalıştırır. <b>Her işlem senin onayından geçer.</b>
       </p>
       <ul>
+        <li>✅ Dosya yazma/düzenleme klasör <b>dışına çıkamaz</b> — onay kapısında zorlanır (her platformda).</li>
         {#if claude.engine?.sandbox}
-          <li>✅ Klasörün <b>dışına yazamaz</b> (işletim sistemi sandbox'ı).</li>
+          <li>✅ Komutlar (bash) da sandbox ile klasöre kilitli.</li>
         {:else}
-          <li>⚠️ Bu platformda sandbox <b>yok</b> — komutlar klasör dışına çıkabilir; tek koruma onay kapısı.</li>
+          <li>⚠️ Bu platformda komut (bash) sandbox'ı <b>yok</b> — komutlar klasör dışına çıkabilir; tek koruma onay kapısı.</li>
         {/if}
-        <li>⚠️ Diskteki <b>diğer dosyaları okuyabilir</b> — sandbox okumayı engellemiyor.</li>
+        <li>⚠️ Diskteki <b>diğer dosyaları okuyabilir</b> — okuma engellenmiyor.</li>
+        <li>📂 Ürettiği .xslt/.xml dosyalarını <b>editörde açabilir</b> (senin de "Editörde aç" düğmen var).</li>
         <li>🔑 Kimlik: Claude.ai aboneliğin veya Anthropic API anahtarın.</li>
       </ul>
       <p class="hint-foot">Başlamak için bir klasör seç.</p>
@@ -171,6 +178,14 @@
             {#if item.durationMs != null}<span class="tdur">{sure(item.durationMs)}</span>{/if}
             <span class="ts" title={tamTarih(item.ts)}>{saat(item.ts)}</span>
           </button>
+          {#if item.tool.path}
+            {@const tpath = item.tool.path}
+            <div class="tool-actions">
+              <button class="open-editor" onclick={() => onOpenInEditor?.(tpath)} title={tpath}>
+                📂 Editörde aç
+              </button>
+            </div>
+          {/if}
           {#if acik.has(i)}
             {#if item.tool.in}
               <div class="io"><span class="io-lbl">IN</span><pre>{item.tool.in}</pre></div>
@@ -333,6 +348,13 @@
   .tsum { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #555; }
   .tstat { white-space: nowrap; }
   .tdur { font-size: 10px; color: #888; white-space: nowrap; }
+  .tool-actions { padding: 2px 8px 6px; }
+  .open-editor {
+    font-size: 11px; padding: 3px 8px; border: 1px solid #a5c8ff; background: #eef4ff;
+    color: #1a56c4; border-radius: 5px; cursor: pointer; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .open-editor:hover { background: #e0ecff; }
   .io { border-top: 1px solid #e0e6e0; padding: 4px 8px; }
   .io-lbl {
     display: inline-block; font-size: 10px; font-weight: 700; color: #888;
@@ -410,6 +432,7 @@
   :global(html.dark) .tool-card { background: #23301f; border-color: #35452f; }
   :global(html.dark) .tool-head, :global(html.dark) .tname { color: #ddd; }
   :global(html.dark) .io pre { background: #1a1a1a; color: #ddd; }
+  :global(html.dark) .open-editor { background: #1e2f4a; border-color: #2f4159; color: #9dc0ff; }
   :global(html.dark) .claude-hint { background: #1e2a3a; border-color: #2f4159; color: #ddd; }
   :global(html.dark) .engine-box { background: #33291a; border-color: #5a4a2a; color: #ddd; }
   :global(html.dark) .composer { background: #222; border-color: #444; }

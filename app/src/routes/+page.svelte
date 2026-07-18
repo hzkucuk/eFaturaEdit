@@ -2079,6 +2079,8 @@ window.addEventListener('message', function(e) {
   let unlistenClose: (() => void) | null = null;
   let unlistenDrop: (() => void) | null = null;
   let unlistenOpened: (() => void) | null = null;
+  /** Claude Code motoru `open_in_editor` çağırınca gelen olay (MCP köprüsü). */
+  let unlistenClaudeOpen: (() => void) | null = null;
   /** Pencere üzerine dosya sürükleniyor mu (bırakma alanı göstergesi). */
   let dropActive = $state(false);
 
@@ -2200,6 +2202,12 @@ window.addEventListener('message', function(e) {
         void openPaths(e.payload);
       });
 
+      // Claude Code motoru bir .xslt/.xml üretip `open_in_editor` çağırınca Rust
+      // bu olayı yayar → dosyayı editör sekmesinde aç (openPaths tek yolu da alır).
+      unlistenClaudeOpen = await listen<string>('claude-open-in-editor', (e) => {
+        void openPaths([e.payload]);
+      });
+
       const pending = await invoke<string[]>('take_opened_files');
       if (pending.length > 0) await openPaths(pending);
     } catch (err) {
@@ -2218,6 +2226,7 @@ window.addEventListener('message', function(e) {
     unlistenClose?.();
     unlistenDrop?.();
     unlistenOpened?.();
+    unlistenClaudeOpen?.();
   });
 </script>
 
@@ -2464,7 +2473,7 @@ window.addEventListener('message', function(e) {
         {#if settings.aiMode === 'agent'}
           <AgentPanel />
         {:else if settings.aiMode === 'claude'}
-          <ClaudePanel />
+          <ClaudePanel onOpenInEditor={(path) => void openPaths([path])} />
         {:else}
           <AIAssistant
             xsltPath={editorState.xsltPath}

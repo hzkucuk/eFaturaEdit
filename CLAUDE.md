@@ -254,6 +254,17 @@ yarısı yalan olurdu.
 varsa. Ve kapsamı **parça parça** ölç (yazma ✓ / okuma ✗ / ağ ?): "sandbox açık" tek başına garanti
 değildir, kullanıcıya **ölçtüğün kadarını** söyle.
 
+**Ek (2026-07-18, ölçüldü):** "Kapsamı parça parça ölç" derken **araç türünü de** parçala.
+Claude Code'un OS sandbox'ı (`sandbox-exec`) **yalnızca `bash` komutlarını** sarıyor; **yerleşik
+`Write`/`Edit`** araçları `claude`'un kendi sürecinde çalışıyor ve sandbox'a **hiç girmiyor** →
+`filesystem.allowWrite` onları **bağlamıyor.** `allowWrite:[kök]` iken model kök **dışına** `Write`
+yaptı ve dosya **diske oluştu** (diske bakılarak doğrulandı). v2.35.0 UI'ı "sandbox klasör dışına
+yazmayı engeller" diyordu — dosya araçları için **eksikti**. Gerçek, zorlanabilir kilit **onay
+kapısında**: `agent_hook::kapida_karar` Write/Edit `file_path`'ini `guard()` ile kanonikleştirip kök
+dışıysa otomatik `Deny`. **Kural:** "sandbox yazmayı keser" gibi bir garantiyi **her araç türü için ayrı
+ölç** (bash ✓ ama Write ✗ olabilir); bir korumanın *bir* aracı tuttuğunu görmek *başka* bir aracı da
+tuttuğunu kanıtlamaz.
+
 ### 18. Ölçülmüş bir liste **envanter değil, örnektir** — ve "başarılı" alanı yalan söyleyebilir (2026-07-17)
 
 Ders 16'nın kardeşi: orada bir **yokluktan** fazla genellemiştim; burada bir **listeyi tam sanmıştım.**

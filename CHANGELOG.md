@@ -3,6 +3,34 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.36.0] — 2026-07-18 — Claude Code motoru: editör entegrasyonu + kök kilidi
+
+### Eklenen
+- **📂 Editör entegrasyonu.** Claude Code motoru artık ürettiği/düzenlediği `.xslt`/`.xsl`/`.xml`
+  dosyasını **uygulamanın kendi editör sekmesinde açabiliyor**. Bir XSLT/XML editörünün içindeki AI'nın
+  dosyayı editörde gösterememesi tuhaftı — motor kendini "terminal" sanıp `open` deniyordu (sandbox'ta
+  engelli). İki yol:
+  - **AI kendisi açar:** yeni `open_in_editor` **MCP aracı** — model dosyayı üretince onu editörde açar.
+  - **Manuel köprü:** araç kartlarındaki `.xslt/.xml` dosya yolunda **"📂 Editörde aç"** düğmesi.
+- **Sistem promptu:** motora artık *"e-Fatura Edit uygulamasının içindesin; GUI/tarayıcı açamazsın;
+  dosyayı göstermek için `open_in_editor` kullan; klasör dışına yazamazsın; Türkçe yanıt ver"* bağlamı
+  veriliyor — böylece model nerede olduğunu biliyor.
+
+### Güvenlik — ölçülmüş boşluk kapatıldı
+- **Yerleşik `Write`/`Edit` artık klasör dışına GERÇEKTEN yazamıyor.** Ölçüm (2026-07-18): işletim
+  sistemi sandbox'ı **yalnız `bash`'i** kısıtlıyor; `claude`'un yerleşik dosya araçları sandbox'a
+  girmiyor. v2.35.0'da gösterilen "klasör dışına yazamaz" iddiası dosya araçları için eksikti. Artık
+  gerçek kilit **onay kapısında**: `Write`/`Edit`/`MultiEdit` hedefi kanonikleştirilip (`..`/symlink/
+  mutlak kaçış çözülür) **kök dışıysa otomatik reddediliyor** — kullanıcıya sorulmadan, her platformda.
+- **MCP editör aracı otomatik onaylanır** (güvenli bir arayüz eylemi: dosyayı sekmede göster). Bilgilendirme
+  ekranı artık dürüst: dosya yazma kök dışına çıkamaz (kapıda zorlanır) · bash mac/Linux'ta sandbox'lı,
+  Windows'ta onaya bağlı · okuma engellenmez.
+
+### Teknik
+- Yeni `agent_mcp.rs`: `--mcp-server` yardımcı modu (ana ikili) + `EditorBridge` yerel soketi;
+  gerçek `claude` + ikiliyle uçtan uca ölçüldü (dosya oluştu + köprüye düştü). Kapı/sandbox garantileri
+  değişmedi (5/5 e2e yeşil). Yeni sidecar yok.
+
 ## [2.35.0] — 2026-07-17 — Klasör Ajanı'na Üçüncü Motor: Gerçek Claude Code
 
 ### Eklenen

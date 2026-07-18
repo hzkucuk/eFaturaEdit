@@ -132,9 +132,16 @@ uygulama **onay kapısıdır**.
 - **Dağıtım:** ikili gömülmez (66 MB); ilk kullanımda indirilir ve **açılmadan önce sha512** ile
   doğrulanır. Gelişmiş ayarda sistemdeki `claude` da kabul (sürüm tabanı denetimiyle; eskiyse
   **açıkça reddedilir**).
-- **Güvenlik — dürüst sınırlar (ders 15/17):** sandbox (mac/Linux) klasör dışına **yazmayı** engeller,
-  **okumayı engellemez** — bilgilendirme ekranı bunu açıkça söyler. Windows'ta sandbox yok; orada bash
-  sorulur.
+- **📂 Editör entegrasyonu (v2.36.0):** motor ürettiği/düzenlediği `.xslt/.xsl/.xml` dosyasını
+  **uygulamanın editör sekmesinde** açabilir — iki yolla: (1) **AI kendisi** yeni `open_in_editor`
+  **MCP aracıyla**, (2) araç kartındaki dosya yolunda **"📂 Editörde aç"** düğmesiyle (manuel köprü).
+  Sistem promptu motora "bir editör uygulamasının içindesin; GUI/`open` açamazsın; dosyayı göstermek için
+  `open_in_editor` kullan" bağlamı verir. MCP sunucusu ana ikilinin `--mcp-server` modudur (ayrı sidecar yok).
+- **Güvenlik — dürüst sınırlar (ders 15/17):** **yazma kilidi artık kapıda zorlanır (v2.36.0):**
+  yerleşik `Write/Edit` kök dışına yazamaz — hedef kanonikleştirilip kök dışıysa **otomatik reddedilir**
+  (ölçüldü: OS sandbox'ı yalnız `bash`'i kısıtlıyor, yerleşik dosya araçlarını değil; her platformda
+  geçerli). Bash mac/Linux'ta sandbox'lı, Windows'ta onaya bağlı. **Okuma engellenmez** — bilgilendirme
+  ekranı hepsini açıkça söyler.
 
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 

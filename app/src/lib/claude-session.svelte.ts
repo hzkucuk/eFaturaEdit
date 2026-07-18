@@ -62,8 +62,9 @@ export interface ClaudeFeedItem {
   /**
    * Araç kartı. `in`/`out` = girdi (komut/dosya/içerik) ve çıktı (stdout/sonuç) —
    * kullanıcı kartı açınca görür (Claude Code arayüzündeki IN/OUT gibi).
+   * `path` doluysa (editörde açılabilir .xslt/.xsl/.xml) kartta "📂 Editörde aç" çıkar.
    */
-  tool?: { name: string; summary: string; ok?: boolean; in?: string; out?: string };
+  tool?: { name: string; summary: string; ok?: boolean; in?: string; out?: string; path?: string };
 }
 
 /** Yeni feed item — zaman damgası otomatik. */
@@ -143,6 +144,20 @@ function toolIn(arac: string, girdi: Record<string, unknown>): string {
 }
 
 /**
+ * Araç girdisinden **editörde açılabilir** dosya yolu (yoksa `undefined`).
+ * Yerleşik dosya araçları `file_path`, MCP `open_in_editor` ise `path` taşır.
+ * Yalnız .xslt/.xsl/.xml döner — uygulama başka uzantıyı editörde açamaz.
+ */
+function toolPath(arac: string, girdi: Record<string, unknown>): string | undefined {
+  const p = arac.startsWith('mcp__')
+    ? String(girdi.path ?? '')
+    : String(girdi.file_path ?? '');
+  if (!p) return undefined;
+  const ext = p.slice(p.lastIndexOf('.') + 1).toLowerCase();
+  return ['xslt', 'xsl', 'xml'].includes(ext) ? p : undefined;
+}
+
+/**
  * Açık "Düşünüyor…" göstergesini kapat — süresini hesaplayıp "Düşündü — Xs" yapar
  * (Claude Code arayüzündeki "Thought for 14s" gibi). Açık gösterge yoksa hiçbir şey yapmaz.
  */
@@ -209,6 +224,7 @@ async function baglan(): Promise<void> {
               name: o.arac,
               summary: toolSummary(o.arac, o.girdi),
               in: toolIn(o.arac, o.girdi),
+              path: toolPath(o.arac, o.girdi),
             },
           }),
         );
