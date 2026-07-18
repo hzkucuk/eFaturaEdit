@@ -209,6 +209,10 @@ export interface Settings {
    * sürüklenme sessiz davranış değişikliği demektir, o yüzden eskiyse reddedilir.
    */
   claudeUseSystemBinary: boolean;
+  /** Claude Code motoru model seçimi. Boş = claude'un varsayılanı (geçme). */
+  claudeModel: '' | 'opus' | 'sonnet' | 'haiku';
+  /** Claude Code motoru düşünme efor düzeyi. Boş = varsayılan (geçme). */
+  claudeEffort: '' | 'low' | 'medium' | 'high';
 }
 
 const DEFAULTS: Settings = {
@@ -238,6 +242,8 @@ const DEFAULTS: Settings = {
   aiMode: 'suggest', // opt-in: Klasör Ajanı varsayılan KAPALI, kullanıcı açar
   agentTrustedFolders: [],
   claudeUseSystemBinary: false, // varsayılan: sürümü BİZ sabitleriz (ölçülmüş davranış)
+  claudeModel: '', // boş = claude'un varsayılan modeli
+  claudeEffort: '', // boş = claude'un varsayılan eforu
 };
 
 const STORAGE_KEY = 'efaturaEdit.settings.v3';

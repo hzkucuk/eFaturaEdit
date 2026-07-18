@@ -491,6 +491,36 @@
         </span>
       </div>
 
+      <div class="row">
+        <label for="claude-model">Claude Code: model</label>
+        <select
+          id="claude-model"
+          value={settings.claudeModel}
+          onchange={(e) => updateSetting('claudeModel', (e.currentTarget as HTMLSelectElement).value as typeof settings.claudeModel)}
+        >
+          <option value="">Varsayılan</option>
+          <option value="opus">Opus</option>
+          <option value="sonnet">Sonnet</option>
+          <option value="haiku">Haiku</option>
+        </select>
+        <span class="hint">Boş bırakılırsa <code>claude</code>'un kendi varsayılan modeli kullanılır.</span>
+      </div>
+
+      <div class="row">
+        <label for="claude-effort">Claude Code: düşünme eforu</label>
+        <select
+          id="claude-effort"
+          value={settings.claudeEffort}
+          onchange={(e) => updateSetting('claudeEffort', (e.currentTarget as HTMLSelectElement).value as typeof settings.claudeEffort)}
+        >
+          <option value="">Varsayılan</option>
+          <option value="low">Düşük</option>
+          <option value="medium">Orta</option>
+          <option value="high">Yüksek</option>
+        </select>
+        <span class="hint">Yüksek efor daha çok düşünür (daha yavaş, daha derin).</span>
+      </div>
+
       {#if currentAiOption?.needsKey}
         <div class="row">
           <label for="ai-key">API Anahtarı</label>

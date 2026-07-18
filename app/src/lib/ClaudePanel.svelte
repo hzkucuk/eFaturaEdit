@@ -82,7 +82,7 @@
     const text = input.trim();
     if (!text || claude.running || !claude.root) return;
     input = '';
-    await runClaude(text, settings.claudeUseSystemBinary);
+    await runClaude(text, settings.claudeUseSystemBinary, settings.claudeModel, settings.claudeEffort);
   }
 
   function onKey(e: KeyboardEvent): void {

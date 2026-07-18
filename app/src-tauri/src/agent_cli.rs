@@ -739,6 +739,8 @@ pub fn run_claude(
     helper_exe: &Path,
     handler: crate::agent_hook::Handler,
     resume: Option<&str>,
+    model: Option<&str>,
+    effort: Option<&str>,
     mcp: Option<crate::agent_mcp::McpSetup>,
     on_spawn: &(dyn Fn(u32) + Send + Sync),
     on_event: &(dyn Fn(ClaudeEvent) + Send + Sync),
@@ -788,6 +790,13 @@ pub fn run_claude(
         // MCP `command` doğrudan çalıştırılır (kabuk yok) → boşluklu ikili yolu tırnak
         // GEREKTİRMEZ (hook komutundan farkı — o kabuktan geçtiği için tırnaklıydı).
         cmd.arg("--mcp-config").arg(cfg);
+    }
+    // Model/efor: yalnızca kullanıcı seçtiyse geç; boşsa claude'un varsayılanı kalır.
+    if let Some(m) = model.filter(|m| !m.is_empty()) {
+        cmd.arg("--model").arg(m);
+    }
+    if let Some(e) = effort.filter(|e| !e.is_empty()) {
+        cmd.arg("--effort").arg(e);
     }
     if let Some(sid) = resume {
         cmd.arg("--resume").arg(sid);
@@ -901,6 +910,8 @@ pub async fn claude_agent_run(
     gorev: String,
     sistem_ikili: bool,
     resume_session: Option<String>,
+    model: Option<String>,
+    effort: Option<String>,
 ) -> Result<ClaudeRun, String> {
     // Kök gerçek bir klasör mü? `canonicalize` `..`/symlink'i çözer — sandbox'ın
     // `allowWrite`'ına ham kullanıcı dizesi geçirmiyoruz.
@@ -953,6 +964,8 @@ pub async fn claude_agent_run(
             &helper,
             handler,
             resume_session.as_deref(),
+            model.as_deref(),
+            effort.as_deref(),
             Some(mcp),
             &move |pid| {
                 // Durdur düğmesi bu pid'i öldürür.

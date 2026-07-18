@@ -77,6 +77,8 @@ fn sur(
         Path::new(APP_EXE),
         handler,
         None, // resume yok — her test taze oturum
+        None, // model — varsayılan
+        None, // effort — varsayılan
         None, // mcp yok — hook/sandbox'a odaklan
         &|_pid| {},
         &move |o: ClaudeEvent| {
@@ -171,6 +173,8 @@ fn yardimci_yoksa_fail_closed() {
         &yok,
         sabit_kapi(HookDecision::Allow, sayac.clone()),
         None,
+        None, // model
+        None, // effort
         None, // mcp yok
         &|_pid| {},
         &|_o| {},
@@ -244,6 +248,8 @@ open_in_editor aracıyla editörde aç. Kısa yanıt ver.",
         Path::new(APP_EXE),
         sabit_kapi(HookDecision::Allow, sayac.clone()),
         None,
+        None, // model
+        None, // effort
         Some(mcp),
         &|_pid| {},
         &|o: ClaudeEvent| eprintln!("  [akış] {o:?}"),

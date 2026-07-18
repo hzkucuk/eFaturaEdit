@@ -329,7 +329,12 @@ export async function resolveFirst(
  * `claude.sessionId` doluysa `--resume` ile **önceki turlar sürdürülür** (model hatırlar).
  * Giriş `/clear` ise claude'a gönderilmez — yeni oturum açılır (Claude Code sözleşmesi).
  */
-export async function runClaude(gorev: string, sistemIkili: boolean): Promise<void> {
+export async function runClaude(
+  gorev: string,
+  sistemIkili: boolean,
+  model = '',
+  effort = '',
+): Promise<void> {
   const metin = gorev.trim();
   if (claude.running || !claude.root || !metin) return;
 
@@ -351,6 +356,8 @@ export async function runClaude(gorev: string, sistemIkili: boolean): Promise<vo
       gorev: metin,
       sistemIkili,
       resumeSession: claude.sessionId, // null = yeni oturum
+      model: model || null, // boş → Rust'ta None → --model geçilmez
+      effort: effort || null,
     });
   } catch (e) {
     claude.error = String((e as Error)?.message ?? e);
