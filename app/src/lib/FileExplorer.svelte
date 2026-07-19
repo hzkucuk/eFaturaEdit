@@ -284,6 +284,10 @@
 
   function menuAc(ev: MouseEvent, hedef: DirEntry | null): void {
     ev.preventDefault();
+    // ⚠️ ŞART: satırdaki sağ tık, ağaç kapsayıcısının "boş alan" işleyicisine KABARIRSA
+    // menü hedefsiz (hedef=null) hâliyle yeniden yazılır ve Kopyala/Sil/Ad değiştir
+    // görünmez olur — tam da bu yaşandı.
+    ev.stopPropagation();
     menu = { x: ev.clientX, y: ev.clientY, hedef };
   }
 
