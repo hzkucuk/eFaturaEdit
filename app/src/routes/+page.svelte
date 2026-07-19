@@ -47,6 +47,7 @@
   import AgentPanel from '$lib/AgentPanel.svelte';
   import ClaudePanel from '$lib/ClaudePanel.svelte';
   import ClaudeTerminal from '$lib/ClaudeTerminal.svelte';
+  import FileExplorer from '$lib/FileExplorer.svelte';
   import UpdateModal from '$lib/UpdateModal.svelte';
   import { checkForUpdate } from '$lib/updater.svelte';
   import { applyEdits, type AiSuggestion, type AiEdit, type AiTarget } from '$lib/ai-suggestion';
@@ -2384,6 +2385,23 @@ window.addEventListener('message', function(e) {
     <!-- Snippet paneli + AI Asistan (sol sütun, dikey bölünmüş) -->
     <aside class="snippets" style="grid-template-rows: 1fr 4px {aiPanelHeight}px;">
       <div class="snippets-top">
+        <!-- Sol panel iki görünüm: snippet kataloğu · dosya gezgini (ajanın klasörü). -->
+        <div class="left-view-tabs">
+          <button
+            class="left-view-tab"
+            class:active={settings.leftPanelView !== 'explorer'}
+            onclick={() => updateSetting('leftPanelView', 'snippets')}
+          >🧩 {m.panels.snippets}</button>
+          <button
+            class="left-view-tab"
+            class:active={settings.leftPanelView === 'explorer'}
+            onclick={() => updateSetting('leftPanelView', 'explorer')}
+            title="Ajanın çalışma klasörü — dokunduğu dosyalar rozetli"
+          >📁 Gezgin</button>
+        </div>
+        {#if settings.leftPanelView === 'explorer'}
+          <FileExplorer onOpen={(paths) => void openPaths(paths)} />
+        {:else}
         <div class="snippets-header">
           <h3>{m.panels.snippets} ({allSnippets.length})</h3>
           <button class="snippet-add" onclick={() => { editingSnippet = undefined; snippetEditorOpen = true; }} title={m.panels.addSnippet}>➕</button>
@@ -2445,6 +2463,7 @@ window.addEventListener('message', function(e) {
             <p class="muted">{m.snip.none}</p>
           {/each}
         </div>
+        {/if}
       </div>
 
       <Splitter direction="horizontal" bind:position={aiPanelHeight} min={40} />
@@ -3366,6 +3385,22 @@ window.addEventListener('message', function(e) {
   .snippets { display: grid; background: #fafbfc; overflow: hidden; }
   .app.dark .snippets { background: #252526; }
   .snippets-top { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  /* Sol panel görünüm sekmeleri: Snippet'ler | Gezgin */
+  .left-view-tabs {
+    display: flex; gap: 2px; padding: 4px 6px 0; flex-shrink: 0;
+    border-bottom: 1px solid #e5e7eb; background: #fff;
+  }
+  .left-view-tab {
+    padding: 3px 10px; border: 1px solid transparent; border-bottom: none;
+    border-radius: 5px 5px 0 0; background: none; cursor: pointer;
+    font-size: 11px; color: #6b7280;
+  }
+  .left-view-tab.active {
+    background: #f3f4f6; border-color: #cbd0d6; color: #111; font-weight: 600;
+  }
+  .app.dark .left-view-tabs { background: #2d2d30; border-bottom-color: #3f3f46; }
+  .app.dark .left-view-tab { color: #9ca3af; }
+  .app.dark .left-view-tab.active { background: #1e1e1e; border-color: #3f3f46; color: #e6e6e6; }
   .ai-dock { overflow: hidden; min-height: 0; border-top: 1px solid #e5e7eb; display: flex; flex-direction: column; }
   .app.dark .ai-dock { border-top-color: #3f3f46; }
   .ai-mode-tabs { display: flex; gap: 2px; padding: 4px 6px 0; flex-shrink: 0; }

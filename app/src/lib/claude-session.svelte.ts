@@ -20,6 +20,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { saveClaudeSession, type ClaudeHistorySession } from '$lib/claude-history.svelte';
+import { recordToolWrite, setActivityRoot } from '$lib/agent-activity.svelte';
 
 /** Rust `ClaudeEvent` ile birebir (`#[serde(tag = "tur")]`). */
 type ClaudeEvent =
@@ -162,12 +163,18 @@ function toolIn(arac: string, girdi: Record<string, unknown>): string {
  * Yalnız .xslt/.xsl/.xml döner — uygulama başka uzantıyı editörde açamaz.
  */
 function toolPath(arac: string, girdi: Record<string, unknown>): string | undefined {
-  const p = arac.startsWith('mcp__')
-    ? String(girdi.path ?? '')
-    : String(girdi.file_path ?? '');
+  const p = rawToolPath(arac, girdi);
   if (!p) return undefined;
   const ext = p.slice(p.lastIndexOf('.') + 1).toLowerCase();
   return ['xslt', 'xsl', 'xml'].includes(ext) ? p : undefined;
+}
+
+/** Araç girdisindeki ham dosya yolu (uzantı süzmesi YOK — Gezgin rozetleri için). */
+function rawToolPath(arac: string, girdi: Record<string, unknown>): string | undefined {
+  const p = arac.startsWith('mcp__')
+    ? String(girdi.path ?? '')
+    : String(girdi.file_path ?? '');
+  return p || undefined;
 }
 
 /**
@@ -229,6 +236,9 @@ async function baglan(): Promise<void> {
         break;
       case 'AracCagrisi':
         kapatDusunme();
+        // Gezgin rozetleri: yazma sınıfı araçlarda dosyayı işaretle. **Şimdi** bakılır
+        // (yazma henüz olmadı) → "yeni" mi "değişti" mi doğru ayrılır.
+        void recordToolWrite(o.arac, rawToolPath(o.arac, o.girdi));
         claude.feed.push(
           feedItem({
             kind: 'tool',
@@ -275,6 +285,7 @@ const hazir = baglan();
 
 export function setClaudeRoot(root: string): void {
   claude.root = root;
+  setActivityRoot(root); // kök değişti → başka klasörün rozetleri sızmasın
 }
 
 /** Motor durumunu tazele (arayüz "kur" düğmesi mi, "hazır" rozeti mi gösterecek). */

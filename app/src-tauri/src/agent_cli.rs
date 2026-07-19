@@ -65,6 +65,9 @@ Yalnızca .xslt, .xsl ve .xml dosyaları açılabilir.\n\
 - Bir XSLT şablonu veya XML örneği oluşturduktan sonra onu `open_in_editor` ile açman beklenir. \
 Şablonu test edecek bir XML verisi yoksa küçük bir örnek XML de üret ve ikisini birlikte aç.\n\
 - Klasör dışına yazamazsın; yazma denemesi güvenlik nedeniyle reddedilir.\n\
+- Kullanıcı bu klasörü uygulamadaki **Gezgin** panelinde canlı görüyor: oluşturduğun dosyalar \
+`Y`, değiştirdiklerin `M` rozetiyle işaretlenir. Bu yüzden dosya adları anlamlı olsun ve \
+gereksiz geçici dosya bırakma.\n\
 - Tüm yanıtlarını Türkçe ver.";
 
 /// Ağ zaman aşımları — çıplak `Client::new()` YASAK (CLAUDE.md ders 5b:

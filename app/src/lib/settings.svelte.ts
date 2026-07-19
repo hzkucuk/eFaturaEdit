@@ -207,6 +207,8 @@ export interface Settings {
    * sekme olarak durunca "Claude Code" ile "Terminal" ayrımı kafa karıştırıyordu.
    */
   claudeView: 'panel' | 'terminal';
+  /** Sol üst panelin görünümü: snippet kataloğu mu, dosya gezgini mi. */
+  leftPanelView: 'snippets' | 'explorer';
   /** Klasör Ajanının "hep izin ver" dendiği güvenilir kök klasörler (kalıcı). */
   agentTrustedFolders: string[];
   /**
@@ -251,6 +253,7 @@ const DEFAULTS: Settings = {
   claudeModel: '', // boş = claude'un varsayılan modeli
   claudeEffort: '', // boş = claude'un varsayılan eforu
   claudeView: 'panel', // güvenli panel varsayılan; Terminal opt-in
+  leftPanelView: 'snippets', // mevcut davranış korunur; Gezgin opt-in
 };
 
 const STORAGE_KEY = 'efaturaEdit.settings.v3';
