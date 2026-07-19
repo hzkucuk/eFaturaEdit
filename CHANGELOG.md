@@ -17,6 +17,13 @@ Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
     dosyanın diskte olup olmadığına bakılır → "yeni" ile "değişti" doğru ayrılır.
 - Model de Gezgin'den haberdar edilir (anlamlı dosya adı verir, geçici dosya bırakmaz).
 
+### Düzeltilen
+- **Terminal oturumu sekme değişiminde ölüyordu.** Panel ↔ Terminal (veya başka bir moda) geçince
+  bileşen unmount oluyor ve çalışan `claude` süreci kapatılıyordu — kullanıcı yan sekmeye bakıp
+  döndüğünde ekran bomboştu. Canlı oturum (xterm + PTY) artık **modülde** yaşıyor: sekme değişiminde
+  ekran yalnızca sökülüp geri takılıyor, çıktı sekme kapalıyken bile tampona yazılıyor. Oturum
+  **yalnızca "Kapat" denince** biter; çalışırken "● canlı" rozeti görünür.
+
 ### Güvenlik
 - Gezgin listelemeyi Rust'taki `agent_list` ile yapar; o komut `guard()` ile **köke kilitlidir**
   (`..`/symlink kaçışı reddedilir) — gezgin çalışma klasörünün dışını **gösteremez**.
