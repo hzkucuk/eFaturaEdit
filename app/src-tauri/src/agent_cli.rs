@@ -49,7 +49,7 @@ const REGISTRY: &str = "https://registry.npmjs.org";
 /// anlama buydu (kullanıcı: "bizim editörde açamaması çok manidar") — model kendini
 /// terminal sanıp `open` deniyor, sandbox `procNotFound` veriyordu. İki şeyi netleştirir:
 /// (1) GUI/tarayıcı açılamaz, (2) dosyayı göstermek için `open_in_editor` MCP aracı var.
-const SYSTEM_CONTEXT: &str = "\
+pub(crate) const SYSTEM_CONTEXT: &str = "\
 Sen 'e-Fatura Edit' adlı bir masaüstü uygulamasının içinde, 'Klasör Ajanı' modunda çalışıyorsun. \
 Bu uygulama Türkiye e-Fatura / e-Arşiv / e-İrsaliye (UBL-TR) için bir XSLT/XML dizayn editörüdür. \
 Bir terminal aracı değilsin; kullanıcının editör penceresinin içindesin.\n\
@@ -58,7 +58,12 @@ engellidir — bunları deneme, hata verirler.\n\
 - Ürettiğin veya düzenlediğin bir dosyayı kullanıcıya göstermek için `open_in_editor` aracını \
 (MCP) kullan ve dosyanın MUTLAK yolunu ver. Bu, dosyayı uygulamanın editör sekmesinde açar. \
 Yalnızca .xslt, .xsl ve .xml dosyaları açılabilir.\n\
-- Bir XSLT şablonu veya XML örneği oluşturduktan sonra onu `open_in_editor` ile açman beklenir.\n\
+- **Uygulamada bir sekme = XSLT + XML ÇİFTİDİR.** Hem şablon hem veri ürettiysen İKİSİNİ DE \
+**tek `open_in_editor` çağrısında** `paths` dizisiyle birlikte gönder (örn. \
+`paths: [\"/yol/sablon.xslt\", \"/yol/veri.xml\"]`) — böylece ikisi aynı sekmeye yüklenir ve \
+önizleme hemen derlenir. Ayrı ayrı gönderme.\n\
+- Bir XSLT şablonu veya XML örneği oluşturduktan sonra onu `open_in_editor` ile açman beklenir. \
+Şablonu test edecek bir XML verisi yoksa küçük bir örnek XML de üret ve ikisini birlikte aç.\n\
 - Klasör dışına yazamazsın; yazma denemesi güvenlik nedeniyle reddedilir.\n\
 - Tüm yanıtlarını Türkçe ver.";
 
@@ -937,23 +942,8 @@ pub async fn claude_agent_run(
     let app_open = app.clone();
     let handler = crate::agent_hook::tauri_handler(app.clone(), kok.clone());
 
-    // MCP: `open_in_editor` → editör olayı yay. Uzantı denetimi BURADA (Rust) — model
-    // desteklenmeyen uzantı verirse net bir hata alsın (sekme açma frontend'de yapılır).
-    let open_handler: crate::agent_mcp::OpenHandler = std::sync::Arc::new(move |path: String| {
-        let ext = Path::new(&path)
-            .extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("")
-            .to_ascii_lowercase();
-        if !matches!(ext.as_str(), "xslt" | "xsl" | "xml") {
-            return Err(format!(
-                "Yalnızca .xslt/.xsl/.xml editörde açılabilir (verilen uzantı: '{ext}')."
-            ));
-        }
-        app_open
-            .emit("claude-open-in-editor", &path)
-            .map_err(|e| format!("Editör olayı yayınlanamadı: {e}"))
-    });
+    // MCP: `open_in_editor` → editör olayı yay (Terminal sekmesiyle ortak işleyici).
+    let open_handler = crate::agent_mcp::tauri_open_handler(app_open);
     let mcp = crate::agent_mcp::McpSetup { exe: helper.clone(), open_handler };
 
     let sonuc = tauri::async_runtime::spawn_blocking(move || {

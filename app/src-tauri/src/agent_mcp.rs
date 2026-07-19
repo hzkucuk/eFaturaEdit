@@ -33,9 +33,13 @@ use std::sync::Arc;
 use crate::agent_hook::{alloc_socket, build_name};
 
 /// MCP sunucusunun soket üstünden uygulamaya yazdığı istek.
+///
+/// **Çoklu yol:** uygulamada bir sekme = **XSLT+XML çifti**. Şablon ve verisi birlikte
+/// gönderilirse ikisi *aynı* sekmeye (doğru panolara) yüklenir ve önizleme hemen derlenir;
+/// tek tek gönderilseydi ikinci dosya ayrı bir sekmeye düşebilirdi.
 #[derive(Debug, Deserialize, Serialize)]
 struct OpenRequest {
-    path: String,
+    paths: Vec<String>,
 }
 
 /// Uygulamanın verdiği cevap.
@@ -48,7 +52,7 @@ struct OpenReply {
 
 /// `open_in_editor` çağrısını uygulama tarafında karşılayan işleyici — sekmeyi açar.
 /// `Err` mesajı modele araç hatası olarak döner (güvenlik değil, bilgilendirme).
-pub type OpenHandler = Arc<dyn Fn(String) -> Result<(), String> + Send + Sync + 'static>;
+pub type OpenHandler = Arc<dyn Fn(Vec<String>) -> Result<(), String> + Send + Sync + 'static>;
 
 /// [`crate::agent_cli::run_claude`]'a verilen MCP kurulumu. `None` verilirse motor MCP'siz
 /// koşar (e2e testleri böyle sürer — hook/sandbox'a odaklanmak için).
@@ -57,6 +61,32 @@ pub struct McpSetup {
     pub exe: PathBuf,
     /// `open_in_editor` çağrıldığında sekmeyi açan işleyici.
     pub open_handler: OpenHandler,
+}
+
+/// Uygulamaya bağlı standart `open_in_editor` işleyicisi: uzantıyı denetle → editör
+/// olayını yay (sekmeyi frontend açar). Hem `-p` motoru hem Terminal sekmesi kullanır.
+pub fn tauri_open_handler(app: tauri::AppHandle) -> OpenHandler {
+    use tauri::Emitter;
+    Arc::new(move |paths: Vec<String>| {
+        if paths.is_empty() {
+            return Err("Açılacak dosya verilmedi.".into());
+        }
+        // Uzantı denetimi BURADA (Rust): model desteklenmeyen bir uzantı verirse net hata alsın.
+        for p in &paths {
+            let ext = std::path::Path::new(p)
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_ascii_lowercase();
+            if !matches!(ext.as_str(), "xslt" | "xsl" | "xml") {
+                return Err(format!(
+                    "Yalnızca .xslt/.xsl/.xml editörde açılabilir (verilen: '{p}')."
+                ));
+            }
+        }
+        app.emit("claude-open-in-editor", &paths)
+            .map_err(|e| format!("Editör olayı yayınlanamadı: {e}"))
+    })
 }
 
 /// Uygulama içi dinleyici: MCP sunucusundan gelen "şu dosyayı aç" isteklerini karşılar.
@@ -138,8 +168,8 @@ fn serve_open(stream: Stream, handler: &OpenHandler) {
 
     let reply = match serde_json::from_str::<OpenRequest>(&line) {
         Ok(req) => {
-            log::info!("[mcp] editörde aç isteği — {} bayt yol", req.path.len());
-            match handler(req.path) {
+            log::info!("[mcp] editörde aç isteği — {} dosya", req.paths.len());
+            match handler(req.paths) {
                 Ok(()) => OpenReply { ok: true, error: String::new() },
                 Err(e) => OpenReply { ok: false, error: e },
             }
@@ -176,7 +206,7 @@ pub fn mcp_server_main(socket_arg: &str) {
         if line.trim().is_empty() {
             continue;
         }
-        if let Some(resp) = mcp_handle_line(&line, &|path| open_exchange(path, socket_arg)) {
+        if let Some(resp) = mcp_handle_line(&line, &|paths| open_exchange(paths, socket_arg)) {
             let _ = stdout.write_all(resp.as_bytes());
             let _ = stdout.write_all(b"\n");
             let _ = stdout.flush();
@@ -188,22 +218,28 @@ pub fn mcp_server_main(socket_arg: &str) {
 fn tool_schema() -> serde_json::Value {
     serde_json::json!({
         "name": "open_in_editor",
-        "description": "e-Fatura Edit uygulamasının editöründe bir .xslt/.xsl/.xml dosyasını açar/gösterir. \
+        "description": "e-Fatura Edit uygulamasının editöründe .xslt/.xsl/.xml dosyalarını açar/gösterir. \
 Dosyayı ürettikten veya düzenledikten sonra kullanıcıya göstermek için bunu kullan. \
-GUI veya tarayıcı açmaya çalışma (open/xdg-open sandbox'ta engellidir).",
+ÖNEMLİ: Bir sekme = XSLT + XML ÇİFTİ. Hem şablonu hem verisini ürettiysen İKİSİNİ DE tek çağrıda \
+`paths` ile birlikte gönder — aynı sekmeye yüklenir ve önizleme hemen derlenir. \
+GUI veya tarayıcı açmaya çalışma (`open`/`xdg-open` kullanma).",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "path": { "type": "string", "description": "Açılacak dosyanın mutlak yolu (.xslt/.xsl/.xml)" }
-            },
-            "required": ["path"]
+                "paths": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Açılacak dosyaların mutlak yolları (.xslt/.xsl/.xml). Şablon+veri varsa ikisi birlikte."
+                },
+                "path": { "type": "string", "description": "Tek dosya için kısayol (paths yerine kullanılabilir)." }
+            }
         }
     })
 }
 
 /// Tek bir JSON-RPC satırını işle. `Some(cevap)` = gönderilecek yanıt; `None` = bildirim
 /// (yanıtsız) ya da anlaşılamayan satır. `send_open` enjekte edilir → süreç açmadan testlenir.
-fn mcp_handle_line(line: &str, send_open: &dyn Fn(&str) -> Result<(), String>) -> Option<String> {
+fn mcp_handle_line(line: &str, send_open: &dyn Fn(&[String]) -> Result<(), String>) -> Option<String> {
     let msg: serde_json::Value = match serde_json::from_str(line) {
         Ok(v) => v,
         Err(e) => {
@@ -246,15 +282,24 @@ fn mcp_handle_line(line: &str, send_open: &dyn Fn(&str) -> Result<(), String>) -
             if name != "open_in_editor" {
                 return Some(tool_result(id, &format!("Bilinmeyen araç: {name}"), true));
             }
-            let path = msg
-                .pointer("/params/arguments/path")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            if path.trim().is_empty() {
-                return Some(tool_result(id, "Hata: 'path' argümanı boş.", true));
+            // `paths` (dizi) tercih edilir; `path` (tek) kısayolu da kabul edilir.
+            let mut paths: Vec<String> = msg
+                .pointer("/params/arguments/paths")
+                .and_then(|v| v.as_array())
+                .map(|a| a.iter().filter_map(|x| x.as_str()).map(str::to_owned).collect())
+                .unwrap_or_default();
+            if let Some(tek) = msg.pointer("/params/arguments/path").and_then(|v| v.as_str()) {
+                if !tek.trim().is_empty() && !paths.iter().any(|p| p == tek) {
+                    paths.push(tek.to_owned());
+                }
             }
-            match send_open(path) {
-                Ok(()) => Some(tool_result(id, &format!("Dosya editörde açıldı: {path}"), false)),
+            paths.retain(|p| !p.trim().is_empty());
+            if paths.is_empty() {
+                return Some(tool_result(id, "Hata: 'paths' (veya 'path') boş.", true));
+            }
+            let ozet = paths.join(", ");
+            match send_open(&paths) {
+                Ok(()) => Some(tool_result(id, &format!("Editörde açıldı: {ozet}"), false)),
                 Err(e) => Some(tool_result(id, &format!("Editörde açılamadı: {e}"), true)),
             }
         }
@@ -283,12 +328,12 @@ fn tool_result(id: Option<serde_json::Value>, text: &str, is_error: bool) -> Str
 
 /// MCP sunucusundan uygulamaya "şu dosyayı aç" de, cevabı bekle. Güvenlik değil —
 /// başarısızlık modele araç hatası olarak döner (sessiz geri düşüş yok, görünür hata).
-fn open_exchange(path: &str, socket_arg: &str) -> Result<(), String> {
+fn open_exchange(paths: &[String], socket_arg: &str) -> Result<(), String> {
     let name = build_name(socket_arg).map_err(|e| format!("soket adı geçersiz: {e}"))?;
     let stream = Stream::connect(name).map_err(|e| format!("uygulamaya bağlanılamadı: {e}"))?;
     let mut conn = BufReader::new(stream);
 
-    let req = serde_json::to_string(&OpenRequest { path: path.to_string() })
+    let req = serde_json::to_string(&OpenRequest { paths: paths.to_vec() })
         .map_err(|e| format!("istek serileştirilemedi: {e}"))?;
     {
         let s = conn.get_mut();
@@ -337,7 +382,7 @@ mod tests {
         serde_json::from_str(s).expect("çıktı JSON değil")
     }
 
-    fn hep_basarili(_p: &str) -> Result<(), String> {
+    fn hep_basarili(_p: &[String]) -> Result<(), String> {
         Ok(())
     }
 
@@ -367,7 +412,7 @@ mod tests {
     }
 
     #[test]
-    fn tools_call_basarili_yol_dondurur() {
+    fn tools_call_tek_yol_kisayolu() {
         let line = r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"open_in_editor","arguments":{"path":"/tmp/a.xslt"}}}"#;
         let out = mcp_handle_line(line, &hep_basarili).expect("yanıt bekleniyordu");
         let v = parse(&out);
@@ -375,10 +420,28 @@ mod tests {
         assert!(v["result"]["content"][0]["text"].as_str().unwrap().contains("/tmp/a.xslt"));
     }
 
+    /// **Asıl senaryo:** şablon + veri BİRLİKTE → ikisi de handler'a gitmeli
+    /// (aynı sekmeye XSLT+XML çifti olarak yüklenirler).
+    #[test]
+    fn tools_call_iki_dosya_birlikte() {
+        let alinan = std::sync::Mutex::new(Vec::<String>::new());
+        let line = r#"{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"open_in_editor","arguments":{"paths":["/tmp/a.xslt","/tmp/b.xml"]}}}"#;
+        let out = mcp_handle_line(line, &|p: &[String]| {
+            *alinan.lock().unwrap() = p.to_vec();
+            Ok(())
+        })
+        .expect("yanıt");
+        assert_eq!(parse(&out)["result"]["isError"], false);
+        assert_eq!(
+            *alinan.lock().unwrap(),
+            vec!["/tmp/a.xslt".to_string(), "/tmp/b.xml".to_string()]
+        );
+    }
+
     #[test]
     fn tools_call_hata_isError_true() {
         let line = r#"{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"open_in_editor","arguments":{"path":"/tmp/a.xslt"}}}"#;
-        let out = mcp_handle_line(line, &|_p| Err("sekme açılamadı".into())).expect("yanıt");
+        let out = mcp_handle_line(line, &|_p: &[String]| Err("sekme açılamadı".into())).expect("yanıt");
         let v = parse(&out);
         assert_eq!(v["result"]["isError"], true);
         assert!(v["result"]["content"][0]["text"].as_str().unwrap().contains("sekme açılamadı"));
@@ -389,6 +452,12 @@ mod tests {
         let line = r#"{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"open_in_editor","arguments":{"path":"  "}}}"#;
         let out = mcp_handle_line(line, &hep_basarili).expect("yanıt");
         assert_eq!(parse(&out)["result"]["isError"], true);
+        // paths boş dizi de reddedilmeli
+        let line2 = r#"{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"open_in_editor","arguments":{"paths":[]}}}"#;
+        assert_eq!(
+            parse(&mcp_handle_line(line2, &hep_basarili).expect("yanıt"))["result"]["isError"],
+            true
+        );
     }
 
     #[test]
@@ -411,23 +480,25 @@ mod tests {
     /// EditorBridge uçtan uca: köprüyü aç → soketten `{path}` gönder → handler çağrılıyor mu.
     #[test]
     fn kopru_ucdan_uca_handleri_cagirir() {
-        let alinan = Arc::new(std::sync::Mutex::new(String::new()));
+        let alinan = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
         let a = alinan.clone();
-        let bridge = EditorBridge::start(Arc::new(move |path: String| {
-            *a.lock().unwrap() = path;
+        let bridge = EditorBridge::start(Arc::new(move |paths: Vec<String>| {
+            *a.lock().unwrap() = paths;
             Ok(())
         }))
         .expect("köprü açılamadı");
 
-        open_exchange("/tmp/deneme.xslt", bridge.socket_arg()).expect("aç isteği başarısız");
-        assert_eq!(*alinan.lock().unwrap(), "/tmp/deneme.xslt");
+        let istek = vec!["/tmp/deneme.xslt".to_string(), "/tmp/veri.xml".to_string()];
+        open_exchange(&istek, bridge.socket_arg()).expect("aç isteği başarısız");
+        assert_eq!(*alinan.lock().unwrap(), istek, "iki dosya da köprüye gitmeli");
     }
 
     #[test]
     fn kopru_handler_hatasini_iletir() {
-        let bridge = EditorBridge::start(Arc::new(|_p: String| Err("desteklenmeyen uzantı".into())))
-            .expect("köprü açılamadı");
-        let err = open_exchange("/tmp/x.png", bridge.socket_arg()).unwrap_err();
+        let bridge =
+            EditorBridge::start(Arc::new(|_p: Vec<String>| Err("desteklenmeyen uzantı".into())))
+                .expect("köprü açılamadı");
+        let err = open_exchange(&["/tmp/x.png".to_string()], bridge.socket_arg()).unwrap_err();
         assert!(err.contains("desteklenmeyen uzantı"), "hata iletilmedi: {err}");
     }
 

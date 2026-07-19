@@ -2203,10 +2203,11 @@ window.addEventListener('message', function(e) {
         void openPaths(e.payload);
       });
 
-      // Claude Code motoru bir .xslt/.xml üretip `open_in_editor` çağırınca Rust
-      // bu olayı yayar → dosyayı editör sekmesinde aç (openPaths tek yolu da alır).
-      unlistenClaudeOpen = await listen<string>('claude-open-in-editor', (e) => {
-        void openPaths([e.payload]);
+      // Claude Code motoru `open_in_editor` çağırınca Rust bu olayı yayar. Payload bir
+      // LİSTE: şablon+veri birlikte gelirse `openPaths` ikisini AYNI sekmeye (XSLT+XML
+      // çifti) yükler ve önizleme hemen derlenir — tam da sekme modelimiz.
+      unlistenClaudeOpen = await listen<string[]>('claude-open-in-editor', (e) => {
+        void openPaths(e.payload);
       });
 
       const pending = await invoke<string[]>('take_opened_files');

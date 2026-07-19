@@ -234,8 +234,8 @@ fn mcp_open_in_editor_kopruye_dusuyor() {
     let a = acilanlar.clone();
     let mcp = app_lib::agent_mcp::McpSetup {
         exe: PathBuf::from(APP_EXE),
-        open_handler: Arc::new(move |path: String| {
-            a.lock().unwrap().push(path);
+        open_handler: Arc::new(move |paths: Vec<String>| {
+            a.lock().unwrap().extend(paths);
             Ok(())
         }),
     };
@@ -243,8 +243,8 @@ fn mcp_open_in_editor_kopruye_dusuyor() {
     let sonuc = run_claude(
         &bin,
         &kok,
-        "Bu klasörde net.xslt adında küçük bir XSLT dosyası oluştur, sonra onu \
-open_in_editor aracıyla editörde aç. Kısa yanıt ver.",
+        "Bu klasörde net.xslt adında küçük bir XSLT şablonu ve onu test eden veri.xml adında \
+küçük bir XML dosyası oluştur, sonra İKİSİNİ BİRDEN open_in_editor ile editörde aç. Kısa yanıt ver.",
         Path::new(APP_EXE),
         sabit_kapi(HookDecision::Allow, sayac.clone()),
         None,
@@ -262,8 +262,15 @@ open_in_editor aracıyla editörde aç. Kısa yanıt ver.",
         acilan.iter().any(|p| p.ends_with("net.xslt")),
         "open_in_editor köprüye düşmedi — açılanlar: {acilan:?}"
     );
-    // İş de görüldü mü: dosya gerçekten yazıldı mı (kanıt diskte).
+    // **Asıl beklenti (kullanıcı isteği):** şablon + veri İKİSİ DE editöre gitmeli;
+    // uygulamada bir sekme XSLT+XML çiftidir, tek dosya yarım iş demektir.
+    assert!(
+        acilan.iter().any(|p| p.ends_with("veri.xml")),
+        "XML editöre gönderilmedi (yalnız XSLT geldi) — açılanlar: {acilan:?}"
+    );
+    // İş de görüldü mü: dosyalar gerçekten yazıldı mı (kanıt diskte).
     assert!(kok.join("net.xslt").exists(), "net.xslt yazılmadı");
+    assert!(kok.join("veri.xml").exists(), "veri.xml yazılmadı");
 
     let _ = std::fs::remove_dir_all(&kok);
 }

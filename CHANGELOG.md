@@ -15,7 +15,12 @@ Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
   `claude`'un kendi varsayılanı kullanılır. Slash komutları (`/compact` vb.) doğrudan `claude`'a geçer;
   `/clear` yeni oturum açar.
 - **🖥️ "Terminal" sekmesi (ileri kullanıcı, opt-in).** Gerçek interaktif `claude` arayüzü uygulamanın
-  içinde bir PTY'de (xterm.js) — kendi TUI'si, kendi araç onaylarıyla.
+  içinde bir PTY'de (xterm.js) — kendi TUI'si, kendi araç onaylarıyla. **Editör entegrasyonu burada da
+  çalışır:** `open_in_editor` aracı ve "uygulamanın içindesin" bağlamı Terminal'e de verilir (yoksa model
+  `open -t` deneyip dosyayı işletim sisteminin metin editöründe açıyordu).
+- **📑 Şablon + veri birlikte açılır.** `open_in_editor` artık **çok dosya** alır (`paths`): uygulamada
+  bir sekme = **XSLT + XML çifti** olduğu için model şablonu ve verisini **tek çağrıda** gönderir, ikisi
+  aynı sekmeye yüklenir ve önizleme hemen derlenir. (Gerçek `claude` ile uçtan uca ölçüldü.)
 
 ### Güvenlik — dürüst sınır (ölçüldü)
 - **Terminal sekmesi AÇIKÇA "ham claude" olarak etiketlidir.** Ölçtük (2026-07-18, diske bakılarak):

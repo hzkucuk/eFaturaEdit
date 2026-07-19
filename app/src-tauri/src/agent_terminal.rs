@@ -26,6 +26,9 @@ struct Session {
     writer: Box<dyn Write + Send>,
     master: Box<dyn portable_pty::MasterPty + Send>,
     child: Box<dyn portable_pty::Child + Send + Sync>,
+    /// Editör köprüsü — oturum boyunca YAŞAMALI (Drop soketi siler, model artık
+    /// `open_in_editor` çağıramaz). Kullanılmıyor gibi görünür ama ömrü kritiktir.
+    _bridge: crate::agent_mcp::EditorBridge,
 }
 
 /// Terminal oturumunu başlat: `claude`'u PTY'de sür, çıktıyı `claude-terminal-output`
@@ -59,10 +62,24 @@ pub fn claude_terminal_start(
         .openpty(PtySize { rows: rows.max(1), cols: cols.max(1), pixel_width: 0, pixel_height: 0 })
         .map_err(|e| format!("PTY açılamadı: {e}"))?;
 
+    // Editör köprüsü (MCP): ham terminalde de model dosyayı **bizim editörümüzde**
+    // açabilsin. ⚠️ Bu bir YETENEK, güvenlik garantisi değil — `--settings` (hook/sandbox)
+    // burada hâlâ verilmiyor, dolayısıyla yanlış bir güvenlik iddiası doğurmaz.
+    // (Olmadığında model `open -t` deneyip dosyayı OS'un metin editöründe açıyordu.)
+    let helper = crate::agent_cli::helper_exe()?;
+    let bridge = crate::agent_mcp::EditorBridge::start(crate::agent_mcp::tauri_open_handler(app.clone()))
+        .map_err(|e| format!("Editör köprüsü açılamadı: {e}"))?;
+    let mcp_config = crate::agent_mcp::build_mcp_config(&helper, bridge.socket_arg());
+
     let mut cmd = CommandBuilder::new(&bin);
     cmd.cwd(&kok);
     // Renkli TUI için terminal tipi.
     cmd.env("TERM", "xterm-256color");
+    cmd.arg("--mcp-config");
+    cmd.arg(&mcp_config);
+    // Modele nerede olduğunu söyle (GUI/`open` yok; dosyayı editör sekmesinde göster).
+    cmd.arg("--append-system-prompt");
+    cmd.arg(crate::agent_cli::SYSTEM_CONTEXT);
 
     let child = pair
         .slave
@@ -105,7 +122,7 @@ pub fn claude_terminal_start(
 
     let state = app.state::<TerminalState>();
     *state.inner.lock().map_err(|_| "Terminal durumu kilitlenemedi.")? =
-        Some(Session { writer, master: pair.master, child });
+        Some(Session { writer, master: pair.master, child, _bridge: bridge });
     Ok(())
 }
 
