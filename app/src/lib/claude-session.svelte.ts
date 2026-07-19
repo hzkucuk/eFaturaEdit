@@ -21,6 +21,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { saveClaudeSession, type ClaudeHistorySession } from '$lib/claude-history.svelte';
 import { recordToolWrite, setActivityRoot } from '$lib/agent-activity.svelte';
+import { updateSetting } from '$lib/settings.svelte';
 
 /** Rust `ClaudeEvent` ile birebir (`#[serde(tag = "tur")]`). */
 type ClaudeEvent =
@@ -110,6 +111,12 @@ export const claude = $state({
   started: false,
   /** Tüm araçlar otomatik onaylansın mı ("Otomatik düzenle" toggle'ı). */
   autoApprove: false,
+  /**
+   * Kullanıcının yaptıkları (ör. Gezgin'den dosya açtı) — bir sonraki mesajla
+   * modele **bağlam** olarak gider, sonra temizlenir. Model kullanıcının neye
+   * baktığını bilmezse "hangi dosya?" diye sormak zorunda kalır.
+   */
+  pendingNotes: [] as string[],
 });
 
 /** Bir araç çağrısı için insanca özet (onay kartında + akışta). */
@@ -284,8 +291,23 @@ const hazir = baglan();
 // ─── Dışa açık işlemler ────────────────────────────────────────────────────
 
 export function setClaudeRoot(root: string): void {
+  if (claude.root === root) return;
   claude.root = root;
   setActivityRoot(root); // kök değişti → başka klasörün rozetleri sızmasın
+  // Çalışma klasörü seçilince Gezgin'i öne al ve o klasöre konumlan — kullanıcı
+  // ajanın hangi klasörde çalıştığını görmeden başlamasın.
+  updateSetting('leftPanelView', 'explorer');
+}
+
+/**
+ * Kullanıcının yaptığı ve **modelin bilmesi gereken** bir şeyi not et
+ * (ör. "editörde şu dosyayı açtı"). Notlar bir sonraki mesaja bağlam olarak eklenir
+ * ve akışta da **görünür** olur — modele ne gönderdiğimizi kullanıcıdan gizlemeyiz.
+ */
+export function noteUserActivity(not: string): void {
+  if (!not.trim()) return;
+  if (claude.pendingNotes.includes(not)) return; // aynı notu tekrar gönderme
+  claude.pendingNotes.push(not);
 }
 
 /** Motor durumunu tazele (arayüz "kur" düğmesi mi, "hazır" rozeti mi gösterecek). */
@@ -360,11 +382,22 @@ export async function runClaude(
   claude.error = '';
   claude.lastDenied = [];
   claude.feed.push(feedItem({ kind: 'user', text: metin }));
+
+  // Kullanıcı notlarını (Gezgin'den açılan dosya vb.) göreve bağlam olarak ekle.
+  // Akışta da gösterilir — modele ne gönderdiğimiz kullanıcıdan gizlenmez.
+  let gonderilecek = metin;
+  if (claude.pendingNotes.length > 0) {
+    const notlar = claude.pendingNotes.join('\n');
+    gonderilecek = `[Kullanıcı bağlamı]\n${notlar}\n\n${metin}`;
+    claude.feed.push(feedItem({ kind: 'info', text: `Bağlam gönderildi: ${notlar}` }));
+    claude.pendingNotes = [];
+  }
+
   claude.running = true;
   try {
     await invoke<unknown>('claude_agent_run', {
       kok: claude.root,
-      gorev: metin,
+      gorev: gonderilecek,
       sistemIkili,
       resumeSession: claude.sessionId, // null = yeni oturum
       model: model || null, // boş → Rust'ta None → --model geçilmez
@@ -417,4 +450,5 @@ export function resetClaudeChat(): void {
   claude.lastDenied = [];
   claude.sessionId = null;
   claude.started = false;
+  claude.pendingNotes = []; // yeni oturum → eski bağlam notları gitmesin
 }

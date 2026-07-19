@@ -11,7 +11,7 @@
 -->
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
-  import { claude, setClaudeRoot } from '$lib/claude-session.svelte';
+  import { claude, setClaudeRoot, noteUserActivity } from '$lib/claude-session.svelte';
   import { agentActivity, activityBadge, reconcileDeleted, clearAgentActivity } from '$lib/agent-activity.svelte';
   import { pickFolder } from '$lib/batch';
 
@@ -89,17 +89,21 @@
 
   async function klasorSec(): Promise<void> {
     const f = await pickFolder();
-    if (!f) return;
-    setClaudeRoot(f);
-    icerik = {};
-    acik = new Set(['']);
-    await klasoruYukle('');
+    if (f) setClaudeRoot(f); // ağacı $effect sıfırlayıp yeni köke konumlandırır
   }
 
-  // Kök seçilince/değişince kökü yükle.
+  /** Ağacın hangi kök için yüklendiği — kök değişince SIFIRLAMAK için (yoksa
+      eski klasörün listesi ekranda kalırdı: ajan klasör değiştirir, gezgin yalan söyler). */
+  let yuklenenKok = $state('');
+
+  // Kök seçilince/DEĞİŞİNCE ağacı o klasöre konumla.
   $effect(() => {
     const kok = claude.root;
-    if (kok && !icerik['']) void klasoruYukle('');
+    if (!kok || kok === yuklenenKok) return;
+    yuklenenKok = kok;
+    icerik = {};
+    acik = new Set(['']);
+    void klasoruYukle('');
   });
 
   // Ajan bir koşuyu bitirdiğinde gezgini tazele — kullanıcı elle yenilemek zorunda kalmasın.
@@ -113,6 +117,18 @@
     if (e.is_dir) return null;
     const durum = agentActivity.dosyalar[mutlak(e.rel)];
     return durum ? activityBadge(durum) : null;
+  }
+
+  /**
+   * Dosyayı editörde aç **ve modele haber ver**. Kullanıcının neye baktığını bilmeyen
+   * model "hangi dosya?" diye sormak zorunda kalıyordu; not bir sonraki mesaja bağlam
+   * olarak gider (akışta da görünür — gizli bağlam göndermeyiz).
+   */
+  function dosyaAc(e: DirEntry): void {
+    if (!acilabilir(e)) return;
+    const yol = mutlak(e.rel);
+    onOpen?.([yol]);
+    noteUserActivity(`Editörde şu dosyayı açtım: ${yol}`);
   }
 
   function boyut(n: number): string {
@@ -162,8 +178,7 @@
               <button
                 class="exp-item"
                 class:openable={acilabilir(e)}
-                ondblclick={() => acilabilir(e) && onOpen?.([mutlak(e.rel)])}
-                onclick={() => acilabilir(e) && onOpen?.([mutlak(e.rel)])}
+                onclick={() => dosyaAc(e)}
                 title={acilabilir(e) ? 'Editörde aç' : 'Bu tür editörde açılamaz'}
               >
                 <span class="exp-caret"></span>

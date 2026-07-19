@@ -14,6 +14,15 @@
  */
 import { invoke } from '@tauri-apps/api/core';
 import { settings, updateSetting } from '$lib/settings.svelte';
+import { recordToolWrite } from '$lib/agent-activity.svelte';
+
+/** Köke göreli yolu mutlak yola çevir (Gezgin rozetleri mutlak yolla eşleşir). */
+function mutlakYol(root: string, path: string): string {
+  if (!path) return '';
+  if (path.startsWith('/') || /^[A-Za-z]:/.test(path)) return path; // zaten mutlak
+  const ayrac = root.includes('\\') ? '\\' : '/';
+  return `${root}${ayrac}${path}`;
+}
 
 /** Ajan döngüsünün üst sınırı (sonsuz araç döngüsünü kes). */
 const MAX_ITERS = 25;
@@ -202,9 +211,12 @@ async function execTool(call: ToolCall): Promise<{ content: string; is_error: bo
         return { content: JSON.stringify(entries), is_error: false };
       }
       case 'edit_file':
+        // Gezgin rozeti: yazmadan ÖNCE işaretle ("yeni" mi "değişti" mi ayrılabilsin).
+        await recordToolWrite('Edit', mutlakYol(root, i.path));
         await invoke('agent_edit', { root, path: i.path, old: i.old, new: i.new });
         return { content: `Düzenlendi: ${i.path}`, is_error: false };
       case 'write_file':
+        await recordToolWrite('Write', mutlakYol(root, i.path));
         await invoke('agent_write', { root, path: i.path, content: i.content });
         return { content: `Yazıldı: ${i.path}`, is_error: false };
       case 'run_bash': {
