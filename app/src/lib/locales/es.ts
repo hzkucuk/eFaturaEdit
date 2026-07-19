@@ -117,6 +117,7 @@ export const es: Messages = {
     collapseAllTitle: 'Contraer todos los bloques (Ctrl+Alt+[)',
     expandAllTitle: 'Expandir todos los bloques (Ctrl+Alt+])',
     snippets: 'Fragmentos',
+    explorer: 'Explorador',
     addSnippet: 'Añadir un fragmento',
     dragHint: 'Clic = insertar en el cursor · Arrastrar = soltar donde quieras',
     preview: 'VISTA PREVIA',

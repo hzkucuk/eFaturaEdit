@@ -119,6 +119,7 @@ export const tr = {
     collapseAllTitle: 'Tüm blokları katla (Ctrl+Alt+[)',
     expandAllTitle: 'Tüm blokları aç (Ctrl+Alt+])',
     snippets: 'Snippet’ler',
+    explorer: 'Gezgin',
     addSnippet: 'Yeni snippet ekle',
     dragHint: 'Tıkla = imlece ekle · Sürükle = istediğin yere bırak',
     preview: 'ÖNİZLEME',

@@ -2397,7 +2397,7 @@ window.addEventListener('message', function(e) {
             class:active={settings.leftPanelView === 'explorer'}
             onclick={() => updateSetting('leftPanelView', 'explorer')}
             title="Ajanın çalışma klasörü — dokunduğu dosyalar rozetli"
-          >📁 Gezgin</button>
+          >📁 {m.panels.explorer}</button>
         </div>
         {#if settings.leftPanelView === 'explorer'}
           <FileExplorer onOpen={(paths) => void openPaths(paths)} />

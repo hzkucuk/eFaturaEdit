@@ -117,6 +117,7 @@ export const pl: Messages = {
     collapseAllTitle: 'Zwiń wszystkie bloki (Ctrl+Alt+[)',
     expandAllTitle: 'Rozwiń wszystkie bloki (Ctrl+Alt+])',
     snippets: 'Fragmenty',
+    explorer: 'Eksplorator',
     addSnippet: 'Dodaj nowy fragment',
     dragHint: 'Kliknij = wstaw w kursorze · Przeciągnij = upuść gdziekolwiek',
     preview: 'PODGLĄD',

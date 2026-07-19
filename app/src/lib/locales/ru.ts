@@ -117,6 +117,7 @@ export const ru: Messages = {
     collapseAllTitle: 'Свернуть все блоки (Ctrl+Alt+[)',
     expandAllTitle: 'Развернуть все блоки (Ctrl+Alt+])',
     snippets: 'Сниппеты',
+    explorer: 'Проводник',
     addSnippet: 'Добавить сниппет',
     dragHint: 'Клик = вставить в курсор · Перетаскивание = отпустить где угодно',
     preview: 'ПРЕДПРОСМОТР',

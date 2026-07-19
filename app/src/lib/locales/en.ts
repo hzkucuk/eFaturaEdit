@@ -118,6 +118,7 @@ export const en: Messages = {
     collapseAllTitle: 'Collapse all blocks (Ctrl+Alt+[)',
     expandAllTitle: 'Expand all blocks (Ctrl+Alt+])',
     snippets: 'Snippets',
+    explorer: 'Explorer',
     addSnippet: 'Add a new snippet',
     dragHint: 'Click = insert at cursor · Drag = drop anywhere',
     preview: 'PREVIEW',
