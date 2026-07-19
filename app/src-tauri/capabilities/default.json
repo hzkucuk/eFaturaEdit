@@ -20,6 +20,8 @@
     "dialog:allow-open",
     "dialog:allow-save",
     "dialog:allow-message",
+    "dialog:allow-ask",
+    "dialog:allow-confirm",
     "fs:allow-read-text-file",
     "fs:allow-write-text-file",
     "fs:allow-write-file",

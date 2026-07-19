@@ -118,6 +118,114 @@ pub fn agent_edit(root: String, path: String, old: String, new: String) -> Resul
     std::fs::write(&p, updated).map_err(|e| format!("Dosya yazılamadı ({path}): {e}"))
 }
 
+// ── Gezgin dosya işlemleri ────────────────────────────────────────────────────
+//
+// Bunlar **kullanıcının** Gezgin panelinden tetiklediği işlemlerdir (ajanın araç
+// seti değildir — ajanın araçları `agent-session.svelte.ts`'te ayrıca sayılır).
+// Yine de aynı `guard()`'dan geçerler: Gezgin de çalışma klasörünün dışına çıkamaz.
+// ⚠️ Taşıma/kopyalamada **hem kaynak hem hedef** denetlenir; yalnız birini denetlemek
+// "kök içinden kök dışına kopyala" kaçağı bırakırdı.
+
+/// Kökün kendisine dokunulmasını engelle (silme/yeniden adlandırma hedefi olamaz).
+fn kok_degil(root: &str, hedef: &Path) -> Result<(), String> {
+    let kok = std::fs::canonicalize(root)
+        .map_err(|e| format!("Çalışma klasörü çözümlenemedi: {e}"))?;
+    if hedef == kok {
+        return Err("Çalışma klasörünün kendisi bu işleme konu olamaz.".into());
+    }
+    Ok(())
+}
+
+/// Kök içinde klasör oluştur (ara dizinler dahil).
+#[tauri::command]
+pub fn agent_mkdir(root: String, path: String) -> Result<(), String> {
+    let p = guard(&root, &path)?;
+    if p.exists() {
+        return Err(format!("Zaten var: {path}"));
+    }
+    std::fs::create_dir_all(&p).map_err(|e| format!("Klasör oluşturulamadı ({path}): {e}"))
+}
+
+/// Kök içindeki dosyayı veya klasörü **kalıcı olarak** sil.
+///
+/// ⚠️ Klasörler **içeriğiyle birlikte** gider ve işlem geri alınamaz — çağıran arayüz
+/// kullanıcıdan açık onay almalıdır (Gezgin bunu yapar).
+#[tauri::command]
+pub fn agent_delete(root: String, path: String) -> Result<(), String> {
+    let p = guard(&root, &path)?;
+    kok_degil(&root, &p)?;
+    if !p.exists() {
+        return Err(format!("Bulunamadı: {path}"));
+    }
+    if p.is_dir() {
+        std::fs::remove_dir_all(&p).map_err(|e| format!("Klasör silinemedi ({path}): {e}"))
+    } else {
+        std::fs::remove_file(&p).map_err(|e| format!("Dosya silinemedi ({path}): {e}"))
+    }
+}
+
+/// Kök içinde yeniden adlandır / taşı. Kaynak ve hedef **ayrı ayrı** guard'lanır.
+#[tauri::command]
+pub fn agent_rename(root: String, from: String, to: String) -> Result<(), String> {
+    let src = guard(&root, &from)?;
+    let dst = guard(&root, &to)?;
+    kok_degil(&root, &src)?;
+    if !src.exists() {
+        return Err(format!("Bulunamadı: {from}"));
+    }
+    if dst.exists() {
+        return Err(format!("Hedef zaten var: {to}"));
+    }
+    if let Some(parent) = dst.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("Hedef klasör oluşturulamadı: {e}"))?;
+    }
+    std::fs::rename(&src, &dst).map_err(|e| format!("Taşınamadı ({from} → {to}): {e}"))
+}
+
+/// Kök içinde kopyala (dosya veya klasör). Kaynak ve hedef **ayrı ayrı** guard'lanır.
+#[tauri::command]
+pub fn agent_copy(root: String, from: String, to: String) -> Result<(), String> {
+    let src = guard(&root, &from)?;
+    let dst = guard(&root, &to)?;
+    if !src.exists() {
+        return Err(format!("Bulunamadı: {from}"));
+    }
+    if dst.exists() {
+        return Err(format!("Hedef zaten var: {to}"));
+    }
+    if src.is_dir() {
+        // Kendini içine kopyalama (sonsuz döngü) engellenir.
+        if dst.starts_with(&src) {
+            return Err("Bir klasör kendi içine kopyalanamaz.".into());
+        }
+        kopyala_ozyineli(&src, &dst)
+    } else {
+        if let Some(parent) = dst.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("Hedef klasör oluşturulamadı: {e}"))?;
+        }
+        std::fs::copy(&src, &dst)
+            .map(|_| ())
+            .map_err(|e| format!("Kopyalanamadı ({from} → {to}): {e}"))
+    }
+}
+
+fn kopyala_ozyineli(src: &Path, dst: &Path) -> Result<(), String> {
+    std::fs::create_dir_all(dst).map_err(|e| format!("Klasör oluşturulamadı: {e}"))?;
+    let girdiler = std::fs::read_dir(src).map_err(|e| format!("Klasör okunamadı: {e}"))?;
+    for girdi in girdiler {
+        let girdi = girdi.map_err(|e| format!("Girdi okunamadı: {e}"))?;
+        let hedef = dst.join(girdi.file_name());
+        if girdi.path().is_dir() {
+            kopyala_ozyineli(&girdi.path(), &hedef)?;
+        } else {
+            std::fs::copy(girdi.path(), &hedef).map_err(|e| format!("Kopyalanamadı: {e}"))?;
+        }
+    }
+    Ok(())
+}
+
 /// Kök içindeki bir alt dizini listele (`sub` boşsa kökün kendisi).
 #[tauri::command]
 pub fn agent_list(root: String, sub: String) -> Result<Vec<DirEntry>, String> {
@@ -257,6 +365,91 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
+    }
+
+    // ── Gezgin dosya işlemleri ────────────────────────────────────────────────
+
+    #[test]
+    fn mkdir_rename_copy_delete_kok_icinde_calisir() {
+        let kok = temp_root();
+        let k = kok.to_string_lossy().to_string();
+
+        agent_mkdir(k.clone(), "alt".into()).unwrap();
+        assert!(kok.join("alt").is_dir(), "klasör oluşmadı");
+
+        agent_write(k.clone(), "alt/a.xslt".into(), "içerik".into()).unwrap();
+        agent_copy(k.clone(), "alt/a.xslt".into(), "alt/b.xslt".into()).unwrap();
+        assert!(kok.join("alt/b.xslt").exists(), "kopya oluşmadı");
+
+        agent_rename(k.clone(), "alt/b.xslt".into(), "alt/c.xslt".into()).unwrap();
+        assert!(!kok.join("alt/b.xslt").exists() && kok.join("alt/c.xslt").exists());
+
+        agent_delete(k.clone(), "alt/c.xslt".into()).unwrap();
+        assert!(!kok.join("alt/c.xslt").exists(), "dosya silinmedi");
+
+        // Klasör içeriğiyle birlikte silinir.
+        agent_delete(k.clone(), "alt".into()).unwrap();
+        assert!(!kok.join("alt").exists(), "klasör silinmedi");
+        let _ = fs::remove_dir_all(&kok);
+    }
+
+    /// **En kritik test:** taşıma/kopyalamada HEDEF de guard'lanmalı. Yalnız kaynak
+    /// denetlenseydi "kök içinden kök DIŞINA kopyala/taşı" kaçağı açık kalırdı.
+    #[test]
+    fn kok_disina_tasima_ve_kopyalama_reddedilir() {
+        let kok = temp_root();
+        let k = kok.to_string_lossy().to_string();
+        agent_write(k.clone(), "veri.xml".into(), "x".into()).unwrap();
+
+        for hedef in ["../kacak.xml", "/tmp/efe-kacak-hedef.xml"] {
+            assert!(
+                agent_copy(k.clone(), "veri.xml".into(), hedef.into()).is_err(),
+                "kök DIŞINA kopyalama reddedilmedi: {hedef}"
+            );
+            assert!(
+                agent_rename(k.clone(), "veri.xml".into(), hedef.into()).is_err(),
+                "kök DIŞINA taşıma reddedilmedi: {hedef}"
+            );
+        }
+        // Kanıt diskte: kaçak dosya oluşmamış olmalı (ders 17).
+        assert!(!std::path::Path::new("/tmp/efe-kacak-hedef.xml").exists());
+        assert!(kok.join("veri.xml").exists(), "kaynak kaybolmuş");
+
+        // Kök dışındaki bir kaynağı silmek/taşımak da reddedilir.
+        assert!(agent_delete(k.clone(), "../".into()).is_err());
+        assert!(agent_delete(k.clone(), "/etc/hosts".into()).is_err());
+        let _ = fs::remove_dir_all(&kok);
+    }
+
+    #[test]
+    fn kokun_kendisi_silinemez() {
+        let kok = temp_root();
+        let k = kok.to_string_lossy().to_string();
+        assert!(agent_delete(k.clone(), ".".into()).is_err(), "kök silinebildi!");
+        assert!(kok.exists(), "kök silindi!");
+        let _ = fs::remove_dir_all(&kok);
+    }
+
+    #[test]
+    fn var_olan_hedefin_uzerine_yazilmaz() {
+        let kok = temp_root();
+        let k = kok.to_string_lossy().to_string();
+        agent_write(k.clone(), "a.xml".into(), "A".into()).unwrap();
+        agent_write(k.clone(), "b.xml".into(), "B".into()).unwrap();
+        assert!(agent_copy(k.clone(), "a.xml".into(), "b.xml".into()).is_err());
+        assert!(agent_rename(k.clone(), "a.xml".into(), "b.xml".into()).is_err());
+        // b bozulmamış olmalı
+        assert_eq!(fs::read_to_string(kok.join("b.xml")).unwrap(), "B");
+        let _ = fs::remove_dir_all(&kok);
+    }
+
+    #[test]
+    fn klasor_kendi_icine_kopyalanamaz() {
+        let kok = temp_root();
+        let k = kok.to_string_lossy().to_string();
+        agent_mkdir(k.clone(), "d".into()).unwrap();
+        assert!(agent_copy(k.clone(), "d".into(), "d/ic".into()).is_err());
+        let _ = fs::remove_dir_all(&kok);
     }
 
     #[test]
