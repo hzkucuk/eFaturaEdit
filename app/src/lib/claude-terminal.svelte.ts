@@ -16,6 +16,11 @@
  */
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+// ⚠️ xterm'in KENDİ stili — burada, terminalin yaşadığı yerde import edilir.
+// Yüklenmezse xterm'in gizli olması gereken yardımcı <textarea>'sı EKRANDA GÖRÜNÜR
+// ve yerleşim bozulur (içerik dibe kayar). Bileşene koyulursa modül tek başına
+// kullanıldığında stil gelmez — o yüzden burada.
+import '@xterm/xterm/css/xterm.css';
 
 export const terminalState = $state({
   /** PTY çalışıyor mu (claude ayakta). */
