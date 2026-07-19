@@ -3,6 +3,24 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.38.0] — 2026-07-19 — Dosya Gezgini (ajanın dokundukları rozetli)
+
+### Eklenen
+- **📁 Dosya Gezgini.** Sol panel artık iki görünüm: **🧩 Snippet'ler** ve **📁 Gezgin**. Gezgin,
+  ajanın çalışma klasörünü (Claude Code paneliyle **aynı kök**) bir ağaçta gösterir; `.xslt/.xsl/.xml`
+  dosyasına tıklayınca **editörde açılır**, ajan bir görevi bitirince ağaç kendiliğinden tazelenir.
+- **Ajanın dokunduğu dosyalar rozetli:** **Y** (ajan oluşturdu · yeşil) · **M** (değiştirdi · sarı) ·
+  **S** (artık yok · kırmızı) — VSCode'daki gibi tek harf + renk. Böylece ajan çalışırken neyin
+  değiştiği canlı görünür. Rozetleri "✕" ile temizleyebilirsin.
+  - Kaynak **git değildir** (bilerek): fatura/şablon klasörleri genelde git deposu olmadığı için
+    git'e dayansaydı rozetler çoğu klasörde **hiç görünmezdi**. Bunun yerine araç çağrısı **anında**
+    dosyanın diskte olup olmadığına bakılır → "yeni" ile "değişti" doğru ayrılır.
+- Model de Gezgin'den haberdar edilir (anlamlı dosya adı verir, geçici dosya bırakmaz).
+
+### Güvenlik
+- Gezgin listelemeyi Rust'taki `agent_list` ile yapar; o komut `guard()` ile **köke kilitlidir**
+  (`..`/symlink kaçışı reddedilir) — gezgin çalışma klasörünün dışını **gösteremez**.
+
 ## [2.37.0] — 2026-07-18 — Claude Code motoru: oturum geçmişi, model/efor, ham Terminal
 
 ### Eklenen

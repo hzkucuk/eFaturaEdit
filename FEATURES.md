@@ -155,6 +155,21 @@ uygulama **onay kapısıdır**.
 - **Mod sekmeleri (v2.37):** üst sırada üç mod — **Öneri** (salt-öneri) · **Klasör Ajanı** (BYOK) ·
   **Claude Code** (gerçek claude; içinde Panel/Terminal).
 
+### 📁 Dosya Gezgini — ajanın klasörünü canlı izle (v2.38.0)
+
+Sol panel iki görünümlü: **🧩 Snippet'ler** ve **📁 Gezgin**. Gezgin, ajanın çalışma klasörünü
+(Claude Code paneliyle **aynı kök**) ağaç olarak gösterir.
+
+- **Rozetler:** **Y** = ajan oluşturdu (yeşil) · **M** = değiştirdi (sarı) · **S** = artık yok (kırmızı).
+  Tek harf + renk, VSCode alışkanlığıyla aynı. "✕" ile temizlenir.
+- **Neden git değil:** fatura/şablon klasörleri genelde git deposu değildir; git durumuna dayansaydık
+  rozetler çoğu klasörde **hiç görünmezdi**. Soru "sürüm kontrolüne göre ne değişti" değil,
+  **"ajan az önce neye dokundu"**. Ayrım araç çağrısı **anında** `exists` ile yapılır (yazma henüz
+  olmamıştır) — sonradan bakılsaydı her şey "değişti" görünürdü.
+- `.xslt/.xsl/.xml` tıklanınca **editörde açılır**; ajan koşuyu bitirince ağaç kendiliğinden tazelenir.
+- **Kök kilidi:** listeleme `agent_list` ile yapılır, o da Rust'ta `guard()` ile köke kilitlidir —
+  gezgin çalışma klasörünün dışını gösteremez.
+
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 
 Önizlemede bir öğeye tıklayıp doğrudan biçimlendirme.
