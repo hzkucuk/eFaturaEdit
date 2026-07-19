@@ -166,9 +166,15 @@ Sol panel iki görünümlü: **🧩 Snippet'ler** ve **📁 Gezgin**. Gezgin, aj
   rozetler çoğu klasörde **hiç görünmezdi**. Soru "sürüm kontrolüne göre ne değişti" değil,
   **"ajan az önce neye dokundu"**. Ayrım araç çağrısı **anında** `exists` ile yapılır (yazma henüz
   olmamıştır) — sonradan bakılsaydı her şey "değişti" görünürdü.
-- `.xslt/.xsl/.xml` tıklanınca **editörde açılır**; ajan koşuyu bitirince ağaç kendiliğinden tazelenir.
-- **Kök kilidi:** listeleme `agent_list` ile yapılır, o da Rust'ta `guard()` ile köke kilitlidir —
-  gezgin çalışma klasörünün dışını gösteremez.
+- `.xslt/.xsl/.xml` tıklanınca **editörde açılır** (ve bu modele bağlam olarak bildirilir); ajan
+  koşuyu bitirince ağaç kendiliğinden tazelenir.
+- **Arama:** kökten özyinelemeli tarar (alt klasörler dahil, 3000 girdi sınırı), sonuçlar düz listede.
+- **Sağ tık dosya işlemleri:** Editörde aç · Yeni dosya/klasör · Ad değiştir (satır içi) · Kopyala ·
+  Kes · Yapıştır ("… kopya" ile ad çakışması çözülür) · Yolu kopyala · **Sil…** (kalıcı, açık onaylı).
+- **Kök kilidi:** listeleme ve **tüm dosya işlemleri** Rust'ta `guard()`'dan geçer; taşıma/kopyalamada
+  **kaynak ve hedef ayrı ayrı** denetlenir — yalnız kaynağı denetlemek "kök içinden dışına kopyala"
+  kaçağını açık bırakırdı. Kök silinemez, var olan hedefin üzerine yazılmaz, klasör kendi içine
+  kopyalanamaz. Gezgin çalışma klasörünün dışına **çıkamaz** (5 birim testiyle kanıtlı).
 
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 

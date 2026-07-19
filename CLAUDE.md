@@ -286,6 +286,27 @@ dönüyor" gibi teşhis edilemez bir şikâyete dönüşür. Boolean alanlarda `
 görüldü mü?" sorusunu hangi alanın cevapladığını **ölç**; sağlayıcının "başarı"sı seninkiyle aynı
 olmayabilir.
 
+### 19. **İzin/kapsam eksiği = sessizce iş görmeyen özellik** (2026-07-19, ölçüldü)
+
+Gezgin'e silme eklerken onay için `ask()` kullandım. `capabilities/default.json`'da
+`dialog:allow-open/save/message` vardı ama **`dialog:allow-ask` YOKTU** → çağrı çalışma anında
+**fırlar**, silme **hiç olmaz**, kullanıcı "tıkladım bir şey olmadı" der. Derleme yeşil, tip denetimi
+yeşil; hata yalnızca çalışırken ve **sessizce**. Üstelik aynı API'yi kullanan **mevcut** bir özellik
+("kaydedilmemiş sekmeyi kapat" onayı) de aynı boşluktaydı — yani bir izin eksiği, onu ilk fark eden
+özellikten **önce** eklenmiş özellikleri de bozmuş olabilir.
+
+**Kural:** Yeni bir eklenti API'si (`dialog`, `clipboard`, `fs`, `opener`, `shell`…) çağırdığında
+**o çağrının kendi iznini** `capabilities/default.json`'da **doğrula** — "eklenti zaten ekli" yetmez,
+izinler **çağrı bazındadır** (`allow-ask` ≠ `allow-message`). Ve yıkıcı bir eylemin onay adımı
+başarısız olabiliyorsa **eylemi yapma + sebebi göster**; `await ask(...)`'ı try/catch'siz bırakmak,
+"onay alınamadı"yı "onaylandı" gibi değil ama **"hiçbir şey olmadı"** gibi gösterir — kullanıcı
+sildiğini sanıp devam eder.
+
+**İkinci ders (aynı iş):** taşıma/kopyalama gibi **iki uçlu** işlemlerde koruma **her iki uca** da
+uygulanmalı. `guard()`'ı yalnız kaynağa uygulasaydım "kök içinden kök **dışına** kopyala" kaçağı açık
+kalırdı — kilit varmış gibi görünür, sınır delinir. Test kaçağı reddetmekle yetinmez, **diskte kaçak
+dosya oluşmadığını** da doğrular (ders 17).
+
 ---
 
 ## Mimari

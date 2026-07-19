@@ -15,9 +15,21 @@ Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
   - Kaynak **git değildir** (bilerek): fatura/şablon klasörleri genelde git deposu olmadığı için
     git'e dayansaydı rozetler çoğu klasörde **hiç görünmezdi**. Bunun yerine araç çağrısı **anında**
     dosyanın diskte olup olmadığına bakılır → "yeni" ile "değişti" doğru ayrılır.
+- **🔎 Arama ve araç çubuğu.** Gezgin'de dosya araması kökten **özyinelemeli** tarar (alt klasörler
+  dahil, 3000 girdi sınırı) ve sonuçları düz listede gösterir. Araç çubuğu: klasör seç · yenile ·
+  tümünü kapat · yeni dosya · yeni klasör.
+- **🖱️ Sağ tık dosya işlemleri.** Editörde aç · Yeni dosya/klasör · **Ad değiştir** (satır içi giriş) ·
+  **Kopyala · Kes · Yapıştır** (aynı klasöre yapıştırınca "… kopya" diye adlandırır) · **Yolu kopyala** ·
+  **Sil…** (kalıcı, açık onaylı). Kullanıcı Gezgin'den bir dosya açtığında bu **modele bağlam olarak
+  bildirilir** ("Editörde şu dosyayı açtım: …") ve akışta görünür — gizli bağlam gönderilmez.
 - Model de Gezgin'den haberdar edilir (anlamlı dosya adı verir, geçici dosya bırakmaz).
 
 ### Düzeltilen
+- **Gezgin'de sağ tık menüsü dosya eylemlerini göstermiyordu** — satırdaki sağ tık, ağacın "boş alan"
+  işleyicisine kabarıp menüyü hedefsiz hâliyle yeniden yazıyordu; Kopyala/Kes/Ad değiştir/Sil
+  görünmüyordu (`stopPropagation` eklendi).
+- **Terminal'de xterm stili yüklenmiyordu** — xterm'in gizli olması gereken yardımcı `<textarea>`'sı
+  ekranın ortasında beyaz bir kutu olarak görünüyor, terminal içeriği dibe kayıyordu.
 - **Terminal oturumu sekme değişiminde ölüyordu.** Panel ↔ Terminal (veya başka bir moda) geçince
   bileşen unmount oluyor ve çalışan `claude` süreci kapatılıyordu — kullanıcı yan sekmeye bakıp
   döndüğünde ekran bomboştu. Canlı oturum (xterm + PTY) artık **modülde** yaşıyor: sekme değişiminde
@@ -27,6 +39,15 @@ Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 ### Güvenlik
 - Gezgin listelemeyi Rust'taki `agent_list` ile yapar; o komut `guard()` ile **köke kilitlidir**
   (`..`/symlink kaçışı reddedilir) — gezgin çalışma klasörünün dışını **gösteremez**.
+- **Dosya işlemlerinde kaynak VE hedef ayrı ayrı kilitlenir.** Yalnız kaynağı denetlemek
+  *"kök içinden kök dışına kopyala/taşı"* kaçağını açık bırakırdı; test bunu reddediyor ve **diskte
+  kaçak dosya oluşmadığını** doğruluyor. Ayrıca kökün kendisi silinemez/taşınamaz, var olan hedefin
+  üzerine yazılmaz, bir klasör kendi içine kopyalanamaz. (5 yeni birim testi; toplam 55.)
+- **Silme onayı sessizce atlanabiliyordu:** onay diyaloğu için gereken `dialog:allow-ask` izni
+  uygulama yetkilerinde **yoktu** — izin olmadan çağrı hata fırlatır ve silme hiç yapılmazdı. İzin
+  eklendi; ayrıca onay penceresi açılamazsa **silme yapılmaz ve sebep ekranda görünür**. (Aynı API'yi
+  kullanan "kaydedilmemiş sekmeyi kapat" onayı da bu düzeltmeden yararlanır.)
+- ⚠️ Silme **kalıcıdır** (çöp kutusuna taşımaz) — onay metni bunu açıkça söyler.
 
 ## [2.37.0] — 2026-07-18 — Claude Code motoru: oturum geçmişi, model/efor, ham Terminal
 
