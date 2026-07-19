@@ -147,10 +147,13 @@ uygulama **onay kapısıdır**.
   **■ Durdur** çalışan görevi iptal eder; akış otomatik en alta iner.
 - **🧠 Model + efor (v2.37):** Ayarlar'dan model (Opus/Sonnet/Haiku) ve düşünme eforu (Düşük/Orta/Yüksek);
   boş = `claude` varsayılanı. Slash `claude`'a geçer, `/clear` yeni oturum.
-- **🖥️ Terminal sekmesi (v2.37, ileri kullanıcı, opt-in):** gerçek interaktif `claude` TUI'si bir PTY'de
-  (xterm.js). ⚠️ **Açıkça etiketli ham mod:** interaktif claude fail-closed kilidimizi tutmadığı
-  (ölçüldü) için burada klasör kilidi **garanti değildir** — tek koruma claude'un kendi onay promptları.
-  Ana panel güvenli/önerilen mod kalır.
+- **🖥️ Terminal görünümü (v2.37, ileri kullanıcı, opt-in):** gerçek interaktif `claude` TUI'si bir PTY'de
+  (xterm.js). Üst sırada ayrı bir mod değil — **Claude Code'un içinde** `[Panel | Terminal ⚠️]` geçişi
+  (ikisi de aynı motor). ⚠️ **Açıkça etiketli ham görünüm:** interaktif claude fail-closed kilidimizi
+  tutmadığı (ölçüldü) için burada klasör kilidi **garanti değildir** — tek koruma claude'un kendi onay
+  promptları. **Panel** güvenli/varsayılan görünüm olarak kalır.
+- **Mod sekmeleri (v2.37):** üst sırada üç mod — **Öneri** (salt-öneri) · **Klasör Ajanı** (BYOK) ·
+  **Claude Code** (gerçek claude; içinde Panel/Terminal).
 
 ### 🎨 Görsel Düzenleyici (WYSIWYG) — Faz 1 + 2a (v2.20.0)
 

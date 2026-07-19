@@ -14,10 +14,17 @@ Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
   veya varsayılan) ve **efor** (Düşük/Orta/Yüksek veya varsayılan) seçilebilir; boş bırakılırsa
   `claude`'un kendi varsayılanı kullanılır. Slash komutları (`/compact` vb.) doğrudan `claude`'a geçer;
   `/clear` yeni oturum açar.
-- **🖥️ "Terminal" sekmesi (ileri kullanıcı, opt-in).** Gerçek interaktif `claude` arayüzü uygulamanın
+- **🖥️ Terminal görünümü (ileri kullanıcı, opt-in).** Gerçek interaktif `claude` arayüzü uygulamanın
   içinde bir PTY'de (xterm.js) — kendi TUI'si, kendi araç onaylarıyla. **Editör entegrasyonu burada da
   çalışır:** `open_in_editor` aracı ve "uygulamanın içindesin" bağlamı Terminal'e de verilir (yoksa model
   `open -t` deneyip dosyayı işletim sisteminin metin editöründe açıyordu).
+
+### Değişen
+- **AI mod sekmeleri sadeleşti.** Üst sırada artık **üç** mod var: **Öneri · Klasör Ajanı · Claude Code**.
+  Terminal ayrı bir üst sekme değil, **Claude Code'un içindeki bir görünüm**: `[Panel | Terminal ⚠️]`.
+  Gerekçe: "Klasör Ajanı" ile "Claude Code" ikisi de klasör ajanı, "Claude Code" ile "Terminal" ikisi de
+  aynı motor — dört sekme hangisinin ne olduğunu belirsizleştiriyordu. Artık ilişki görünür: **Panel**
+  güvenli/onay-kapılı (varsayılan), **Terminal** ham. Eski ayar otomatik göç eder.
 - **📑 Şablon + veri birlikte açılır.** `open_in_editor` artık **çok dosya** alır (`paths`): uygulamada
   bir sekme = **XSLT + XML çifti** olduğu için model şablonu ve verisini **tek çağrıda** gönderir, ikisi
   aynı sekmeye yüklenir ve önizleme hemen derlenir. (Gerçek `claude` ile uçtan uca ölçüldü.)

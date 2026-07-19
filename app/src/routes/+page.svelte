@@ -2471,19 +2471,32 @@ window.addEventListener('message', function(e) {
             onclick={() => updateSetting('aiMode', 'claude')}
             title={m.ai.modeClaudeTitle}
           >{m.ai.modeClaude}</button>
-          <button
-            class="ai-mode-tab"
-            class:active={settings.aiMode === 'terminal'}
-            onclick={() => updateSetting('aiMode', 'terminal')}
-            title="Ham interaktif claude (kendi güvenliğiyle — klasör kilidi garanti değil)"
-          >Terminal</button>
         </div>
         {#if settings.aiMode === 'agent'}
           <AgentPanel />
         {:else if settings.aiMode === 'claude'}
-          <ClaudePanel onOpenInEditor={(path) => void openPaths([path])} />
-        {:else if settings.aiMode === 'terminal'}
-          <ClaudeTerminal />
+          <!-- Aynı motorun iki görünümü: güvenli Panel (onay kapılı) · ham Terminal.
+               Üst sırada ayrı sekme olarak durunca "Claude Code mu Terminal mi?" diye
+               karıştırılıyordu; burada alt geçiş olarak ilişki net. -->
+          <div class="claude-view-tabs">
+            <button
+              class="claude-view-tab"
+              class:active={settings.claudeView !== 'terminal'}
+              onclick={() => updateSetting('claudeView', 'panel')}
+              title="Güvenli mod: her işlem onaydan geçer, klasör dışına yazamaz"
+            >Panel</button>
+            <button
+              class="claude-view-tab"
+              class:active={settings.claudeView === 'terminal'}
+              onclick={() => updateSetting('claudeView', 'terminal')}
+              title="Ham claude arayüzü — kendi güvenliğiyle, klasör kilidi garanti değil"
+            >Terminal ⚠️</button>
+          </div>
+          {#if settings.claudeView === 'terminal'}
+            <ClaudeTerminal />
+          {:else}
+            <ClaudePanel onOpenInEditor={(path) => void openPaths([path])} />
+          {/if}
         {:else}
           <AIAssistant
             xsltPath={editorState.xsltPath}
@@ -3364,6 +3377,20 @@ window.addEventListener('message', function(e) {
   .ai-mode-tab.active { background: #fff; color: #111; font-weight: 600; }
   .app.dark .ai-mode-tab { background: #252526; border-color: #3f3f46; color: #9ca3af; }
   .app.dark .ai-mode-tab.active { background: #1e1e1e; color: #e6e6e6; }
+  /* Claude Code'un iki görünümü (Panel | Terminal) — üst sekmelerden daha silik,
+     çünkü bunlar mod değil, aynı motorun görünümleri. */
+  .claude-view-tabs {
+    display: flex; gap: 4px; padding: 4px 6px 0; flex-shrink: 0;
+  }
+  .claude-view-tab {
+    padding: 2px 10px; border: 1px solid transparent; border-radius: 4px;
+    background: none; cursor: pointer; font-size: 11px; color: #6b7280;
+  }
+  .claude-view-tab.active {
+    background: #eef2ff; border-color: #c7d2fe; color: #3730a3; font-weight: 600;
+  }
+  .app.dark .claude-view-tab { color: #9ca3af; }
+  .app.dark .claude-view-tab.active { background: #2b2b40; border-color: #454565; color: #c7d2fe; }
   /* Mod tabları altındaki panel kalan yeri doldurur ve kendi içinde kayar. */
   .ai-dock > :global(*:last-child) { flex: 1; min-height: 0; }
   .snippets-header { padding: 0.5rem; border-bottom: 1px solid #e5e7eb; background: #fff; }

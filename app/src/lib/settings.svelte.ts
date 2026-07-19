@@ -200,7 +200,13 @@ export interface Settings {
    * - `agent`   = Klasör Ajanı, BYOK motor (dosya okur/yazar; araç döngüsü uygulamada)
    * - `claude`  = Klasör Ajanı, **Claude Code motoru** (`claude` ikilisi sürülür)
    */
-  aiMode: 'suggest' | 'agent' | 'claude' | 'terminal';
+  aiMode: 'suggest' | 'agent' | 'claude';
+  /**
+   * Claude Code modunun görünümü: güvenli **Panel** (onay kapılı) veya ham **Terminal**.
+   * Ayrı bir üst sekme DEĞİL — ikisi de aynı motorun görünümü; üst sırada dördüncü bir
+   * sekme olarak durunca "Claude Code" ile "Terminal" ayrımı kafa karıştırıyordu.
+   */
+  claudeView: 'panel' | 'terminal';
   /** Klasör Ajanının "hep izin ver" dendiği güvenilir kök klasörler (kalıcı). */
   agentTrustedFolders: string[];
   /**
@@ -244,6 +250,7 @@ const DEFAULTS: Settings = {
   claudeUseSystemBinary: false, // varsayılan: sürümü BİZ sabitleriz (ölçülmüş davranış)
   claudeModel: '', // boş = claude'un varsayılan modeli
   claudeEffort: '', // boş = claude'un varsayılan eforu
+  claudeView: 'panel', // güvenli panel varsayılan; Terminal opt-in
 };
 
 const STORAGE_KEY = 'efaturaEdit.settings.v3';
@@ -269,6 +276,12 @@ function loadInitial(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
+    // Göç: Terminal bir ara DÖRDÜNCÜ üst sekmeydi; artık Claude Code'un alt görünümü.
+    // Eski değerle açılan kullanıcı "Öneri"ye düşmesin, Terminal görünümünde kalsın.
+    if (parsed.aiMode === 'terminal') {
+      parsed.aiMode = 'claude';
+      parsed.claudeView = 'terminal';
+    }
     return {
       ...DEFAULTS,
       ...parsed,
