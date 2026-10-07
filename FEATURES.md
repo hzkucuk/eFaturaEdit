@@ -346,6 +346,11 @@ fatura sidecar'a beslenip karşılaştırıldı, tek fark eklenen sayfa kabı `<
 - Elle denetleme: **Ayarlar → Hakkında → "Güncellemeleri denetle"**.
 - **İmzalı:** Paketler minisign anahtarıyla imzalanır; uygulama, gömülü açık anahtarla doğrulayamadığı
   hiçbir güncellemeyi kurmaz. Doğrulama Rust tarafında yapılır.
+- **macOS Developer ID + notarizasyon (v2.38.1):** `.app`, sidecar (`xslt-transform`) dahil Developer ID
+  ile hardened runtime altında imzalanır ve Apple'a notarize ettirilir. CI, paketleri yüklemeden **önce**
+  kullanıcıya giden üç biçimi de (`.app`, `.dmg` içindeki `.app`, güncelleme arşivi) Gatekeeper'a sorar
+  (`codesign --strict` + `stapler validate` + `spctl`); biri düşerse hiçbir macOS paketi yüklenmez.
+  Bu, minisign güncelleme imzasından **bağımsızdır** (o updater'ın kabulü, bu Gatekeeper'ın açması için).
 - Linux'ta yalnızca **AppImage** için çalışır (`.deb`/`.rpm` paket yöneticisinin sorumluluğundadır).
 
 ### 📦 Dağıtım

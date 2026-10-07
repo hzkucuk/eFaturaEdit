@@ -52,26 +52,19 @@ Hazır kurulum paketleri: **[Releases](https://github.com/hzkucuk/eFaturaEdit/re
 Kurulduktan sonra **otomatik güncelleme** devreye girer: yeni sürüm çıkınca uygulama
 açılışta haber verir, onaylarsan indirip kurar.
 
-### ⚠️ macOS: "hasar görmüş olduğu için açılamıyor" uyarısı
+### macOS: imzalı ve notarize (v2.38.1+)
 
-macOS, `.dmg` içinden ilk açılışta **"e-Fatura Edit.app hasar görmüş"** diyebilir.
-**Uygulama bozuk değildir.** Sebep şu: tarayıcıyla indirilen dosyalara macOS bir
-*karantina* bayrağı takar; Gatekeeper açılışta kod imzasını denetler ve paketlerimiz
-(henüz) bir Apple Developer ID sertifikasıyla imzalanmadığı için macOS bu yanıltıcı
-mesajı gösterir.
+macOS paketleri **Apple Developer ID** ile imzalı ve Apple tarafından **notarize** edilmiştir —
+`.dmg`'yi açıp uygulamayı `Applications`'a sürükleyin, çift tıklayıp açın. Eski sürümlerdeki
+`xattr -dr com.apple.quarantine …` adımına **artık gerek yoktur.**
 
-Çözüm — uygulamayı `Applications` klasörüne sürükledikten sonra Terminal'de **bir kez**:
-
-```bash
-xattr -dr com.apple.quarantine "/Applications/e-Fatura Edit.app"
-```
-
-Sonrasında normal şekilde açılır ve bir daha sormaz. (Otomatik güncellemeler bu adımı
-gerektirmez — karantina bayrağı yalnızca tarayıcıyla indirilen dosyalara takılır.)
+> **İmzalı sürüme ilk geçişte bir kez:** macOS, daha önce kaydettiğiniz AI API anahtarları için
+> "e-Fatura Edit anahtar zincirinize erişmek istiyor" diye sorabilir (uygulamanın imzası değiştiği
+> için). **Her Zaman İzin Ver**'i seçin; sonraki güncellemelerde tekrar sormaz.
 
 ### Windows: "Bilinmeyen yayımcı" uyarısı
 
-Aynı sebeple (kod imzası yok) Windows SmartScreen bir uyarı gösterebilir:
+Windows paketleri henüz kod imzalı değildir; SmartScreen bir uyarı gösterebilir:
 **Daha fazla bilgi → Yine de çalıştır**.
 
 ## Geliştirme

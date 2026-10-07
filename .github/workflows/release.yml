@@ -38,6 +38,9 @@ jobs:
             args: ''
 
     runs-on: ${{ matrix.platform }}
+    # Varsayılan 6 saat. En uzun iş ~15 dk sürüyor; takılan bir iş (ör. Apple
+    # notarizasyon kuyruğu) saatlerce "çalışıyor" görünmesin, net düşsün (ders 5b).
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -140,24 +143,39 @@ jobs:
             echo ''
             echo 'Tam XSLT 1.0/2.0/3.0 desteği (Saxon-HE motoru dahili).'
             echo ''
-            echo '### ⚠️ macOS: "hasar görmüş olduğu için açılamıyor" uyarısı'
-            echo ''
-            echo 'Uygulama **bozuk değildir.** Paketler henüz Apple Developer ID ile imzalanmadığından,'
-            echo 'macOS tarayıcıyla indirilen dosyalara taktığı *karantina* bayrağı yüzünden bu yanıltıcı'
-            echo 'mesajı gösterir. Uygulamayı `Applications` klasörüne sürükledikten sonra Terminal'"'"'de **bir kez**:'
-            echo ''
-            echo '```bash'
-            echo 'xattr -dr com.apple.quarantine "/Applications/e-Fatura Edit.app"'
-            echo '```'
-            echo ''
-            echo 'Sonrasında normal açılır. Otomatik güncellemeler bu adımı gerektirmez.'
+            echo 'macOS paketleri Apple Developer ID ile imzalı ve Apple tarafından notarize edilmiştir — çift tıklayıp açabilirsiniz.'
             echo ''
             echo 'Windows'"'"'ta SmartScreen uyarısı çıkarsa: **Daha fazla bilgi → Yine de çalıştır**.'
             echo 'CHANGELOG_EOF'
           } >> "$GITHUB_OUTPUT"
 
+      # Apple notarizasyonu App Store Connect API anahtarıyla yapılır; Tauri
+      # .p8'i dosya yolundan okur, sırdan dosyaya burada yazılır (yalnız macOS).
+      - name: Notarizasyon anahtarı (macOS)
+        if: startsWith(matrix.platform, 'macos')
+        shell: bash
+        env:
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          set -euo pipefail
+          # Sır eksikse derlemenin ortasında anlaşılmaz bir codesign hatası yerine burada net düş.
+          # ISSUER/KEY eksikse Tauri imzalar ama notarizasyonu yalnız UYARIYLA atlar
+          # (sessiz geri düşüş — ders 3) → beşi de zorunlu.
+          for s in APPLE_API_KEY_P8 APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_API_ISSUER APPLE_API_KEY; do
+            [ -n "${!s}" ] || { echo "::error::$s sırrı yok — paket imzalanamaz/notarize edilemez"; exit 1; }
+          done
+          P8="$RUNNER_TEMP/AuthKey.p8"
+          printf '%s' "$APPLE_API_KEY_P8" > "$P8"
+          echo "APPLE_API_KEY_PATH=$P8" >> "$GITHUB_ENV"
+
       - name: Derle & Release yayınla
         uses: tauri-apps/tauri-action@v0
+        # Notarizasyon Apple'ın kuyruğunu bekler; takılırsa iş sınırından önce burada düş.
+        timeout-minutes: 45
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Otomatik güncelleme imzası. Uygulama, güncellemeyi yalnızca bu
@@ -166,9 +184,26 @@ jobs:
           # gönderilemez — yedeği ~/.tauri/efaturaedit.key.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Apple kod imzası (Developer ID) + notarizasyon — yalnız macOS'ta
+          # kullanılır. Bu, güncelleme imzasından (yukarıdaki minisign) BAĞIMSIZDIR:
+          # o updater'ın paketi kabulü içindir, bu Gatekeeper'ın uygulamayı açması için.
+          # Tauri sertifikayı geçici bir keychain'e kendisi alır; sidecar
+          # (xslt-transform) da aynı kimlik + hardened runtime ile imzalanır.
+          # APPLE_SIGNING_IDENTITY bilerek YOK: sertifika verilince Tauri kimliği
+          # sertifikadan kendisi çıkarır (tauri-bundler macos/sign.rs). Elle yazılan
+          # ad, sertifika yenilenince sessizce tutmaz hâle gelirdi.
+          APPLE_CERTIFICATE: ${{ startsWith(matrix.platform, 'macos') && secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ startsWith(matrix.platform, 'macos') && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_API_ISSUER: ${{ startsWith(matrix.platform, 'macos') && secrets.APPLE_API_ISSUER || '' }}
+          APPLE_API_KEY: ${{ startsWith(matrix.platform, 'macos') && secrets.APPLE_API_KEY || '' }}
         with:
           projectPath: ./app
-          tagName: ${{ github.ref_name }}
+          # macOS'ta BOŞ → tauri-action yalnız derler, hiçbir şey yüklemez
+          # ("No releaseId or tagName provided, skipping all uploads"). macOS
+          # paketleri Gatekeeper kontrolü GEÇTİKTEN SONRA aşağıda yüklenir; yoksa
+          # notarize edilmemiş paket + .sig taslağa düşer ve elle yayınlanırsa
+          # updater kullanıcılarına gider. Release'i diğer platformlar oluşturur.
+          tagName: ${{ !startsWith(matrix.platform, 'macos') && github.ref_name || '' }}
           # ⚠️ KAPALI OLMALI (v2.33.2). Açıkken HER matris işi latest.json'u
           # release'e yüklüyordu: işler paralel koştuğu için biri diğerinin
           # yazdığını EZİYOR (oku-değiştir-yaz yarışı). v2.33.1'de tam da bu oldu —
@@ -192,6 +227,103 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      # İmzalandı/notarize edildi diye VARSAYMA — Gatekeeper'a sor (ders 1).
+      # Kullanıcıya giden ÜÇ biçimin üçü de ölçülür: yalnız bundle/macos/*.app'e
+      # bakmak, .dmg'deki ya da güncelleme arşivindeki kopyayı kanıtlamaz (ders 12).
+      # Düşerse paketler HİÇ yüklenmez (yükleme bir sonraki adım) ve iş kırmızı olur.
+      - name: Gatekeeper kontrolü (macOS — .app + .dmg + güncelleme arşivi)
+        if: startsWith(matrix.platform, 'macos')
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          B=app/src-tauri/target/release/bundle
+          apps=("$B"/macos/*.app); dmgs=("$B"/dmg/*.dmg); tars=("$B"/macos/*.app.tar.gz)
+          if [ ${#apps[@]} -ne 1 ] || [ ${#dmgs[@]} -ne 1 ] || [ ${#tars[@]} -ne 1 ]; then
+            echo "::error::Beklenen 1 .app + 1 .dmg + 1 .app.tar.gz; bulunan: ${#apps[@]} / ${#dmgs[@]} / ${#tars[@]}"
+            ls -R "$B"; exit 1
+          fi
+
+          kontrol() {
+            local APP="$1" NE="$2" GK
+            echo "── $NE: $APP"
+            codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Authority=Developer ID Application|TeamIdentifier|flags'
+            codesign --verify --deep --strict "$APP"
+            xcrun stapler validate "$APP"
+            # Çıktı önce değişkene alınır: `| grep -q` + pipefail, tee'ye SIGPIPE
+            # düşürüp sağlam paketi "notarize değil" diye kırmızıya boyayabilir (ders 11).
+            GK="$(spctl -a -vv -t exec "$APP" 2>&1 || true)"
+            echo "$GK"
+            [[ "$GK" == *'source=Notarized Developer ID'* ]] \
+              || { echo "::error::Gatekeeper $NE paketini notarize Developer ID olarak kabul etmedi"; exit 1; }
+            echo "✓ $NE"
+          }
+
+          kontrol "${apps[0]}" "bundle .app"
+
+          MNT="$(mktemp -d)"
+          hdiutil attach -nobrowse -readonly -noautoopen -mountpoint "$MNT" "${dmgs[0]}" >/dev/null
+          trap 'hdiutil detach "$MNT" -quiet || true' EXIT
+          dapps=("$MNT"/*.app)
+          [ ${#dapps[@]} -eq 1 ] || { echo "::error::.dmg içinde tek .app bekleniyordu: ${#dapps[@]}"; exit 1; }
+          kontrol "${dapps[0]}" ".dmg içindeki .app"
+
+          X="$(mktemp -d)"
+          tar -xzf "${tars[0]}" -C "$X"
+          tapps=("$X"/*.app)
+          [ ${#tapps[@]} -eq 1 ] || { echo "::error::Güncelleme arşivinde tek .app bekleniyordu: ${#tapps[@]}"; exit 1; }
+          kontrol "${tapps[0]}" "güncelleme arşivindeki .app"
+
+      # Kontrolden GEÇEN paketler yüklenir. Adlar tauri-action'ınkiyle BİREBİR
+      # olmalı — verify işi latest.json'u bu adlardan kurar (RULES): boşluk → '.',
+      # güncelleme arşivine mimari eklenir (ör. e-Fatura.Edit_aarch64.app.tar.gz).
+      - name: macOS paketlerini release'e yükle (Gatekeeper'dan sonra)
+        if: startsWith(matrix.platform, 'macos')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          B=app/src-tauri/target/release/bundle
+          case "$(uname -m)" in
+            arm64)  ARCH=aarch64 ;;
+            x86_64) ARCH=x64 ;;
+            *) echo "::error::Bilinmeyen mimari: $(uname -m)"; exit 1 ;;
+          esac
+          dmgs=("$B"/dmg/*.dmg); tars=("$B"/macos/*.app.tar.gz)
+          [ -f "${tars[0]}.sig" ] || { echo "::error::Güncelleme imzası yok: ${tars[0]}.sig"; exit 1; }
+
+          OUT="$RUNNER_TEMP/macos-upload"; rm -rf "$OUT"; mkdir -p "$OUT"
+          DMG="$(basename "${dmgs[0]}")"
+          AD="$(basename "${tars[0]}" .app.tar.gz)"
+          TGZ="${AD// /.}_${ARCH}.app.tar.gz"
+          cp "${dmgs[0]}"     "$OUT/${DMG// /.}"
+          cp "${tars[0]}"     "$OUT/$TGZ"
+          cp "${tars[0]}.sig" "$OUT/$TGZ.sig"
+          ls -l "$OUT"
+
+          # Release'i diğer platformlardaki tauri-action oluşturur; macOS onlardan
+          # önce bitebilir (macos-14 ~7 dk) → var olana kadar bekle, sonsuza dek değil.
+          for i in $(seq 1 40); do
+            gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 && break
+            if [ "$i" -eq 40 ]; then
+              echo "::error::$TAG release'i 20 dk içinde oluşmadı (diğer platform işleri düşmüş olabilir)"; exit 1
+            fi
+            echo "release henüz yok, bekleniyor ($i/40)…"; sleep 30
+          done
+
+          gh release upload "$TAG" "$OUT"/* --repo "$GITHUB_REPOSITORY" --clobber
+
+          # Yüklendi diye VARSAYMA — release'teki adları say (ders 1).
+          NAMES="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')"
+          for f in "$OUT"/*; do
+            n="$(basename "$f")"
+            grep -qxF "$n" <<<"$NAMES" || { echo "::error::Release'te yok: $n"; exit 1; }
+            echo "✓ $n"
+          done
 
   # ───────────────────────────────────────────────────────────────────────
   # YAYIN DOĞRULAMA — bu iş olmadan eksik bir sürüm SESSİZCE yayınlanabilir.

@@ -3,6 +3,30 @@
 Tüm önemli değişiklikler bu dosyada belgelenir.
 Format [Semantic Versioning](https://semver.org/lang/tr/) kurallarına uygundur.
 
+## [2.38.1] — 2026-10-07 — macOS paketleri Apple Developer ID ile imzalı ve notarize
+
+### Değişen
+- **macOS paketleri artık Apple Developer ID ile imzalı ve Apple tarafından notarize.** "Hasar görmüş
+  olduğu için açılamıyor" uyarısı ve `xattr -dr com.apple.quarantine …` adımı tarihe karıştı — `.dmg`'yi
+  açıp çift tıklamak yeterli. XSLT motoru (`xslt-transform` sidecar'ı) da aynı kimlikle, hardened
+  runtime altında imzalanır (gerçek bir faturayla bu koşulda dönüştürme ölçüldü: çıkış 0).
+- ⚠️ **İmzalı sürüme ilk geçişte bir kez:** uygulamanın imzası değiştiği için macOS, kayıtlı AI API
+  anahtarlarına erişim için anahtar zinciri izni sorabilir — **Her Zaman İzin Ver**'i seçin.
+
+### Release hattı (CI)
+- macOS paketleri **önce derlenir, Gatekeeper'dan geçerse yüklenir.** Kullanıcıya giden üç biçimin üçü
+  de denetlenir: `.app`, `.dmg` içindeki `.app` ve güncelleme arşivi (`.app.tar.gz`). Eskiden yalnız
+  ilki bakılıyordu ve paketler denetimden **önce** taslağa yükleniyordu.
+- İmza/notarizasyon için gereken 5 sırrın hepsi derlemeden önce denetlenir; eksikse iş saniyesinde ve
+  net mesajla düşer (eksik `APPLE_API_ISSUER`/`APPLE_API_KEY` notarizasyonu yalnız uyarıyla atlatıyordu).
+- İş başına 60 dk, derleme adımına 45 dk süre sınırı — takılan bir notarizasyon kuyruğu saatlerce
+  "çalışıyor" görünmez.
+- İmza kimliği artık sertifikadan otomatik çıkarılır (elle yazılmış ad, sertifika yenilenince sessizce
+  tutmaz hâle gelirdi). Elle yazılmış hâli ayrıca YAML'ı bozuyordu (`Application: ` iki noktası) —
+  workflow hiç ayrışmazdı.
+
+---
+
 ## [2.38.0] — 2026-07-19 — Dosya Gezgini (ajanın dokundukları rozetli)
 
 ### Eklenen
