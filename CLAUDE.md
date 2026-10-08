@@ -309,6 +309,30 @@ dosya oluşmadığını** da doğrular (ders 17).
 
 ---
 
+### 20. Boş sır "var" görünür; çok kimlikli `.p12` YANLIŞ sertifikayla imzalar (v2.38.1, 2026-10-08)
+
+Apple Developer ID imzasını CI'a taşırken iki sessiz tuzak, ikisi de **erken kontrol** sayesinde
+kullanıcıya ulaşmadan yakalandı:
+- **`gh secret list` sırrı gösteriyordu ama değeri BOŞTU.** `base64 -i <olmayan dosya> | gh secret set`
+  boş girdiyle sırrı yine "başarıyla" yazar. İki kez oldu. Sertifika yalnız Anahtar Zinciri'ndeydi,
+  `.p12` hiç dışa aktarılmamıştı. Diğer proje (Buluo) **yerelde** imzaladığı için `.p12`'ye hiç
+  ihtiyaç duymamıştı ("orada çalıştı" yanıltıcıydı). Sırrın tarihi yalnız **yazıldığı anı** söyler,
+  içeriğini söylemez. CI'daki "sır boş mu?" kontrolü saniyesinde düşürdü.
+- **`security export -t identities` TÜM kimlikleri (7) tek `.p12`'ye koyar.** Tauri seçim yapmaz:
+  kimlikleri sertifika `O` alanına göre sıralayıp **ilkini** alır (`tauri-macos-sign` keychain.rs).
+  "huseyin kucuk" (Apple Development) < "huseyin zafer kucuk" (Developer ID) → **Apple Development
+  seçilirdi**, notarizasyon düşerdi. `APPLE_SIGNING_IDENTITY` vermek seçtirmez, yalnız "eşleşmiyor"
+  hatası verir. Çözüm: geçici keychain'e al → Developer ID dışındaki kimlikleri `delete-identity` ile
+  sil → oradan dışa aktar → **sırra göndermeden** başka bir geçici keychain'e alıp
+  `find-identity -v -p codesigning` = **1 kimlik** olduğunu gör.
+
+**Kural:** Bir sırrı yazdın diye dolu olduğunu varsayma: üreten komutun çıktısını **önce say**
+(`base64 … | wc -c`). Bir aracın "seçeceğini" varsayma: birden fazla aday varsa **seçim kuralını
+kaynaktan oku** (ders 10) ya da girdiyi tek adaya indir. Özel anahtarı Claude dışa aktaramaz
+(sınıflandırıcı engeller, doğrusu da bu): komutları kullanıcı çalıştırır, Claude **doğrular**.
+
+---
+
 ## Mimari
 
 Depo **iki bağlı parçadan** oluşur:
@@ -438,6 +462,11 @@ tool-calling'i model-bağımlı destekler, desteklemeyende sağlayıcı hatası 
   1. `gh release create vX.Y.Z --title ... --notes "<CHANGELOG bölümü>"` ile elle oluştur.
   2. `gh run rerun <id> --failed` → varlıklar mevcut release'e yüklenir.
   3. `latest.json`'daki platformları **doğrula**.
+- 🍎 **macOS Developer ID + notarizasyon (v2.38.1+).** 5 sır: `APPLE_CERTIFICATE` (yalnız Developer
+  ID içeren `.p12`, base64, bkz. ders 20) + `_PASSWORD` + `APPLE_API_ISSUER` + `APPLE_API_KEY` +
+  `APPLE_API_KEY_P8`. macOS paketleri **önce derlenir, Gatekeeper'dan (.app + .dmg içi + güncelleme
+  arşivi) geçerse yüklenir**, release'i diğer platformlar oluşturur. Sertifika yenilenince `.p12`'yi
+  ders 20'deki yolla yeniden üret. Bu, updater minisign anahtarından **bağımsızdır**.
 - 🔑 **Updater imza anahtarı — KAYBEDİLEMEZ.** Özel anahtar GitHub Secret'larında
   (`TAURI_SIGNING_PRIVATE_KEY` + `..._PASSWORD`), yedeği `~/.tauri/efaturaedit.key`(+`.password`).
   **Kaybolursa kurulu uygulamalara bir daha güncelleme gönderilemez.** Açık anahtarı değiştirmek de
