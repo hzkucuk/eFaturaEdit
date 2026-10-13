@@ -86,7 +86,7 @@ jobs:
           print('CP1252 kontrolu tamam.')
 
       - name: Node.js kur
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 20
 
