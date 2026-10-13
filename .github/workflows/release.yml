@@ -173,7 +173,7 @@ jobs:
           echo "APPLE_API_KEY_PATH=$P8" >> "$GITHUB_ENV"
 
       - name: Derle & Release yayınla
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         # Notarizasyon Apple'ın kuyruğunu bekler; takılırsa iş sınırından önce burada düş.
         timeout-minutes: 45
         env:
