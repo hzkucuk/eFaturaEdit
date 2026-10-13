@@ -42,7 +42,7 @@ jobs:
     # notarizasyon kuyruğu) saatlerce "çalışıyor" görünmesin, net düşsün (ders 5b).
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Linux bağımlılıkları
         if: startsWith(matrix.platform, 'ubuntu')
